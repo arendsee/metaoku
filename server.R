@@ -1,25 +1,52 @@
 require(shiny)
 source('global.R')
 
+mergeByName <- function(dat, by.colname){
+    # iterate through every dataset
+    # datalist is a global variable defined in merge.R
+
+    if(is.null(by.colname)){
+        return(dat)
+    }
+
+    for(d in datalist){
+        idx = colnames(d)[1]
+        if(by.colname %in% colnames(d)){
+            if('model' %in% colnames(d)){
+                key = 'model'
+            } else if ('locus' %in% colnames(d)) {
+                key = 'locus'
+            } else {
+                return(dat) 
+            }
+               dat <- merge(dat, d[, c(key, by.colname)], by=key) 
+        }
+    }
+    return(dat)
+}
+
 shinyServer(function(input, output) {
+dat <- reactive({
+    out <- data.frame(model=models, locus=sub('\\.\\d+', '', models))
+    for(column in input$columns){
+        out <- mergeByName(out, column)
+    }
+    return(out)
+})
 
-  dat <- reactive({ model.data[, input$columns, with=FALSE] })
-  
-  # Generate a summary of the dataset
-  output$summary <- renderPrint({
+# Generate a summary of the dataset
+output$summary <- renderPrint({
     summary(dat())
-  })
-  
-  # Show the first "n" observations
-  output$view <- renderTable({
-    head(dat(), n=input$obs)
-  })
+})
 
-  output$downloadData <- downloadHandler(
+# Show the first "n" observations
+output$view <- renderTable({
+    head(dat(), n=input$obs)
+})
+
+output$downloadData <- downloadHandler(
     filename = 'arabidopsis-data.tsv',
     content = function(file) {
-      write.table(dat(), file)
-    }
-  )
-
+        write.table(dat(), file)
+    })
 })

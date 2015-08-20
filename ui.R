@@ -1,8 +1,9 @@
 require(shiny)
+require(shinythemes)
 source('global.R')
 
 # Define UI for dataset viewer application
-shinyUI(fluidPage(
+shinyUI(fluidPage(theme = shinytheme('spacelab'),
   
   # Application title.
   titlePanel("Arabidopsis thaliana data"),
@@ -19,8 +20,8 @@ shinyUI(fluidPage(
     sidebarPanel(
       checkboxGroupInput("columns",
                          "Choose columns to include", 
-                         colnames(model.data),
-                         selected=colnames(model.data)),
+                         cols,
+                         selected=c('locus')),
       
       numericInput("obs", "Number of observations to view:", 10),
       

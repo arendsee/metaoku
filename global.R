@@ -1,2 +1,3 @@
 require(data.table)
-load('model.Rdat')
+source('merge.R')
+load('datalist.Rdat')

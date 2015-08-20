@@ -1,2 +1,3 @@
-model.Rdat
+*.Rdat
+*.tab
 shinyapps/
