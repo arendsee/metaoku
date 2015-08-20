@@ -179,7 +179,7 @@ awk 'BEGIN{FS="\t"; OFS="\t"} {print $2, $1, $3}' ~/research/DATASETS/strata-loc
 # 28  coils
 # 29  rem465
 # 30  hotloops
-awk 'BEGIN{OFS="\t"}
+awk 'BEGIN{FS="\t"; OFS="\t"}
      {print $3, $1, $5, $9, $10, $11, $15, $16, $20, $21, $28, $29, $30}
     ' ~/research/DATASETS/all-tips-data.tab |
     tr -d '"' > protein-data.tab
