@@ -1,47 +1,33 @@
 require(shiny)
 require(shinythemes)
+require(shinyBS)
 source('global.R')
 
 # Define UI for dataset viewer application
-shinyUI(fluidPage(theme = shinytheme('spacelab'),
-  
-  # Application title.
-  titlePanel("Arabidopsis thaliana data"),
-  
-  # Sidebar with controls to select a dataset and specify the
-  # number of observations to view. The helpText function is
-  # also used to include clarifying text. Most notably, the
-  # inclusion of a submitButton defers the rendering of output
-  # until the user explicitly clicks the button (rather than
-  # doing it immediately when inputs change). This is useful if
-  # the computations required to render output are inordinately
-  # time-consuming.
-  sidebarLayout(
-    sidebarPanel(
-      checkboxGroupInput("columns",
-                         "Choose columns to include", 
-                         cols,
-                         selected=c('locus')),
-      
-      numericInput("obs", "Number of observations to view:", 10),
-      
-      fluidRow(
-        column(6, submitButton("Update View")),
-        column(6, downloadButton('downloadData', 'Download'))
-      )
-      #helpText("Note: ")
-    ),
-    
-    # Show a summary of the dataset and an HTML table with the
-    # requested number of observations. Note the use of the h4
-    # function to provide an additional header above each output
-    # section.
-    mainPanel(
-      h4("Summary"),
-      verbatimTextOutput("summary"),
-      
-      h4("Observations"),
-      tableOutput("view")
+shinyUI(
+    fluidPage(theme = shinytheme('spacelab'),
+    titlePanel("Arabidopsis thaliana data"),
+    sidebarLayout(
+        sidebarPanel(
+            column(3, actionButton('selcol', 'Select Columns')),
+            column(3, actionButton('summarize', 'Summarize')),
+            column(3, submitButton("Update View")),
+            column(3, downloadButton('downloadData', 'Download'))
+        ),
+        
+        # Show a summary of the dataset and an HTML table with the
+        # requested number of observations. Note the use of the h4
+        # function to provide an additional header above each output
+        # section.
+        mainPanel(
+            h4("Observations"),
+            dataTableOutput("view"),
+            bsModal("summaryBox", "Summary", "summarize", size="large", verbatimTextOutput("summary")),
+            bsModal("columnBox", "Select Columns", "selcol", size="large",
+                checkboxGroupInput("columns",
+                                   "Choose columns to include", 
+                                   cols,
+                                   selected=c('locus', 'model', 'start', 'end', 'GC')))
+        )
     )
-  )
 ))

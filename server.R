@@ -40,8 +40,8 @@ output$summary <- renderPrint({
 })
 
 # Show the first "n" observations
-output$view <- renderTable({
-    head(dat(), n=input$obs)
+output$view <- renderDataTable({
+   return(dat()) 
 })
 
 output$downloadData <- downloadHandler(
