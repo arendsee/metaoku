@@ -44,7 +44,13 @@ shinyServer(function(input, output){
         dat(),
         rownames=FALSE,
         filter='bottom',
-        options = list(autoWidth=FALSE)
+        options = list(
+            autoWidth=TRUE,
+            scrollX=TRUE,
+            orderMulti=TRUE,
+            searching=TRUE,
+            search.regex=TRUE
+        )
     )
 
     output$downloadData <- downloadHandler(
