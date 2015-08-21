@@ -37,17 +37,17 @@ dat <- reactive({
 
 # Generate a summary of the dataset
 output$summary <- renderPrint({
-    summary(dat())
+    summary(dat()[input$main_table_rows_all, ])
 })
 
 # Show the first "n" observations
-output$table <- DT::renderDataTable({
+output$main_table <- DT::renderDataTable({
    return(dat()) 
 })
 
 output$downloadData <- downloadHandler(
     filename = 'arabidopsis-data.tsv',
     content = function(file) {
-        write.table(dat()[input$table_rows_all, ], file)
+        write.table(dat()[input$main_table_rows_all, ], file, row.names=FALSE, sep="\t")
     })
 })

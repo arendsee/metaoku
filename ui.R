@@ -21,7 +21,7 @@ shinyUI(
         # section.
         mainPanel(
             h4("Observations"),
-            DT::dataTableOutput("table"),
+            DT::dataTableOutput("main_table"),
             bsModal("summaryBox", "Summary", "summarize", size="large", verbatimTextOutput("summary")),
             bsModal("columnBox", "Select Columns", "selcol", size="large",
                 checkboxGroupInput("columns",
