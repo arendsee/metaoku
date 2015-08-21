@@ -1,4 +1,5 @@
 require(shiny)
+require(DT)
 source('global.R')
 
 mergeByName <- function(dat, by.colname){
@@ -40,13 +41,13 @@ output$summary <- renderPrint({
 })
 
 # Show the first "n" observations
-output$view <- renderDataTable({
+output$table <- DT::renderDataTable({
    return(dat()) 
 })
 
 output$downloadData <- downloadHandler(
     filename = 'arabidopsis-data.tsv',
     content = function(file) {
-        write.table(dat(), file)
+        write.table(dat()[input$table_rows_all, ], file)
     })
 })

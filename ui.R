@@ -1,6 +1,7 @@
 require(shiny)
 require(shinythemes)
 require(shinyBS)
+require(DT)
 source('global.R')
 
 # Define UI for dataset viewer application
@@ -11,7 +12,6 @@ shinyUI(
         sidebarPanel(
             column(3, actionButton('selcol', 'Select Columns')),
             column(3, actionButton('summarize', 'Summarize')),
-            column(3, submitButton("Update View")),
             column(3, downloadButton('downloadData', 'Download'))
         ),
         
@@ -21,7 +21,7 @@ shinyUI(
         # section.
         mainPanel(
             h4("Observations"),
-            dataTableOutput("view"),
+            DT::dataTableOutput("table"),
             bsModal("summaryBox", "Summary", "summarize", size="large", verbatimTextOutput("summary")),
             bsModal("columnBox", "Select Columns", "selcol", size="large",
                 checkboxGroupInput("columns",
