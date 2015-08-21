@@ -23,123 +23,73 @@ rm $desc
 gff=TAIR10_GFF3_genes.gff
 wget -O $gff 'ftp://ftp.arabidopsis.org/home/tair/Genes/TAIR10_genome_release/TAIR10_gff3/TAIR10_GFF3_genes.gff'
 
-sed -ri "/gene\t/s/ID=([^;]+);.*/\1/" $gff
+sed -ri "/gene\t/s/ID=([^;]+);.*/\1/"    $gff
 sed -ri "/exon\t/s/Parent=([^;]+).*/\1/" $gff
-sed -ri "/UTR\t/s/Parent=([^;]+).*/\1/" $gff
+sed -ri "/UTR\t/s/Parent=([^;]+).*/\1/"  $gff
 
-echo -e "locus\tgene_length" > gene_length.tab
 awk '
-    BEGIN{OFS="\t"}
-    $3 ~ /gene/ {
-        seqid=$9
-        len=$5 - $4 + 1
-        print seqid, len
+    BEGIN {
+        OFS="\t"
+        print "locus",
+              "gene_length",
+              "gene_start",
+              "gene_end",
+              "gene_strand"
     }
-    ' $gff >> gene_length.tab
-
-
-echo -e "locus\tstart" > gene_start.tab
-awk '
-    BEGIN{OFS="\t"}
-    $3 ~ /gene/ {
-        seqid=$9
+    $3 ~ /gene/  {
+        locus=$9
         start=$4
-        print seqid, start
-    }
-    ' $gff >> gene_start.tab 
-
-
-echo -e "locus\tend" > gene_end.tab
-awk '
-    BEGIN{OFS="\t"}
-    $3 ~ /gene/ {
-        seqid=$9
-        end=$5
-        print seqid, end
-    }
-    ' $gff >> gene_end.tab 
-
-
-echo -e "locus\tstrand" > strand.tab
-awk '
-    BEGIN{OFS="\t"}
-    $3 ~ /gene$/ {
-        seqid=$9
+        stop=$5
+        len=stop - start + 1
         strand=$7
-        print seqid, strand
+        print locus, len, start, stop, strand
     }
-    ' $gff >> strand.tab 
+' $gff > locus-data.tab
 
-echo -e "model\tnexons" > nexons.tab
 awk '
-    BEGIN{OFS="\t"}
-    $3 ~ /exon$/ { a[$9]++ }
-    END{ for(k in a) {print k, a[k]} }
-    ' $gff >> nexons.tab
-
-echo -e "model\tfive-prime_UTR-length" > five-UTR.tab
-awk '
-    BEGIN{OFS="\t"}
-    $3 ~ /five_prime_UTR$/ {
-        model=$9
-        len=$5-$4+1
-        print model, len
+    BEGIN {
+        OFS="\t"
+        print "model",
+              "model_exons",
+              "model_5UTR_length",
+              "model_3UTR-length"
     }
-' $gff >> five-UTR.tab
-
-echo -e "model\tthree-prime_UTR-length" > three-UTR.tab
-awk '
-    BEGIN{OFS="\t"}
-    $3 ~ /three_prime_UTR$/ {
-        model=$9
-        len=$5-$4+1
-        print model, len
+    $3 ~ /exon$/            { exons[$9]++ }
+    $3 ~ /five_prime_UTR$/  { utr5[$9] = $5 - $4 + 1 }
+    $3 ~ /three_prime_UTR$/ { utr3[$9] = $5 - $4 + 1 }
+    END {
+        for (k in exons){
+            print k, exons[k], utr5[k], utr3[k]
+        }
     }
-    ' $gff >> three-UTR.tab
-
+' $gff > model-data.tab
 rm $gff
 
 
 
 conf=conf.tab
 wget -O $conf 'ftp://ftp.arabidopsis.org/home/tair/Genes/TAIR10_genome_release/TAIR10_gene_confidence_ranking/confidenceranking_gene'
-
-echo -e "model\tconfidence_rating" > confidence_rating.tab
 awk '
     BEGIN{OFS="\t"}
-    NR > 1 {print $1, length($5)}
-    ' $conf >> confidence_rating.tab 
-
-echo -e "model\toverall_confidence" > overall_confidence.tab
-awk '
-    BEGIN{OFS="\t"}
-    NR > 1 {print $1, $7}
-    ' $conf >> overall_confidence.tab
-
-echo -e "model\ttranscript_confidence" > transcript_confidence.tab
-awk '
-    BEGIN{OFS="\t"}
-    NR > 1 {print $1, $9}
-    ' $conf >> transcript_confidence.tab
-
-echo -e "model\tproteomic_confidence" > proteomic_confidence.tab
-awk '
-    BEGIN{OFS="\t"}
-    NR > 1 {print $1, $11}
-    ' $conf >> proteomic_confidence.tab
-
-echo -e "model\tspecies_confidence" > species_confidence.tab
-awk '
-    BEGIN{OFS="\t"}
-    NR > 1 {print $1, $13}
-    ' $conf >> species_confidence.tab
-
-echo -e "model\tvista_confidence" > vista_confidence.tab
-awk '
-    BEGIN{OFS="\t"}
-    NR > 1 {print $1, $15}
-    ' $conf >> vista_confidence.tab
-
+    NR == 1 {
+        print "model", 
+              "confidence_rating",
+              "confidence_overall",
+              "confidence_transcript",
+              "confidence_proteomic",
+              "condifdence_species",
+              "confidence_vista"
+    }
+    NR > 1 {
+        print $1,         # model
+              length($5), # number of stars
+              $7,         # overall
+              $9,         # transcript
+              $11,        # proteomic
+              $13,        # species
+              $15         # vista
+    }
+    ' $conf > confidence.tab
 rm $conf
 
 

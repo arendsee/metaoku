@@ -41,6 +41,7 @@ if(! file.exists(rdat.filename)){
 
     global$columns <- unique(global$columns[-which(global$columns %in% c('model', 'locus'))])
     global$loci    <- sub('\\.\\d+', '', global$models)
+    global$columns <- sort(global$columns)
 
     # model.data <- MergeData(d)
     save(global, file=rdat.filename)
