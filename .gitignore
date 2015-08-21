@@ -1,3 +1,4 @@
 *.Rdat
 *.tab
+rsconnect/
 shinyapps/
