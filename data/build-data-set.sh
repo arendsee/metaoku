@@ -123,7 +123,7 @@ awk '
     ' $conf >> transcript_confidence.tab
 
 echo -e "model\tproteomic_confidence" > proteomic_confidence.tab
- '
+awk '
     BEGIN{OFS="\t"}
     NR > 1 {print $1, $11}
     ' $conf >> proteomic_confidence.tab
@@ -145,9 +145,18 @@ rm $conf
 
 
 # House data
-awk 'BEGIN{FS="\t"; OFS="\t"} {print $2, $1, $3}' ~/research/DATASETS/strata-models.tab > strata-models.tab
+datadir=~/research/DATASETS
+awk '
+    BEGIN{FS="\t"; OFS="\t"}
+    NR == 1 {print "model", "model_stratum_level", "model_stratum_name"}
+    NR > 1  {print $2, $1, $3}
+    ' $datadir/strata-models.tab > strata-models.tab
 
-awk 'BEGIN{FS="\t"; OFS="\t"} {print $2, $1, $3}' ~/research/DATASETS/strata-loci.tab > strata-loci.tab
+awk '
+    BEGIN{FS="\t"; OFS="\t"}
+    NR == 1 {print "locus", "stratum_level", "stratum_name"}
+    NR > 1  {print $2, $1, $3}
+    ' $datadir/strata-loci.tab > strata-loci.tab
 
 # 1   gb
 # 2   length
