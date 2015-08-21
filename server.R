@@ -40,10 +40,15 @@ output$summary <- renderPrint({
     summary(dat()[input$main_table_rows_all, ])
 })
 
-# Show the first "n" observations
-output$main_table <- DT::renderDataTable({
-   return(dat()) 
-})
+output$main_table <- DT::renderDataTable(
+    dat,
+    rownames=FALSE,
+    filter='bottom',
+    options = list(
+        autoWidth=TRUE
+    )
+)
+
 
 output$downloadData <- downloadHandler(
     filename = 'arabidopsis-data.tsv',
