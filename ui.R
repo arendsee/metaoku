@@ -10,10 +10,12 @@ shinyUI(
     titlePanel("Arabidopsis thaliana data"),
     sidebarLayout(
         sidebarPanel(
-            column(3, actionButton('selcol', 'Select Columns')),
-            column(3, actionButton('summarize', 'Summarize')),
-            column(3, downloadButton('downloadData', 'Download')),
-            column(9, plotOutput('plot'))
+            column(4, actionButton('selcol', 'Select Columns')),
+            column(4, actionButton('summarize', 'Summarize')),
+            column(4, downloadButton('downloadData', 'Download')),
+            br(), 
+            br(),
+            column(12, plotOutput('plot'))
         ),
 
         # Show a summary of the dataset and an HTML table with the
@@ -27,7 +29,7 @@ shinyUI(
                 checkboxGroupInput("columns",
                                    "Choose columns to include", 
                                    global$columns,
-                                   selected=c('locus', 'model', 'gene_start', 'gene_end', 'GC')))
+                                   selected=c('locus', 'model', 'gene_start', 'gene_end', 'GC', 'stratum_name')))
         )
     )
 ))

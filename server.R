@@ -75,7 +75,8 @@ shinyServer(function(input, output){
         filter='top',
         selection=list(
             mode='single',
-            target='column'
+            target='column',
+            selected=5
         ),
         options = list(
             autoWidth=TRUE,
