@@ -69,27 +69,29 @@ rm $gff
 
 conf=conf.tab
 wget -O $conf 'ftp://ftp.arabidopsis.org/home/tair/Genes/TAIR10_genome_release/TAIR10_gene_confidence_ranking/confidenceranking_gene'
-awk '
-    BEGIN{OFS="\t"}
-    NR == 1 {
-        print "model", 
-              "confidence_rating",
-              "confidence_overall",
-              "confidence_transcript",
-              "confidence_proteomic",
-              "condifdence_species",
-              "confidence_vista"
-    }
-    NR > 1 {
-        print $1,         # model
-              length($5), # number of stars
-              $7,         # overall
-              $9,         # transcript
-              $11,        # proteomic
-              $13,        # species
-              $15         # vista
-    }
-    ' $conf > confidence.tab
+
+sed -r 's/ *\| */\t/g' $conf |
+    awk '
+        BEGIN{FS="\t"; OFS="\t"}
+        NR == 1 {
+            print "model", 
+                  "confidence_rating",
+                  "confidence_overall",
+                  "confidence_transcript",
+                  "confidence_proteomic",
+                  "condifdence_species",
+                  "confidence_vista"
+        }
+        NR > 1 {
+            print $1,         # model
+                  length($3), # number of stars
+                  $4,         # overall
+                  $5,         # transcript
+                  $6,         # proteomic
+                  $7,         # species
+                  $8          # vista
+        }
+        ' > confidence.tab
 rm $conf
 
 
