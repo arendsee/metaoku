@@ -12,9 +12,10 @@ shinyUI(
         sidebarPanel(
             column(3, actionButton('selcol', 'Select Columns')),
             column(3, actionButton('summarize', 'Summarize')),
-            column(3, downloadButton('downloadData', 'Download'))
+            column(3, downloadButton('downloadData', 'Download')),
+            column(9, plotOutput('plot'))
         ),
-        
+
         # Show a summary of the dataset and an HTML table with the
         # requested number of observations. Note the use of the h4
         # function to provide an additional header above each output
