@@ -33,6 +33,14 @@ shinyServer(function(input, output){
         for(column in input$columns){
             out <- mergeByName(out, column)
         }
+        out = data.frame(out)
+        # factorize non-numeric strings if less than 20 unique elements
+        for(i in 1:ncol(out)){
+            x = out[, i]
+            if(! is.numeric(x) && length(unique(x)) <= 20){
+                out[, i] = as.factor(x)
+            }
+        }
         return(out)
     })
 
@@ -44,27 +52,29 @@ shinyServer(function(input, output){
     output$plot <- renderPlot({
         columns = input$main_table_columns_selected + 1
         rows = input$main_table_rows_all
-        if(! is.null(columns)){
-            d = data.frame(dat()[rows, columns, with=FALSE])
-            if(ncol(d) == 1){
-                x = d[, 1]
-                if(is.numeric(x)){
-                    ggplot(data.frame(value=x)) +
-                        geom_histogram(aes(value))
-                } else {
-                    if(!is.factor(x)){
-                        x = as.factor(x)
-                    }
-                    s = sort(summary(x))
-                    if(length(s) > 20){
-                        s[21] = sum(s[21:length(s)])
-                        names(s) = c(names(s)[1:20], 'other')
-                    }
-                    s.dt = data.frame(variables=rep(names(s), times=as.numeric(s)))
-                    ggplot(s.dt) +
-                        geom_bar(aes(factor(variables))) +
-                        theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
+        if(! is.null(columns) && length(columns) > 0){
+            x = dat()[rows, columns]
+            write(paste(class(x), is.numeric(x), is.character(x), is.factor(x)), 'log', append=TRUE)
+            if(is.numeric(x)){
+                g <- ggplot(data.frame(values=x)) +
+                    geom_histogram(aes(x=values))
+                return(g)
+            }
+
+            if(is.character(x) && ! is.factor(x)){
+                s = sort(summary(factor(x)))
+                if(length(s) > 20){
+                    s[21] = sum(s[21:length(s)])
+                    names(s) = c(names(s)[1:20], 'other')
                 }
+                x = factor(rep(names(s), times=as.numeric(s)))
+            }
+
+            if(is.factor(x)){
+                g <- ggplot(data.frame(values=x)) +
+                    geom_bar(aes(x=values)) +
+                    theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
+                return(g)
             }
         }
     })
@@ -73,6 +83,7 @@ shinyServer(function(input, output){
         dat(),
         rownames=FALSE,
         filter='top',
+        style='bootstrap',
         selection=list(
             mode='single',
             target='column',
@@ -80,7 +91,6 @@ shinyServer(function(input, output){
         ),
         options = list(
             autoWidth=TRUE,
-            scrollX=TRUE,
             orderMulti=TRUE,
             searching=TRUE,
             search.regex=TRUE
