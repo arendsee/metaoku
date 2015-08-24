@@ -3,6 +3,8 @@ require(ggplot2)
 require(DT)
 require(wordcloud) 
 require(tm)
+require(SnowballC)
+
 source('global.R')
 
 mergeByName <- function(dat, by.colname){
@@ -20,13 +22,23 @@ mergeByName <- function(dat, by.colname){
             } else {
                 return(dat) 
             }
-            write(paste(key, colnames(d)), 'log', append=TRUE)
             setkeyv(dat, key)
-            # dat <- dat[d[, c(key, by.colname), with=FALSE]]
             dat <- merge(dat, d[, c(key, by.colname), with=FALSE], by=key)
         }
     }
     return(dat)
+}
+
+makeWordCloud <- function(m){
+    v <- sort(colSums(m), decreasing=TRUE)
+    d <- data.frame(word = names(v), freq=v)
+    pal2 <- brewer.pal(8, "Dark2")
+    g = wordcloud(d$word, d$freq,
+                  min.freq=3, max.words=100,
+                  random.order=FALSE,
+                  rot.per=.15,
+                  colors=pal2)
+    return(g)
 }
 
 shinyServer(function(input, output){
@@ -53,17 +65,21 @@ shinyServer(function(input, output){
 
     output$plot <- renderPlot({
         columns = input$main_table_columns_selected + 1
+        column.names = colnames(dat())[columns]
         rows = input$main_table_rows_all
         if(! is.null(columns) && length(columns) > 0){
             x = dat()[rows, columns]
-            write(paste(class(x), is.numeric(x), is.character(x), is.factor(x)), 'log', append=TRUE)
+            column.name = column.names[1]
             if(is.numeric(x)){
                 g <- ggplot(data.frame(values=x)) +
                     geom_histogram(aes(x=values))
                 return(g)
             }
 
-            longest.line = max(nchar(as.character(x)))
+            if(column.name %in% names(global$corpa)){
+                m = global$corpa[[column.name]]
+                return(makeWordCloud(m[rows, ]))
+            }
 
             # if is non-factored character array, reduce to most common 20
             # strings and replace all others with "other"

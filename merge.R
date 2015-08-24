@@ -1,4 +1,5 @@
 require(data.table)
+require(Matrix)
 
 # All datasets are
 # 1. TAB-delimited
@@ -14,6 +15,7 @@ if(! file.exists(rdat.filename)){
     global$indx     = c()
     global$files    = c()
     global$loci     = c()
+    global$corpa    = list()
 
     for(f in list.files('data/', '*.tab')){
         d <- as.data.table(read.delim(paste0('data/', f), quote="", stringsAsFactors=FALSE))
@@ -34,6 +36,22 @@ if(! file.exists(rdat.filename)){
         } else {
             warning(paste('table', f, 'skipped'))
             next
+        }
+
+        for (cname in colnames(d)){
+            txt = as.character(data.frame(d)[, cname])
+            longest.line = max(nchar(txt))
+            if(longest.line > 50){
+                write(paste(cname), 'log', append=TRUE)
+                corpus <- Corpus(VectorSource(txt))
+                corpus <- tm_map(corpus, content_transformer(function(x) iconv(x, to='ASCII', sub='byte')))
+                corpus <- tm_map(corpus, content_transformer(tolower))
+                corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes=TRUE)
+                corpus <- tm_map(corpus, function(x) removeWords(x, stopwords("english")))
+                dtm <- DocumentTermMatrix(corpus)
+                m <- sparseMatrix(i=dtm$i, j=dtm$j, x=dtm$v, dims=c(dtm$nrow, dtm$ncol), dimnames=dtm$dimnames)
+                global$corpa[[cname]] = m
+            }
         }
 
         global$datasets[[f]] <- d
