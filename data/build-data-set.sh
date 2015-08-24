@@ -4,9 +4,9 @@ desc=description.tab
 wget -O $desc 'ftp://ftp.arabidopsis.org/home/tair/Genes/TAIR10_genome_release/TAIR10_functional_descriptions_20140331.txt'
 
 dtype='type'
-dshort='short-description'
-dcurator='curator-description'
-dautomatic='automatic-description'
+dshort='short_description'
+dcurator='curator_description'
+dautomatic='automatic_description'
 echo -e "model\t$dtype"      > ${dtype}.tab
 echo -e "model\t$dshort"     > ${dshort}.tab
 echo -e "model\t$dcurator"   > ${dcurator}.tab
@@ -44,7 +44,7 @@ awk '
         strand=$7
         print locus, len, start, stop, strand
     }
-' $gff > locus-data.tab
+' $gff > locus_data.tab
 
 awk '
     BEGIN {
@@ -52,7 +52,7 @@ awk '
         print "model",
               "model_exons",
               "model_5UTR_length",
-              "model_3UTR-length"
+              "model_3UTR_length"
     }
     $3 ~ /exon$/            { exons[$9]++ }
     $3 ~ /five_prime_UTR$/  { utr5[$9] = $5 - $4 + 1 }
@@ -62,7 +62,7 @@ awk '
             print k, exons[k], utr5[k], utr3[k]
         }
     }
-' $gff > model-data.tab
+' $gff > model_data.tab
 rm $gff
 
 
@@ -102,13 +102,13 @@ awk '
     BEGIN{FS="\t"; OFS="\t"}
     NR == 1 {print "model", "model_stratum_level", "model_stratum_name"}
     NR > 1  {print $2, $1, $3}
-    ' $datadir/strata-models.tab > strata-models.tab
+    ' $datadir/strata-models.tab > strata_models.tab
 
 awk '
     BEGIN{FS="\t"; OFS="\t"}
     NR == 1 {print "locus", "stratum_level", "stratum_name"}
     NR > 1  {print $2, $1, $3}
-    ' $datadir/strata-loci.tab > strata-loci.tab
+    ' $datadir/strata-loci.tab > strata_loci.tab
 
 # 1   gb
 # 2   length
@@ -143,4 +143,5 @@ awk '
 awk 'BEGIN{FS="\t"; OFS="\t"}
      {print $3, $1, $5, $9, $10, $11, $15, $16, $20, $21, $28, $29, $30}
     ' ~/research/DATASETS/all-tips-data.tab |
-    tr -d '"' > protein-data.tab
+    tr -d '"' |
+    sed '1 s/\./_/g' > protein_data.tab
