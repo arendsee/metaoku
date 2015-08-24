@@ -70,6 +70,7 @@ shinyServer(function(input, output){
         if(! is.null(columns) && length(columns) > 0){
             x = dat()[rows, columns]
             column.name = column.names[1]
+            longest.line = max(nchar(as.character(x)))
             if(is.numeric(x)){
                 g <- ggplot(data.frame(values=x)) +
                     geom_histogram(aes(x=values))
