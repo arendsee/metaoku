@@ -1,6 +1,8 @@
 require(shiny)
 require(ggplot2)
 require(DT)
+require(wordcloud) 
+require(tm)
 source('global.R')
 
 mergeByName <- function(dat, by.colname){
@@ -37,7 +39,7 @@ shinyServer(function(input, output){
         # factorize non-numeric strings if less than 20 unique elements
         for(i in 1:ncol(out)){
             x = out[, i]
-            if(! is.numeric(x) && length(unique(x)) <= 20){
+            if(length(unique(x)) <= 20){
                 out[, i] = as.factor(x)
             }
         }
@@ -61,6 +63,10 @@ shinyServer(function(input, output){
                 return(g)
             }
 
+            longest.line = max(nchar(as.character(x)))
+
+            # if is non-factored character array, reduce to most common 20
+            # strings and replace all others with "other"
             if(is.character(x) && ! is.factor(x)){
                 s = sort(summary(factor(x)))
                 if(length(s) > 20){
@@ -72,8 +78,11 @@ shinyServer(function(input, output){
 
             if(is.factor(x)){
                 g <- ggplot(data.frame(values=x)) +
-                    geom_bar(aes(x=values)) +
-                    theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
+                    geom_bar(aes(x=values))
+                # make x-lables vertical is they are longer than 2 characters
+                if(longest.line > 2) {
+                    g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
+                }
                 return(g)
             }
         }
