@@ -29,12 +29,11 @@ shinyUI(
                 checkboxGroupInput("columns",
                                    "Choose columns to include", 
                                    global$columns,
-                                   selected=c('locus',
-                                              'model',
-                                              'GC',
+                                   selected=c('GC',
                                               'gene_length',
-                                              'stratum_name',
-                                              'short_description')))
+                                              'short_description',
+                                              'location',
+                                              'stratum_name')))
         )
     )
 ))
