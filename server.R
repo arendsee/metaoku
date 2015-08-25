@@ -29,9 +29,15 @@ mergeByName <- function(dat, by.colname){
     return(dat)
 }
 
-makeWordCloud <- function(m){
-    v <- sort(colSums(m), decreasing=TRUE)
-    d <- data.frame(word = names(v), freq=v)
+makeWordCloud <- function(mat, selection){
+    obs.sel <- sort(colSums(mat[selection, ]), decreasing=TRUE)
+
+    # # eventually I should do more statistics with this
+    # v.ori <- sort(colSums(mat), decreasing=TRUE)
+    # exp.sel <- sum(v.sel) * (v.ori / sum(v.ori))
+    # sel <- data.frame(exp=exp.sel, obs=obs.sel, rat=log(obs.sel / exp.sel))
+
+    d <- data.frame(word = names(obs.sel), freq=obs.sel)
     pal2 <- brewer.pal(8, "Dark2")
     g = wordcloud(d$word, d$freq,
                   min.freq=3, max.words=100,
@@ -64,12 +70,12 @@ shinyServer(function(input, output){
             out <- mergeByName(out, column)
         }
         out <- data.frame(out)
-        for(i in ncol(out)){
+        for(i in 1:ncol(out)){
             if(length(unique(out[, i])) <= 20){
                 out[, i] <- factor(out[, i])
             }
         }
-        return(data.frame(out))
+        return(out)
     })
 
     # Generate a summary of the dataset
@@ -97,7 +103,7 @@ shinyServer(function(input, output){
         # === Handle long string data column
         if(column.name %in% names(global$corpa)){
             m = global$corpa[[column.name]]
-            return(makeWordCloud(m[rows, ]))
+            return(makeWordCloud(m, rows))
         } else if(!is.numeric(x) && luniq > 20){
             return()
         }
@@ -130,7 +136,6 @@ shinyServer(function(input, output){
                     ) + theme(axis.text.y=element_blank(),
                               axis.ticks.y=element_blank())
             }
-            return(g)
         }
 
         if(is.factor(d$values)){
@@ -157,8 +162,20 @@ shinyServer(function(input, output){
             if(longest.line > 2) {
                 g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
             }
-            return(g)
         }
+
+        g <- g +
+            ggtitle(column.name) +
+            theme(
+               axis.text.x  = element_text(size=14), 
+               axis.text.y  = element_text(size=14),
+               axis.title.x = element_blank(), 
+               axis.title.y = element_blank(),
+               plot.title   = element_text(size=24, face='bold'),
+               legend.title = element_blank(),
+               legend.background = element_blank()
+            )
+        return(g)
     })
 
     output$main_table <- DT::renderDataTable(
