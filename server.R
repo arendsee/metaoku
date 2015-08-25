@@ -74,6 +74,7 @@ shinyServer(function(input, output){
             d$selected[rows] <- TRUE
             d <- data.frame(d)
             d <- melt(d, id.vars=c('selected'), value.name='value')
+            d$group = ifelse(d$selected, 'selected', 'non-selected')
             return(d)
         }
         return()
@@ -88,7 +89,6 @@ shinyServer(function(input, output){
     output$plot <- renderPlot({
         # exit if more than one column is selected
         s <- sel()
-        s$group = ifelse(s$selected, 'selected', 'non-selected')
 
         if(nrow(s) < 1 || nlevels(s$variable) != 1){
             return()
@@ -164,8 +164,50 @@ shinyServer(function(input, output){
         return(g)
     })
 
-    output$selection_summary <- renderTable({
-        return()
+    output$selection_summary_1 <- renderTable({
+        if(nlevels(sel()$variable) < 1){ return() }
+
+        if(is.numeric(sel()$value)){
+            if(all(sel()$selected)){
+                s <- with(sel(), data.frame( 
+                        N=length(value),
+                        mean=mean(value),
+                        sd=sd(value)
+                    ))
+            } else {
+                s <- ddply(sel(), 'group', summarize,
+                           N=length(value),
+                           mean=mean(value),
+                           sd=sd(value))
+            }
+        } else if(is.factor(sel()$value)){
+           return() 
+        } else {
+            return()
+        }
+        return(s)
+    })
+
+    output$selection_summary_2 <- renderTable({
+        if(nlevels(sel()$variable) < 1){ return() }
+
+        if(is.numeric(sel()$value)){
+            if(!all(sel()$selected)){
+                x = subset(sel(), selected)$value
+                y = subset(sel(), !selected)$value
+                s = data.frame(
+                    wilcoxon_test=wilcox.test(x, y)$p.value    
+                )
+            } else {
+                return()
+            }
+        } else if(is.factor(sel()$value)){
+           return() 
+        } else {
+            return()
+        }
+        return(s)
+
     })
 
     output$main_table <- DT::renderDataTable(

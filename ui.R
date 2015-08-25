@@ -10,12 +10,15 @@ shinyUI(
     titlePanel("Arabidopsis thaliana data"),
     sidebarLayout(
         sidebarPanel(
-            column(4, actionButton('selcol', 'Select Columns')),
-            column(4, actionButton('summarize', 'Summarize')),
-            column(4, downloadButton('downloadData', 'Download')),
-            br(), 
-            br(),
-            column(12, plotOutput('plot'))
+            fluidRow(
+                column(4, actionButton('selcol', 'Select Columns')),
+                column(4, actionButton('summarize', 'Summarize')),
+                column(4, downloadButton('downloadData', 'Download'))
+            ),
+            fluidRow(column(12, plotOutput('plot'))),
+            fluidRow(
+                column(6, tableOutput('selection_summary_1')),
+                column(6, tableOutput('selection_summary_2')))
         ),
 
         # Show a summary of the dataset and an HTML table with the
