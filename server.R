@@ -113,9 +113,14 @@ shinyServer(function(input, output){
         if(is.full){
             d <- data.frame(values=x)
         } else {
+            # casting as vectors is essential for joining factor columns
             d <- data.frame(
-                values=c(x, full.data[ , column.name]),
+                values=c(as.vector(x), as.vector(full.data[ , column.name])),
                 group=c(rep('selected', length(x)), rep('all', nrow(full.data))))
+            # then recast as a factor if originally so
+            if(is.factor(x)){
+                d$values = factor(d$values)
+            }
         }
         
         # === Handle numeric data column
@@ -131,7 +136,7 @@ shinyServer(function(input, output){
                             y=..density..,
                             fill=group
                         ),
-                        alpha=.5,
+                        alpha=.75,
                         position='identity'
                     ) + theme(axis.text.y=element_blank(),
                               axis.ticks.y=element_blank())
@@ -186,7 +191,7 @@ shinyServer(function(input, output){
         selection=list(
             mode='single',
             target='column',
-            selected=6
+            selected=7
         ),
         options = list(
             autoWidth=TRUE,
