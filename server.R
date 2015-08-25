@@ -4,6 +4,7 @@ require(ggplot2)
 require(DT)
 require(wordcloud) 
 require(tm)
+require(reshape2)
 
 source('global.R')
 
@@ -47,22 +48,6 @@ makeWordCloud <- function(mat, selection){
     return(g)
 }
 
-# toSmallFactor <- function(x, maxN=20){
-#     # if is non-factored character array, reduce to most common maxN
-#     # strings and replace all others with "other"
-#     if(is.character(x) && ! is.factor(x)){
-#         s = sort(summary(factor(x)))
-#         if(length(s) > 20){
-#             s[21] = sum(s[21:length(s)])
-#             names(s) = c(names(s)[1:20], 'other')
-#         }
-#         x = factor(rep(names(s), times=as.numeric(s)))
-#     } else if(is.numeric(x) && length(unique(x)) <= 20){
-#         x = factor(x)
-#     }
-#     return(x)
-# }
-
 shinyServer(function(input, output){
     dat <- reactive({
         out <- data.table(model=as.vector(global$models), locus=as.vector(global$loci))
@@ -70,6 +55,7 @@ shinyServer(function(input, output){
             out <- mergeByName(out, column)
         }
         out <- data.frame(out)
+        # This factoring is vital for filtering columns in DT
         for(i in 1:ncol(out)){
             if(length(unique(out[, i])) <= 20){
                 out[, i] <- factor(out[, i])
@@ -78,61 +64,55 @@ shinyServer(function(input, output){
         return(out)
     })
 
+    sel <- reactive({
+        columns  <- input$main_table_columns_selected + 1
+        rows     <- input$main_table_rows_all
+        d <- data.table(dat())
+        if(length(columns) > 0 && ncol(d) >= max(columns)){
+            d <- d[, columns, with=FALSE]
+            d$selected       <- FALSE
+            d$selected[rows] <- TRUE
+            d <- data.frame(d)
+            d <- melt(d, id.vars=c('selected'), value.name='value')
+            return(d)
+        }
+        return()
+    })
+
+
     # Generate a summary of the dataset
     output$summary <- renderPrint({
         summary(dat()[input$main_table_rows_all, ])
     })
 
     output$plot <- renderPlot({
-        columns      <- input$main_table_columns_selected + 1
-        rows         <- input$main_table_rows_all
+        # exit if more than one column is selected
+        s <- sel()
+        s$group = ifelse(s$selected, 'selected', 'non-selected')
 
-        if(is.na(columns[1])){ return() }
-
-        full.data   <- dat()
-        column.name <- colnames(full.data)[columns][1]
-
-        x = full.data[rows, column.name]
-
-        longest.line <- max(nchar(as.character(x)))
-        is.full      <- (length(rows) == nrow(full.data))
-        luniq        <- length(unique(x))
-
-        if(luniq == 1){ return() }
-
-        # === Handle long string data column
-        if(column.name %in% names(global$corpa)){
-            m = global$corpa[[column.name]]
-            return(makeWordCloud(m, rows))
-        } else if(!is.numeric(x) && luniq > 20){
+        if(nrow(s) < 1 || nlevels(s$variable) != 1){
             return()
         }
 
-        # === Handle well-behaved factors and numeric columns
+        column.name <- levels(s$variable)[1]
+        luniq       <- length(unique(s$value))
 
-        if(is.full){
-            d <- data.frame(values=x)
-        } else {
-            # casting as vectors is essential for joining factor columns
-            d <- data.frame(
-                values=c(as.vector(x), as.vector(full.data[ , column.name])),
-                group=c(rep('selected', length(x)), rep('all', nrow(full.data))))
-            # then recast as a factor if originally so
-            if(is.factor(x)){
-                d$values = factor(d$values)
-            }
+        if(luniq < 21){
+            s$value = factor(s$value)
         }
-        
-        # === Handle numeric data column
-        if(is.numeric(d$values)){
-            if(is.full){
-                g <- ggplot(d) +
-                    geom_histogram(aes(x=values))
+
+        if(column.name %in% names(global$corpa)){
+            m = global$corpa[[column.name]]
+            return(makeWordCloud(m, which(s$selected)))
+        } else if(is.numeric(s$value)){
+            if(all(s$selected)){
+                g <- ggplot(s) +
+                    geom_histogram(aes(x=value))
             } else {
-                g <- ggplot(d) +
+                g <- ggplot(s) +
                     geom_histogram(
                         aes(
-                            x=values,
+                            x=value,
                             y=..density..,
                             fill=group
                         ),
@@ -141,22 +121,20 @@ shinyServer(function(input, output){
                     ) + theme(axis.text.y=element_blank(),
                               axis.ticks.y=element_blank())
             }
-        }
-
-        if(is.factor(d$values)){
-            if(is.full){
-                g <- ggplot(d) +
-                    geom_bar(aes(x=values))
+        } else if(is.factor(s$value)){
+            if(all(s$selected)){
+                g <- ggplot(s) +
+                    geom_bar(aes(x=value))
                 # make x-lables vertical is they are longer than 2 characters
             } else {
-                d <- ddply(d, 'group', mutate, N.group=length(group))
-                d <- ddply(d, c('values', 'group'), mutate, N.values=length(values))
-                d$proportion = d$N.values / d$N.group
+                s <- ddply(s, 'selected', mutate, N.selected=length(selected))
+                s <- ddply(s, c('value', 'selected'), mutate, N.value=length(value))
+                s$proportion = s$N.value / s$N.selected
                 
-                g <- ggplot(d) +
+                g <- ggplot(s) +
                     geom_bar(
                         aes(
-                            x=values,
+                            x=value,
                             y=proportion,
                             fill=group
                         ),
@@ -164,23 +142,30 @@ shinyServer(function(input, output){
                         stat='identity'
                     )
             }
+            longest.line <- max(nchar(as.character(s$value)))
             if(longest.line > 2) {
                 g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
             }
+        } else {
+            return()
         }
 
         g <- g +
             ggtitle(column.name) +
             theme(
-               axis.text.x  = element_text(size=14), 
-               axis.text.y  = element_text(size=14),
-               axis.title.x = element_blank(), 
-               axis.title.y = element_blank(),
-               plot.title   = element_text(size=24, face='bold'),
-               legend.title = element_blank(),
+               axis.text.x       = element_text(size=14), 
+               axis.text.y       = element_text(size=14),
+               plot.title        = element_text(size=24, face='bold'),
+               axis.title.x      = element_blank(), 
+               axis.title.y      = element_blank(),
+               legend.title      = element_blank(),
                legend.background = element_blank()
             )
         return(g)
+    })
+
+    output$selection_summary <- renderTable({
+        return()
     })
 
     output$main_table <- DT::renderDataTable(
