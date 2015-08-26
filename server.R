@@ -121,6 +121,9 @@ shinyServer(function(input, output){
                     ) + theme(axis.text.y=element_blank(),
                               axis.ticks.y=element_blank())
             }
+            if(input$logx){
+                g <- g + scale_x_continuous(trans='log2')
+            }
         } else if(is.factor(s$value)){
             if(all(s$selected)){
                 g <- ggplot(s) +
