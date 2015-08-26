@@ -64,6 +64,21 @@ shinyServer(function(input, output){
         return(out)
     })
 
+    # Read input from textInput box, parse out ids, and if they are present in
+    # the key column of the main dataset, return them
+    user.rows <- reactive({
+        txt <- input$user_ids
+        ids <- gsub('[,\\\'"\\\t|<>]+', ' ', txt) 
+        ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
+        if(input$key == "model"){
+            all.ids = dat()$model
+        } else if(input$key == "locus"){
+            all.ids = dat()$locus
+        }
+        rows = which(all.ids %in% ids)
+        return(rows)
+    })
+
     sel <- reactive({
         columns  <- input$main_table_columns_selected + 1
         rows     <- input$main_table_rows_all
@@ -221,8 +236,15 @@ shinyServer(function(input, output){
 
     }, include.rownames=FALSE)
 
+    get_user_data <- function(){
+        if(length(user.rows()) > 0){
+            return(dat()[user.rows(), ])
+        } else {
+            return(dat())
+        }
+    }
     output$main_table <- DT::renderDataTable(
-        dat(),
+        get_user_data(),
         rownames=FALSE,
         filter='top',
         style='bootstrap',

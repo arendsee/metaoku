@@ -19,7 +19,11 @@ shinyUI(
             fluidRow(column(3, checkboxInput('logx', 'log2 x-axis'))),
             fluidRow(
                 column(6, tableOutput('selection_summary_1')),
-                column(6, tableOutput('selection_summary_2')))
+                column(6, tableOutput('selection_summary_2'))),
+            fluidRow(column(8, textInput('user_ids', 'Enter ids (e.g. "AT5G28465 AT5G54910 AT5G58170")')),
+                     column(4, radioButtons('key', 'Choose key',
+                                            choices=list('Locus'='locus', 'Model'='model'),
+                                            selected='locus')))
         ),
 
         # Show a summary of the dataset and an HTML table with the
