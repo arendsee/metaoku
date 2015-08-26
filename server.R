@@ -165,7 +165,9 @@ shinyServer(function(input, output){
     })
 
     output$selection_summary_1 <- renderTable({
-        if(nlevels(sel()$variable) < 1){ return() }
+        if(nlevels(sel()$variable) != 1){ return() }
+
+        luniq <- length(unique(sel()$value))
 
         if(is.numeric(sel()$value)){
             if(all(sel()$selected)){
@@ -180,13 +182,19 @@ shinyServer(function(input, output){
                            mean=mean(value),
                            sd=sd(value))
             }
-        } else if(is.factor(sel()$value)){
-           return() 
+        } else if(luniq < 21){
+            if(all(sel()$selected)){
+                return()
+            } else {
+                s <- ddply(sel(), 'group', summarize,
+                           N=length(value),
+                           sd=mean(summary(value)))
+            }
         } else {
             return()
         }
         return(s)
-    })
+    }, include.rownames=FALSE)
 
     output$selection_summary_2 <- renderTable({
         if(nlevels(sel()$variable) < 1){ return() }
@@ -208,7 +216,7 @@ shinyServer(function(input, output){
         }
         return(s)
 
-    })
+    }, include.rownames=FALSE)
 
     output$main_table <- DT::renderDataTable(
         dat(),
