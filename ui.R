@@ -39,7 +39,7 @@ shinyUI(
                                    global$columns,
                                    selected=c('GC',
                                               'gene_length',
-                                              'confidence_rating',
+                                              'confidence_overall',
                                               'short_description',
                                               'location',
                                               'stratum_name')))

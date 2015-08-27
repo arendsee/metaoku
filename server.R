@@ -68,7 +68,7 @@ shinyServer(function(input, output){
     # the key column of the main dataset, return them
     user.rows <- reactive({
         txt <- input$user_ids
-        ids <- gsub('[,\\\'"\\\t|<>]+', ' ', txt) 
+        ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
         ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
         if(input$key == "model"){
             all.ids = dat()$model
@@ -92,7 +92,7 @@ shinyServer(function(input, output){
             d$group = ifelse(d$selected, 'selected', 'non-selected')
             return(d)
         }
-        return()
+        return(NULL)
     })
 
 
@@ -105,15 +105,16 @@ shinyServer(function(input, output){
         # exit if more than one column is selected
         s <- sel()
 
-        if(nrow(s) < 1 || nlevels(s$variable) != 1){
+        if(is.null(s) || nrow(s) < 1 || nlevels(s$variable) != 1){
             return()
         }
 
         column.name <- levels(s$variable)[1]
         luniq       <- length(unique(s$value))
 
-        if(luniq < 21){
-            s$value = factor(s$value)
+        # ensure this column has the same levels as the original (this gets scrambled easily)
+        if(is.factor(dat()[, column.name])){
+            s$value = factor(s$value, levels=levels(dat()[, column.name]))
         }
 
         if(column.name %in% names(global$corpa)){
@@ -183,7 +184,7 @@ shinyServer(function(input, output){
     })
 
     output$selection_summary_1 <- renderTable({
-        if(nlevels(sel()$variable) != 1){ return() }
+        if(is.null(sel()) || nlevels(sel()$variable) != 1){ return() }
 
         luniq <- length(unique(sel()$value))
 
@@ -215,7 +216,7 @@ shinyServer(function(input, output){
     }, include.rownames=FALSE)
 
     output$selection_summary_2 <- renderTable({
-        if(nlevels(sel()$variable) < 1){ return() }
+        if(is.null(sel()) || nlevels(sel()$variable) < 1){ return() }
 
         if(is.numeric(sel()$value)){
             if(!all(sel()$selected)){

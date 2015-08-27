@@ -79,7 +79,7 @@ sed -r 's/ *\| */\t/g' $conf |
                   "confidence_overall",
                   "confidence_transcript",
                   "confidence_proteomic",
-                  "condifdence_species",
+                  "confidence_species",
                   "confidence_vista"
         }
         NR > 1 {
