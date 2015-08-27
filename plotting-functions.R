@@ -1,15 +1,30 @@
-addTheme <- function(g, title="", xlab="", ylab=""){
+addTheme <- function(g, ggtitle=NULL, xlab=NULL, ylab=NULL){
     g <- g +
-           labs(x=xlab, y=ylab, title=title) +
+           labs(x=xlab, y=ylab, title=ggtitle) +
          theme(
             axis.text.x       = element_text(size=14), 
             axis.text.y       = element_text(size=14),
-            plot.title        = element_text(size=24, face='bold'),
-            axis.title.x      = element_blank(), 
-            axis.title.y      = element_blank(),
             legend.title      = element_blank(),
             legend.background = element_blank()
         )
+    if(is.null(title)){
+        g <- g + theme(plot.title = element_blank())
+    } else {
+        g <- g + theme(plot.title = element_text(size=24, face='bold'))
+    }
+
+    if(is.null(xlab)){
+        g <- g + theme(axis.title.x = element_blank())
+    } else {
+        g <- g + theme(axis.title.x = element_text(size=18))
+    }
+
+    if(is.null(ylab)){
+        g <- g + theme(axis.title.y = element_blank())
+    } else {
+        g <- g + theme(axis.title.y = element_text(size=18))
+    }
+
     return(g)
 }
 
@@ -37,10 +52,10 @@ plotText <- function(s, column.name){
 }
 
 formatNumeric <- function(g, d, fmt.opts){
-    if(fmt.opts$logx && is.numeric(d$x)){
+    if(fmt.opts$logx){
         g <- g + scale_x_continuous(trans='log2')
     }
-    if(fmt.opts$logy && is.numeric(d$y)){
+    if(fmt.opts$logy){
         g <- g + scale_y_continuous(trans='log2')
     }
     return(g)

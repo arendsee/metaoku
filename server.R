@@ -122,6 +122,9 @@ shinyServer(function(input, output){
         }
 
         fmt.opts <- list(logy=input$logy, logx=input$logx)
+        ggtitle <- column.name
+        xlab <- NULL
+        ylab <- NULL
 
         if(is_com){
             other <- sel.nonreactive(column.names=input$compare.to)
@@ -129,11 +132,18 @@ shinyServer(function(input, output){
             other.is_num <- is.numeric(other$value)
             other.is_fac <- is.factor(other$value)
             selection <- if(is_all) NULL else ifelse(s$selected, 'selected', 'not-selected')
+            ggtitle <- '2-column comparison'
+            xlab <- column.name
+            ylab <- input$compare.to
             if(is_num && other.is_num){
                 g <- plotPairedNumericNumeric(x=s$value, y=other$value, group=selection, fmt.opts)
             } else if (is_num && other.is_fac){
+                ylab <- column.name
+                xlab <- input$compare.to
+                fmt.opts$logx = FALSE 
                 g <- plotPairedFactorNumeric(other$value, s$value, group=selection, fmt.opts)
             } else if (is_fac && other.is_num){
+                fmt.opts$logx = FALSE 
                 g <- plotPairedFactorNumeric(s$value, other$value, group=selection, fmt.opts)
             } else if (is_fac && other.is_fac){
                 g <- plotPairedFactorFactor(s$value, other$value, group=selection, fmt.opts)
@@ -154,7 +164,7 @@ shinyServer(function(input, output){
             }
         }
 
-        g <- addTheme(g, title=column.name)
+        g <- addTheme(g, ggtitle=ggtitle, xlab=xlab, ylab=ylab)
 
         return(g)
     })
