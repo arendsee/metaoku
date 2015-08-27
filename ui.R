@@ -4,6 +4,8 @@ require(shinyBS)
 require(DT)
 source('global.R')
 
+selected.columns <- c('GC', 'gene_length', 'confidence_overall', 'short_description', 'location', 'stratum_name')
+
 # Define UI for dataset viewer application
 shinyUI(
     fluidPage(theme = shinytheme('spacelab'),
@@ -16,7 +18,8 @@ shinyUI(
                 column(4, downloadButton('downloadData', 'Download'))
             ),
             fluidRow(column(12, plotOutput('plot'))),
-            fluidRow(column(3, checkboxInput('logx', 'log2 x-axis'))),
+            fluidRow(column(3, checkboxInput('logx', 'log2 x-axis')),
+                     column(6, selectInput('compare.to', 'Compare to', c('None', selected.columns)))),
             fluidRow(
                 column(6, tableOutput('selection_summary_1')),
                 column(6, tableOutput('selection_summary_2'))),
@@ -37,12 +40,7 @@ shinyUI(
                 checkboxGroupInput("columns",
                                    "Choose columns to include", 
                                    global$columns,
-                                   selected=c('GC',
-                                              'gene_length',
-                                              'confidence_overall',
-                                              'short_description',
-                                              'location',
-                                              'stratum_name')))
+                                   selected=selected.columns))
         )
     )
 ))

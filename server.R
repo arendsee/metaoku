@@ -7,6 +7,7 @@ require(tm)
 require(reshape2)
 
 source('global.R')
+source('plotting-functions.R')
 
 mergeByName <- function(dat, by.colname){
     if(is.null(by.colname)){
@@ -28,24 +29,6 @@ mergeByName <- function(dat, by.colname){
         }
     }
     return(dat)
-}
-
-makeWordCloud <- function(mat, selection){
-    obs.sel <- sort(colSums(mat[selection, ]), decreasing=TRUE)
-
-    # # eventually I should do more statistics with this
-    # v.ori <- sort(colSums(mat), decreasing=TRUE)
-    # exp.sel <- sum(v.sel) * (v.ori / sum(v.ori))
-    # sel <- data.frame(exp=exp.sel, obs=obs.sel, rat=log(obs.sel / exp.sel))
-
-    d <- data.frame(word = names(obs.sel), freq=obs.sel)
-    pal2 <- brewer.pal(8, "Dark2")
-    g = wordcloud(d$word, d$freq,
-                  min.freq=3, max.words=100,
-                  random.order=FALSE,
-                  rot.per=.15,
-                  colors=pal2)
-    return(g)
 }
 
 shinyServer(function(input, output){
@@ -110,76 +93,34 @@ shinyServer(function(input, output){
         }
 
         column.name <- levels(s$variable)[1]
-        luniq       <- length(unique(s$value))
 
         # ensure this column has the same levels as the original (this gets scrambled easily)
         if(is.factor(dat()[, column.name])){
             s$value = factor(s$value, levels=levels(dat()[, column.name]))
         }
 
-        if(column.name %in% names(global$corpa)){
-            m = global$corpa[[column.name]]
-            return(makeWordCloud(m, which(s$selected)))
-        } else if(is.numeric(s$value)){
-            if(all(s$selected)){
-                g <- ggplot(s) +
-                    geom_histogram(aes(x=value))
-            } else {
-                g <- ggplot(s) +
-                    geom_histogram(
-                        aes(
-                            x=value,
-                            y=..density..,
-                            fill=group
-                        ),
-                        alpha=.75,
-                        position='identity'
-                    ) + theme(axis.text.y=element_blank(),
-                              axis.ticks.y=element_blank())
-            }
-            if(input$logx){
-                g <- g + scale_x_continuous(trans='log2')
-            }
-        } else if(is.factor(s$value)){
-            if(all(s$selected)){
-                g <- ggplot(s) +
-                    geom_bar(aes(x=value))
-                # make x-lables vertical is they are longer than 2 characters
-            } else {
-                s <- ddply(s, 'selected', mutate, N.selected=length(selected))
-                s <- ddply(s, c('value', 'selected'), mutate, N.value=length(value))
-                s$proportion = s$N.value / s$N.selected
-                
-                g <- ggplot(s) +
-                    geom_bar(
-                        aes(
-                            x=value,
-                            y=proportion,
-                            fill=group
-                        ),
-                        position='dodge',
-                        stat='identity'
-                    )
-            }
-            longest.line <- max(nchar(as.character(s$value)))
-            if(longest.line > 2) {
-                g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
-            }
+        is_txt <- column.name %in% names(global$corpa)
+        is_com <- input$compare.to != "None"
+        is_num <- is.numeric(s$value)
+        is_fac <- is.factor(s$value)
+        is_all <- all(s$selected)
+
+        if(is_txt){
+            return(plotText(s, column.name))
+        } else if(is_num && is_all){
+            g <- plotNumeric(s, logx=input$logx)
+        } else if(is_num && !is_all){
+            g <- plotSampledNumeric(s, logx=input$logx)
+        } else if(is_fac && is_all){
+            g <- plotFactor(s)
+        } else if(is_fac && !is_all){
+            g <- plotSampledFactor(s)
         } else {
             return()
         }
 
-        g <- g +
-            ggtitle(column.name) +
-            theme(
-               axis.text.x       = element_text(size=14), 
-               axis.text.y       = element_text(size=14),
-               plot.title        = element_text(size=24, face='bold'),
-               axis.title.x      = element_blank(), 
-               axis.title.y      = element_blank(),
-               legend.title      = element_blank(),
-               legend.background = element_blank()
-            )
+        g <- addTheme(g, title=column.name)
+
         return(g)
     })
 
@@ -201,7 +142,7 @@ shinyServer(function(input, output){
                            mean=mean(value),
                            sd=sd(value))
             }
-        } else if(luniq < 21){
+        } else if(luniq <= 20){
             if(all(sel()$selected)){
                 return()
             } else {
@@ -259,8 +200,7 @@ shinyServer(function(input, output){
             orderMulti=TRUE,
             searching=TRUE,
             search.regex=TRUE
-        )
-    )
+    ))
 
     output$downloadData <- downloadHandler(
         filename = 'arabidopsis-data.tsv',
