@@ -18,8 +18,10 @@ shinyUI(
                 column(4, downloadButton('downloadData', 'Download'))
             ),
             fluidRow(column(12, plotOutput('plot'))),
-            fluidRow(column(3, checkboxInput('logx', 'log2 x-axis')),
-                     column(6, selectInput('compare.to', 'Compare to', c('None', selected.columns)))),
+            fluidRow(
+                column(2, checkboxInput('logx', 'log2 x-axis')),
+                column(2, checkboxInput('logy', 'log2 y-axis')),
+                column(5, selectInput('compare.to', 'Compare to', c('None', selected.columns)))),
             fluidRow(
                 column(6, tableOutput('selection_summary_1')),
                 column(6, tableOutput('selection_summary_2'))),

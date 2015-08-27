@@ -121,6 +121,8 @@ shinyServer(function(input, output){
             return(plotText(s, column.name))
         }
 
+        fmt.opts <- list(logy=input$logy, logx=input$logx)
+
         if(is_com){
             other <- sel.nonreactive(column.names=input$compare.to)
             other$value <- refactor(other$value, input$compare.to)
@@ -128,25 +130,25 @@ shinyServer(function(input, output){
             other.is_fac <- is.factor(other$value)
             selection <- if(is_all) NULL else ifelse(s$selected, 'selected', 'not-selected')
             if(is_num && other.is_num){
-                g <- plotPairedNumericNumeric(x=s$value, y=other$value, group=selection)
+                g <- plotPairedNumericNumeric(x=s$value, y=other$value, group=selection, fmt.opts)
             } else if (is_num && other.is_fac){
-                g <- plotPairedFactorNumeric(other$value, s$value, group=selection)
+                g <- plotPairedFactorNumeric(other$value, s$value, group=selection, fmt.opts)
             } else if (is_fac && other.is_num){
-                g <- plotPairedFactorNumeric(s$value, other$value, group=selection)
+                g <- plotPairedFactorNumeric(s$value, other$value, group=selection, fmt.opts)
             } else if (is_fac && other.is_fac){
-                g <- plotPairedFactorFactor(s$value, other$value)
+                g <- plotPairedFactorFactor(s$value, other$value, group=selection, fmt.opts)
             } else {
                return() 
             }
         } else {
             if(is_num && is_all){
-                g <- plotNumeric(s, logx=input$logx)
+                g <- plotNumeric(s, fmt.opts)
             } else if(is_num && !is_all){
-                g <- plotSampledNumeric(s, logx=input$logx)
+                g <- plotSampledNumeric(s, fmt.opts)
             } else if(is_fac && is_all){
-                g <- plotFactor(s)
+                g <- plotFactor(s, fmt.opts)
             } else if(is_fac && !is_all){
-                g <- plotSampledFactor(s)
+                g <- plotSampledFactor(s, fmt.opts)
             } else {
                 return()
             }

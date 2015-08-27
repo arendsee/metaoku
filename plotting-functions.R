@@ -36,9 +36,12 @@ plotText <- function(s, column.name){
     return(makeWordCloud(m, which(s$selected)))
 }
 
-formatNumeric <- function(g, logx){
-    if(logx){
+formatNumeric <- function(g, d, fmt.opts){
+    if(fmt.opts$logx && is.numeric(d$x)){
         g <- g + scale_x_continuous(trans='log2')
+    }
+    if(fmt.opts$logy && is.numeric(d$y)){
+        g <- g + scale_y_continuous(trans='log2')
     }
     return(g)
 }
@@ -46,7 +49,7 @@ formatNumeric <- function(g, logx){
 plotNumeric <- function(s, ...){
     g <- ggplot(s) +
         geom_histogram(aes(x=value))
-    return(formatNumeric(g, ...))
+    return(formatNumeric(g, s, ...))
 }
 
 plotSampledNumeric <- function(s, ...){
@@ -61,7 +64,7 @@ plotSampledNumeric <- function(s, ...){
             position='identity'
         ) + theme(axis.text.y=element_blank(),
                   axis.ticks.y=element_blank())
-    return(formatNumeric(g, ...))
+    return(formatNumeric(g, s, ...))
 }
 
 
@@ -78,7 +81,7 @@ formatFactor <- function(g, labs){
 plotFactor <- function(s, ...){
     g <- ggplot(s) +
         geom_bar(aes(x=value))
-    return(formatFactor(g, s$value, ...))
+    return(formatFactor(g, s$value))
 }
 
 plotSampledFactor <- function(s, ...){
@@ -96,7 +99,7 @@ plotSampledFactor <- function(s, ...){
             position='dodge',
             stat='identity'
         )
-    return(formatFactor(g, s$value, ...))
+    return(formatFactor(g, s$value))
 }
 
 plotPairedNumericNumeric <- function(x, y, group=NULL, ...){
@@ -109,7 +112,7 @@ plotPairedNumericNumeric <- function(x, y, group=NULL, ...){
     if(!is.null(group)){
         g <- g + facet_grid(group~.)
     }
-    return(g)
+    return(formatNumeric(g, d, ...))
 }
 
 plotPairedFactorNumeric <- function(x, y, group=NULL, ...){
@@ -121,7 +124,9 @@ plotPairedFactorNumeric <- function(x, y, group=NULL, ...){
     if(!is.null(group)){
         g <- g + facet_grid(group~.)
     }
-    return(formatFactor(g, d$x))
+    g <- formatFactor(g, d$x)
+    g <- formatNumeric(g, d, ...)
+    return(g)
 }
 
 plotPairedFactorFactor <- function(x, y, group=NULL, ...){
