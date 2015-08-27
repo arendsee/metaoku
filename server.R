@@ -62,12 +62,14 @@ shinyServer(function(input, output){
         return(rows)
     })
 
-    sel <- reactive({
-        columns  <- input$main_table_columns_selected + 1
-        rows     <- input$main_table_rows_all
+    sel.nonreactive <- function(cols=NULL, column.names=NULL, rows=input$main_table_rows_all){
+        if(is.null(cols) && ! is.null(column.names)){
+            cols <- which(colnames(dat()) %in% column.names)
+        }
+        stopifnot(is.numeric(cols))
         d <- data.table(dat())
-        if(length(columns) > 0 && ncol(d) >= max(columns)){
-            d <- d[, columns, with=FALSE]
+        if(!is.null(cols) && length(cols) > 0 && ncol(d) >= max(cols)){
+            d <- d[, cols, with=FALSE]
             d$selected       <- FALSE
             d$selected[rows] <- TRUE
             d <- data.frame(d)
@@ -75,7 +77,12 @@ shinyServer(function(input, output){
             d$group = ifelse(d$selected, 'selected', 'non-selected')
             return(d)
         }
-        return(NULL)
+    }
+
+    sel <- reactive({
+        cols  <- input$main_table_columns_selected + 1
+        rows  <- input$main_table_rows_all
+        return(sel.nonreactive(cols=cols, rows=rows))
     })
 
 
@@ -83,6 +90,13 @@ shinyServer(function(input, output){
     output$summary <- renderPrint({
         summary(dat()[input$main_table_rows_all, ])
     })
+
+    refactor <- function(x, column.name){
+        if(is.factor(dat()[, column.name])){
+            x = factor(x, levels=levels(dat()[, column.name]))
+        }
+        return(x)
+    }
 
     output$plot <- renderPlot({
         # exit if more than one column is selected
@@ -95,9 +109,7 @@ shinyServer(function(input, output){
         column.name <- levels(s$variable)[1]
 
         # ensure this column has the same levels as the original (this gets scrambled easily)
-        if(is.factor(dat()[, column.name])){
-            s$value = factor(s$value, levels=levels(dat()[, column.name]))
-        }
+        s$value <- refactor(s$value, column.name)
 
         is_txt <- column.name %in% names(global$corpa)
         is_com <- input$compare.to != "None"
@@ -107,16 +119,37 @@ shinyServer(function(input, output){
 
         if(is_txt){
             return(plotText(s, column.name))
-        } else if(is_num && is_all){
-            g <- plotNumeric(s, logx=input$logx)
-        } else if(is_num && !is_all){
-            g <- plotSampledNumeric(s, logx=input$logx)
-        } else if(is_fac && is_all){
-            g <- plotFactor(s)
-        } else if(is_fac && !is_all){
-            g <- plotSampledFactor(s)
+        }
+
+        if(is_com){
+            other <- sel.nonreactive(column.names=input$compare.to)
+            other$value <- refactor(other$value, input$compare.to)
+            other.is_num <- is.numeric(other$value)
+            other.is_fac <- is.factor(other$value)
+            selection <- if(is_all) NULL else ifelse(s$selected, 'selected', 'not-selected')
+            if(is_num && other.is_num){
+                g <- plotPairedNumericNumeric(x=s$value, y=other$value, group=selection)
+            } else if (is_num && other.is_fac){
+                g <- plotPairedFactorNumeric(other$value, s$value, group=selection)
+            } else if (is_fac && other.is_num){
+                g <- plotPairedFactorNumeric(s$value, other$value, group=selection)
+            } else if (is_fac && other.is_fac){
+                g <- plotPairedFactorFactor(s$value, other$value)
+            } else {
+               return() 
+            }
         } else {
-            return()
+            if(is_num && is_all){
+                g <- plotNumeric(s, logx=input$logx)
+            } else if(is_num && !is_all){
+                g <- plotSampledNumeric(s, logx=input$logx)
+            } else if(is_fac && is_all){
+                g <- plotFactor(s)
+            } else if(is_fac && !is_all){
+                g <- plotSampledFactor(s)
+            } else {
+                return()
+            }
         }
 
         g <- addTheme(g, title=column.name)

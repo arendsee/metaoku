@@ -66,9 +66,9 @@ plotSampledNumeric <- function(s, ...){
 
 
 
-formatFactor <- function(g, s){
+formatFactor <- function(g, labs){
     # make x-lables vertical is they are longer than 2 characters
-    longest.line <- max(nchar(as.character(s$value)))
+    longest.line <- max(nchar(as.character(labs)))
     if(longest.line > 2) {
         g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
     }
@@ -78,7 +78,7 @@ formatFactor <- function(g, s){
 plotFactor <- function(s, ...){
     g <- ggplot(s) +
         geom_bar(aes(x=value))
-    return(formatFactor(g, s, ...))
+    return(formatFactor(g, s$value, ...))
 }
 
 plotSampledFactor <- function(s, ...){
@@ -96,9 +96,44 @@ plotSampledFactor <- function(s, ...){
             position='dodge',
             stat='identity'
         )
-    return(formatFactor(g, s, ...))
+    return(formatFactor(g, s$value, ...))
 }
 
-plotPairedNumericNumeric <- function(){}
-plotPairedNumericFactor <- function(){}
-plotPairedFactorFactor <- function(){}
+plotPairedNumericNumeric <- function(x, y, group=NULL, ...){
+    stopifnot(is.numeric(x), is.numeric(y))
+    stopifnot(length(x) == length(y))
+    d <- data.frame(x=x, y=y)
+    d$group <- group
+    g <- ggplot(d) +
+        geom_point(aes(x=x, y=y))
+    if(!is.null(group)){
+        g <- g + facet_grid(group~.)
+    }
+    return(g)
+}
+
+plotPairedFactorNumeric <- function(x, y, group=NULL, ...){
+    stopifnot(is.factor(x), is.numeric(y))
+    d <- data.frame(x=x, y=y)
+    d$group <- group
+    g <- ggplot(d) +
+        geom_boxplot(aes(x=x, y=y))
+    if(!is.null(group)){
+        g <- g + facet_grid(group~.)
+    }
+    return(formatFactor(g, d$x))
+}
+
+plotPairedFactorFactor <- function(x, y, group=NULL, ...){
+    stopifnot(is.factor(x), is.factor(y))
+    d <- data.frame(x=x, y=y)
+    d$group <- group
+    d <- ddply(d, colnames(d), summarize, count=length(x))
+    d <- ddply(d, 'x', mutate, rescaled=count / sum(count))
+    g <- ggplot(d) +
+        geom_tile(aes(x=x, y=y, fill=rescaled))
+    if(!is.null(group)){
+        g <- g + facet_grid(group~.)
+    }
+    return(formatFactor(g, d$x))
+}
