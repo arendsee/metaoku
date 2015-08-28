@@ -23,8 +23,8 @@ shinyUI(
                 column(2, checkboxInput('logy', 'log2 y-axis')),
                 column(5, selectInput('compare.to', 'Compare to', c('None', selected.columns)))),
             fluidRow(
-                column(6, tableOutput('selection_summary_1')),
-                column(6, tableOutput('selection_summary_2'))),
+                column(6, tableOutput('column_summary')),
+                column(6, tableOutput('comparison_summary'))),
             fluidRow(column(8, textInput('user_ids', 'Enter ids (e.g. "AT5G28465 AT5G54910 AT5G58170")')),
                      column(4, radioButtons('key', 'Choose key',
                                             choices=list('Locus'='locus', 'Model'='model'),

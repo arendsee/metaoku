@@ -1,3 +1,70 @@
+plotAnything <- function(x, y=NULL, x.name='x', y.name='y', fmt.opts=NULL, corpa=NULL){
+
+    # exit if more than one column is selected
+    if(is.null(x) || nrow(x) < 1 || nlevels(x$variable) != 1){
+        return()
+    }
+
+    stopifnot(is.data.frame(x))
+    stopifnot(c('value', 'variable', 'selected') %in% colnames(x))
+
+    x.is_txt <- x.name %in% names(corpa)
+    x.is_num <- is.numeric(x$value)
+    x.is_fac <- is.factor(x$value)
+    is_all <- all(x$selected)
+    is_com <- !is.null(y)
+
+    if(x.is_txt){
+        m = corpa[[x.name]]
+        return(plotText(m=m, rows=which(x$selected)))
+    }
+
+    ggtitle <- x.name
+    xlab <- NULL
+    ylab <- NULL
+
+    if(is_com){
+        stopifnot(is.data.frame(y))
+        stopifnot(c('value', 'variable', 'selected') %in% colnames(y))
+        y.is_num <- is.numeric(y$value)
+        y.is_fac <- is.factor(y$value)
+        selection <- if(is_all) NULL else ifelse(x$selected, 'selected', 'not-selected')
+        ggtitle <- '2-column comparison'
+        xlab <- x.name
+        ylab <- y.name 
+        if(x.is_num && y.is_num){
+            g <- plotPairedNumericNumeric(x=x$value, y=y$value, group=selection, fmt.opts)
+        } else if (x.is_num && y.is_fac){
+            ylab <- x.name
+            xlab <- y.name
+            fmt.opts$logx = FALSE 
+            g <- plotPairedFactorNumeric(y$value, x$value, group=selection, fmt.opts)
+        } else if (x.is_fac && y.is_num){
+            fmt.opts$logx = FALSE 
+            g <- plotPairedFactorNumeric(x$value, y$value, group=selection, fmt.opts)
+        } else if (x.is_fac && y.is_fac){
+            g <- plotPairedFactorFactor(x$value, y$value, group=selection, fmt.opts)
+        } else {
+           return() 
+        }
+    } else {
+        if(x.is_num && is_all){
+            g <- plotNumeric(x, fmt.opts)
+        } else if(x.is_num && !is_all){
+            g <- plotSampledNumeric(x, fmt.opts)
+        } else if(x.is_fac && is_all){
+            g <- plotFactor(x, fmt.opts)
+        } else if(x.is_fac && !is_all){
+            g <- plotSampledFactor(x, fmt.opts)
+        } else {
+            return()
+        }
+    }
+
+    g <- addTheme(g, ggtitle=ggtitle, xlab=xlab, ylab=ylab)
+    return(g)
+}
+
 addTheme <- function(g, ggtitle=NULL, xlab=NULL, ylab=NULL){
     g <- g +
            labs(x=xlab, y=ylab, title=ggtitle) +
@@ -28,8 +95,8 @@ addTheme <- function(g, ggtitle=NULL, xlab=NULL, ylab=NULL){
     return(g)
 }
 
-makeWordCloud <- function(mat, selection){
-    obs.sel <- sort(colSums(mat[selection, ]), decreasing=TRUE)
+makeWordCloud <- function(mat, rows){
+    obs.sel <- sort(colSums(mat[rows, ]), decreasing=TRUE)
 
     # # eventually I should do more statistics with this
     # v.ori <- sort(colSums(mat), decreasing=TRUE)
@@ -46,9 +113,8 @@ makeWordCloud <- function(mat, selection){
     return(g)
 }
 
-plotText <- function(s, column.name){
-    m = global$corpa[[column.name]]
-    return(makeWordCloud(m, which(s$selected)))
+plotText <- function(m, rows){
+    return(makeWordCloud(m, rows))
 }
 
 formatNumeric <- function(g, d, fmt.opts){

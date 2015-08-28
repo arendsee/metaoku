@@ -7,9 +7,11 @@ require(tm)
 require(reshape2)
 
 source('global.R')
+source('statistics.R')
 source('plotting-functions.R')
 
 mergeByName <- function(dat, by.colname){
+    cat('entering mergeByName()\n', stderr())
     if(is.null(by.colname)){
         return(dat)
     }
@@ -33,6 +35,7 @@ mergeByName <- function(dat, by.colname){
 
 shinyServer(function(input, output){
     dat <- reactive({
+        cat('entering dat()\n', stderr())
         out <- data.table(model=as.vector(global$models), locus=as.vector(global$loci))
         for(column in input$columns){
             out <- mergeByName(out, column)
@@ -47,9 +50,15 @@ shinyServer(function(input, output){
         return(out)
     })
 
+    # observe({
+    #     updateSelectInput(session, "compare.to", choices = c('None', input$columns))
+    # })
+
+
     # Read input from textInput box, parse out ids, and if they are present in
     # the key column of the main dataset, return them
     user.rows <- reactive({
+        cat('entering user.rows()\n', stderr())
         txt <- input$user_ids
         ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
         ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
@@ -63,6 +72,7 @@ shinyServer(function(input, output){
     })
 
     sel.nonreactive <- function(cols=NULL, column.names=NULL, rows=input$main_table_rows_all){
+        cat('entering sel.nonreactive()\n', stderr())
         if(is.null(cols) && ! is.null(column.names)){
             cols <- which(colnames(dat()) %in% column.names)
         }
@@ -80,6 +90,7 @@ shinyServer(function(input, output){
     }
 
     sel <- reactive({
+        cat('entering sel()\n', stderr())
         cols  <- input$main_table_columns_selected + 1
         rows  <- input$main_table_rows_all
         return(sel.nonreactive(cols=cols, rows=rows))
@@ -88,10 +99,12 @@ shinyServer(function(input, output){
 
     # Generate a summary of the dataset
     output$summary <- renderPrint({
+        cat('entering output.summary.rendePrint()\n', stderr())
         summary(dat()[input$main_table_rows_all, ])
     })
 
     refactor <- function(x, column.name){
+        cat(sprintf('entering refactor() with (x=%s, column.name=%s)\n', class(x), column.name), stderr())
         if(is.factor(dat()[, column.name])){
             x = factor(x, levels=levels(dat()[, column.name]))
         }
@@ -99,131 +112,43 @@ shinyServer(function(input, output){
     }
 
     output$plot <- renderPlot({
-        # exit if more than one column is selected
-        s <- sel()
+        cat('entering renderPlot()\n', stderr())
 
-        if(is.null(s) || nrow(s) < 1 || nlevels(s$variable) != 1){
-            return()
+        # Dataframe for selected column
+        x = sel()
+        # Dataframe for the column selected from the 'Compare to' dropdown, may be NULL
+        y = sel.nonreactive(column.names=input$compare.to)
+        fmt.opts <- list(
+            logy=input$logy,
+            logx=input$logx
+        )
+
+        x.name <- levels(x$variable)[1]
+        y.name <- levels(y$variable)[1]
+
+        x$value <- refactor(x$value, x.name)
+        if(!is.null(y)){
+            y$value <- refactor(y$value, y.name)
         }
-
-        column.name <- levels(s$variable)[1]
-
-        # ensure this column has the same levels as the original (this gets scrambled easily)
-        s$value <- refactor(s$value, column.name)
-
-        is_txt <- column.name %in% names(global$corpa)
-        is_com <- input$compare.to != "None"
-        is_num <- is.numeric(s$value)
-        is_fac <- is.factor(s$value)
-        is_all <- all(s$selected)
-
-        if(is_txt){
-            return(plotText(s, column.name))
-        }
-
-        fmt.opts <- list(logy=input$logy, logx=input$logx)
-        ggtitle <- column.name
-        xlab <- NULL
-        ylab <- NULL
-
-        if(is_com){
-            other <- sel.nonreactive(column.names=input$compare.to)
-            other$value <- refactor(other$value, input$compare.to)
-            other.is_num <- is.numeric(other$value)
-            other.is_fac <- is.factor(other$value)
-            selection <- if(is_all) NULL else ifelse(s$selected, 'selected', 'not-selected')
-            ggtitle <- '2-column comparison'
-            xlab <- column.name
-            ylab <- input$compare.to
-            if(is_num && other.is_num){
-                g <- plotPairedNumericNumeric(x=s$value, y=other$value, group=selection, fmt.opts)
-            } else if (is_num && other.is_fac){
-                ylab <- column.name
-                xlab <- input$compare.to
-                fmt.opts$logx = FALSE 
-                g <- plotPairedFactorNumeric(other$value, s$value, group=selection, fmt.opts)
-            } else if (is_fac && other.is_num){
-                fmt.opts$logx = FALSE 
-                g <- plotPairedFactorNumeric(s$value, other$value, group=selection, fmt.opts)
-            } else if (is_fac && other.is_fac){
-                g <- plotPairedFactorFactor(s$value, other$value, group=selection, fmt.opts)
-            } else {
-               return() 
-            }
-        } else {
-            if(is_num && is_all){
-                g <- plotNumeric(s, fmt.opts)
-            } else if(is_num && !is_all){
-                g <- plotSampledNumeric(s, fmt.opts)
-            } else if(is_fac && is_all){
-                g <- plotFactor(s, fmt.opts)
-            } else if(is_fac && !is_all){
-                g <- plotSampledFactor(s, fmt.opts)
-            } else {
-                return()
-            }
-        }
-
-        g <- addTheme(g, ggtitle=ggtitle, xlab=xlab, ylab=ylab)
-
+        g <- plotAnything(x=x, y=y,
+                          x.name=x.name, y.name=y.name,
+                          fmt.opts=fmt.opts,
+                          corpa=global$corpa)
         return(g)
     })
 
-    output$selection_summary_1 <- renderTable({
-        if(is.null(sel()) || nlevels(sel()$variable) != 1){ return() }
+    output$column_summary <- renderTable(
+        columnSummary(sel()),
+        include.rownames=FALSE
+    )
 
-        luniq <- length(unique(sel()$value))
-
-        if(is.numeric(sel()$value)){
-            if(all(sel()$selected)){
-                s <- with(sel(), data.frame( 
-                        N=length(value),
-                        mean=mean(value),
-                        sd=sd(value)
-                    ))
-            } else {
-                s <- ddply(sel(), 'group', summarize,
-                           N=length(value),
-                           mean=mean(value),
-                           sd=sd(value))
-            }
-        } else if(luniq <= 20){
-            if(all(sel()$selected)){
-                return()
-            } else {
-                s <- ddply(sel(), 'group', summarize,
-                           N=length(value),
-                           sd=mean(summary(value)))
-            }
-        } else {
-            return()
-        }
-        return(s)
-    }, include.rownames=FALSE)
-
-    output$selection_summary_2 <- renderTable({
-        if(is.null(sel()) || nlevels(sel()$variable) < 1){ return() }
-
-        if(is.numeric(sel()$value)){
-            if(!all(sel()$selected)){
-                x = subset(sel(), selected)$value
-                y = subset(sel(), !selected)$value
-                s = data.frame(
-                    wilcoxon_test=wilcox.test(x, y)$p.value    
-                )
-            } else {
-                return()
-            }
-        } else if(is.factor(sel()$value)){
-           return() 
-        } else {
-            return()
-        }
-        return(s)
-
-    }, include.rownames=FALSE)
+    output$comparison_summary <- renderTable(
+        comparisonSummary(d=sel()),
+        include.rownames=FALSE
+    )
 
     get_user_data <- function(){
+        cat('entering get_user_data()\n', stderr())
         if(length(user.rows()) > 0){
             return(dat()[user.rows(), ])
         } else {
