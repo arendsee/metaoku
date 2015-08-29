@@ -73,6 +73,7 @@ shinyServer(function(input, output){
 
     sel.nonreactive <- function(cols=NULL, column.names=NULL, rows=input$main_table_rows_all){
         cat('entering sel.nonreactive()\n', stderr())
+        # cat(cols, column.names, rows[1], stderr())
         if(is.null(cols) && ! is.null(column.names)){
             cols <- which(colnames(dat()) %in% column.names)
         }
@@ -85,8 +86,10 @@ shinyServer(function(input, output){
             d <- data.frame(d)
             d <- melt(d, id.vars=c('selected'), value.name='value')
             d$group = ifelse(d$selected, 'selected', 'non-selected')
+            cat('\tsuccessfully loaded\n', stderr())
             return(d)
         }
+        cat('\tfailed to load\n', stderr())
     }
 
     sel <- reactive({
@@ -96,7 +99,6 @@ shinyServer(function(input, output){
         return(sel.nonreactive(cols=cols, rows=rows))
     })
 
-
     # Generate a summary of the dataset
     output$summary <- renderPrint({
         cat('entering output.summary.rendePrint()\n', stderr())
@@ -104,7 +106,7 @@ shinyServer(function(input, output){
     })
 
     refactor <- function(x, column.name){
-        cat(sprintf('entering refactor() with (x=%s, column.name=%s)\n', class(x), column.name), stderr())
+        cat('entering refactor\n', stderr())
         if(is.factor(dat()[, column.name])){
             x = factor(x, levels=levels(dat()[, column.name]))
         }
@@ -179,3 +181,33 @@ shinyServer(function(input, output){
         }
     )
 })
+
+    # sel.nonreactive <- function(cols=NULL, column.names=NULL, rows=input$main_table_rows_all){
+    #     cat('entering sel.nonreactive()\n', stderr())
+    #     # cat(cols, column.names, rows[1], stderr())
+    #     if(is.null(cols) && ! is.null(column.names)){
+    #         cols <- which(colnames(dat()) %in% column.names)
+    #     }
+    #     stopifnot(is.numeric(cols))
+    #     d <- data.table(dat())
+    #     if(!is.null(cols) && length(cols) > 0 && ncol(d) >= max(cols)){
+    #         d <- d[, cols, with=FALSE]
+    #         d$selected       <- FALSE
+    #         d$selected[rows] <- TRUE
+    #         d <- data.frame(d)
+    #         d <- melt(d, id.vars=c('selected'), value.name='value')
+    #         d$group = ifelse(d$selected, 'selected', 'non-selected')
+    #         cat('\tsuccessfully loaded\n', stderr())
+    #         return(d)
+    #     }
+    #     cat('\tfailed to load\n', stderr())
+    # }
+    #
+    # sel <- reactive({
+    #     cat('entering sel()\n', stderr())
+    #     cols  <- input$main_table_columns_selected + 1
+    #     rows  <- input$main_table_rows_all
+    #     return(sel.nonreactive(cols=cols, rows=rows))
+    # })
+
+

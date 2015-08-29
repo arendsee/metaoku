@@ -1,71 +1,26 @@
-plotAnything <- function(x, y=NULL, x.name='x', y.name='y', fmt.opts=NULL, corpa=NULL){
-
-    # exit if more than one column is selected
-    if(is.null(x) || nrow(x) < 1 || nlevels(x$variable) != 1){
-        return()
+formatPlot <- function(g,
+                       logx=FALSE,
+                       logy=FALSE,
+                       x.values=NULL,
+                       ggtitle=NULL,
+                       xlab=NULL,
+                       ylab=NULL){
+    if(logx){
+        g <- g + scale_x_continuous(trans='log2')
     }
 
-    stopifnot(is.data.frame(x))
-    stopifnot(c('value', 'variable', 'selected') %in% colnames(x))
-
-    x.is_txt <- x.name %in% names(corpa)
-    x.is_num <- is.numeric(x$value)
-    x.is_fac <- is.factor(x$value)
-    is_all <- all(x$selected)
-    is_com <- !is.null(y)
-
-    if(x.is_txt){
-        m = corpa[[x.name]]
-        return(plotText(m=m, rows=which(x$selected)))
+    if(logy){
+        g <- g + scale_y_continuous(trans='log2')
     }
 
-    ggtitle <- x.name
-    xlab <- NULL
-    ylab <- NULL
-
-    if(is_com){
-        stopifnot(is.data.frame(y))
-        stopifnot(c('value', 'variable', 'selected') %in% colnames(y))
-        y.is_num <- is.numeric(y$value)
-        y.is_fac <- is.factor(y$value)
-        selection <- if(is_all) NULL else ifelse(x$selected, 'selected', 'not-selected')
-        ggtitle <- '2-column comparison'
-        xlab <- x.name
-        ylab <- y.name 
-        if(x.is_num && y.is_num){
-            g <- plotPairedNumericNumeric(x=x$value, y=y$value, group=selection, fmt.opts)
-        } else if (x.is_num && y.is_fac){
-            ylab <- x.name
-            xlab <- y.name
-            fmt.opts$logx = FALSE 
-            g <- plotPairedFactorNumeric(y$value, x$value, group=selection, fmt.opts)
-        } else if (x.is_fac && y.is_num){
-            fmt.opts$logx = FALSE 
-            g <- plotPairedFactorNumeric(x$value, y$value, group=selection, fmt.opts)
-        } else if (x.is_fac && y.is_fac){
-            g <- plotPairedFactorFactor(x$value, y$value, group=selection, fmt.opts)
-        } else {
-           return() 
-        }
-    } else {
-        if(x.is_num && is_all){
-            g <- plotNumeric(x, fmt.opts)
-        } else if(x.is_num && !is_all){
-            g <- plotSampledNumeric(x, fmt.opts)
-        } else if(x.is_fac && is_all){
-            g <- plotFactor(x, fmt.opts)
-        } else if(x.is_fac && !is_all){
-            g <- plotSampledFactor(x, fmt.opts)
-        } else {
-            return()
+    if(!is.null(x.values) && is.factor(x.values)){
+        # make x-lables vertical is they are longer than 2 characters
+        longest.line <- max(nchar(as.character(x.values)))
+        if(longest.line > 2 && is.factor(x.values)) {
+            g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
         }
     }
 
-    g <- addTheme(g, ggtitle=ggtitle, xlab=xlab, ylab=ylab)
-    return(g)
-}
-
-addTheme <- function(g, ggtitle=NULL, xlab=NULL, ylab=NULL){
     g <- g +
            labs(x=xlab, y=ylab, title=ggtitle) +
          theme(
@@ -95,6 +50,92 @@ addTheme <- function(g, ggtitle=NULL, xlab=NULL, ylab=NULL){
     return(g)
 }
 
+plotAnything <- function(x, y=NULL, x.name='x', y.name='y', fmt.opts=NULL, corpa=NULL){
+    cat('entering plotAnything\n', stderr())
+
+    # exit if more than one column is selected
+    if(is.null(x) || nrow(x) < 1 || nlevels(x$variable) != 1){
+        cat('\tstuff is null\n', stderr())
+        return()
+    }
+
+    stopifnot(is.data.frame(x))
+    stopifnot(c('value', 'variable', 'selected') %in% colnames(x))
+
+    x.is_txt <- x.name %in% names(corpa)
+    x.is_num <- is.numeric(x$value)
+    x.is_fac <- is.factor(x$value)
+    is_all <- all(x$selected)
+    is_com <- !is.null(y)
+
+    logx <- fmt.opts$logx && is.numeric(x$value)
+    logy <- fmt.opts$logy && is_com && is.numeric(y$value)
+
+    if(x.is_txt){
+        m = corpa[[x.name]]
+        return(plotText(m=m, rows=which(x$selected)))
+    }
+
+    ggtitle <- x.name
+    xlab <- NULL
+    ylab <- NULL
+
+    selection <- if(is_all) NULL else ifelse(x$selected, 'selected', 'not-selected')
+
+    g <- NULL
+    if(is_com){
+        stopifnot(is.data.frame(y))
+        stopifnot(c('value', 'variable', 'selected') %in% colnames(y))
+        y.is_num <- is.numeric(y$value)
+        y.is_fac <- is.factor(y$value)
+        ggtitle <- '2-column comparison'
+        xlab <- x.name
+        ylab <- y.name 
+        if(x.is_num && y.is_num){
+            func <- plotPairedNumericNumeric
+        } else if (x.is_num && y.is_fac){
+            # I flip the coordinates, so need to swap values
+            tmp  <- xlab
+            xlab <- ylab
+            ylab <- tmp
+            tmp  <- logx
+            logx <- logy
+            logy <- tmp
+            rm(tmp)
+            func <- plotPairedNumericFactor
+        } else if (x.is_fac && y.is_num){
+            func <- plotPairedFactorNumeric
+        } else if (x.is_fac && y.is_fac){
+            func <- plotPairedFactorFactor
+        } else {
+           return() 
+        }
+        g <- func(x=x$value, y=y$value, group=selection)
+    } else {
+        if(is_all){
+            if(x.is_num){
+                func <- plotNumeric
+            } else if(x.is_fac){
+                func <- plotFactor
+            }
+            g <- func(x=x$value)
+        } else {
+            if(x.is_num){
+                func <- plotSampledNumeric
+            } else if(x.is_fac){
+                func <- plotSampledFactor
+            }
+            g <- func(x=x$value, group=selection)
+        }
+    }
+
+    if(!is.null(g)){
+        g <- formatPlot(g, logx=logx, logy=logy, x.values=x$value,
+                        ggtitle=ggtitle, xlab=xlab, ylab=ylab)
+    }
+    return(g)
+}
+
 makeWordCloud <- function(mat, rows){
     obs.sel <- sort(colSums(mat[rows, ]), decreasing=TRUE)
 
@@ -117,27 +158,19 @@ plotText <- function(m, rows){
     return(makeWordCloud(m, rows))
 }
 
-formatNumeric <- function(g, d, fmt.opts){
-    if(fmt.opts$logx){
-        g <- g + scale_x_continuous(trans='log2')
-    }
-    if(fmt.opts$logy){
-        g <- g + scale_y_continuous(trans='log2')
-    }
+plotNumeric <- function(x){
+    d <- data.frame(x=x)
+    g <- ggplot(d) +
+        geom_histogram(aes(x=x))
     return(g)
 }
 
-plotNumeric <- function(s, ...){
-    g <- ggplot(s) +
-        geom_histogram(aes(x=value))
-    return(formatNumeric(g, s, ...))
-}
-
-plotSampledNumeric <- function(s, ...){
-    g <- ggplot(s) +
+plotSampledNumeric <- function(x, group){
+    d <- data.frame(x=x, group=group)
+    g <- ggplot(d) +
         geom_histogram(
             aes(
-                x=value,
+                x=x,
                 y=..density..,
                 fill=group
             ),
@@ -145,45 +178,38 @@ plotSampledNumeric <- function(s, ...){
             position='identity'
         ) + theme(axis.text.y=element_blank(),
                   axis.ticks.y=element_blank())
-    return(formatNumeric(g, s, ...))
-}
-
-
-
-formatFactor <- function(g, labs){
-    # make x-lables vertical is they are longer than 2 characters
-    longest.line <- max(nchar(as.character(labs)))
-    if(longest.line > 2) {
-        g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
-    }
     return(g)
 }
 
-plotFactor <- function(s, ...){
-    g <- ggplot(s) +
-        geom_bar(aes(x=value))
-    return(formatFactor(g, s$value))
+
+
+plotFactor <- function(x){
+    d <- data.frame(x=x)
+    g <- ggplot(d) +
+        geom_bar(aes(x=x))
+    return(g)
 }
 
-plotSampledFactor <- function(s, ...){
-    s <- ddply(s, 'selected', mutate, N.selected=length(selected))
-    s <- ddply(s, c('value', 'selected'), mutate, N.value=length(value))
-    s$proportion = s$N.value / s$N.selected
+plotSampledFactor <- function(x, group){
+    d <- data.frame(x=x, group=group)
+    d <- ddply(d, 'group', mutate, N.group=length(group))
+    d <- ddply(d, c('x', 'group'), mutate, N.x=length(x))
+    d$proportion = d$N.x / d$N.group
     
-    g <- ggplot(s) +
+    g <- ggplot(d) +
         geom_bar(
             aes(
-                x=value,
+                x=x,
                 y=proportion,
                 fill=group
             ),
             position='dodge',
             stat='identity'
         )
-    return(formatFactor(g, s$value))
+    return(g)
 }
 
-plotPairedNumericNumeric <- function(x, y, group=NULL, ...){
+plotPairedNumericNumeric <- function(x, y, group=NULL){
     stopifnot(is.numeric(x), is.numeric(y))
     stopifnot(length(x) == length(y))
     d <- data.frame(x=x, y=y)
@@ -193,11 +219,11 @@ plotPairedNumericNumeric <- function(x, y, group=NULL, ...){
     if(!is.null(group)){
         g <- g + facet_grid(group~.)
     }
-    return(formatNumeric(g, d, ...))
+    return(g)
 }
 
-plotPairedFactorNumeric <- function(x, y, group=NULL, ...){
-    stopifnot(is.factor(x), is.numeric(y))
+plotPairedFactorNumeric <- function(x, y, group=NULL){
+    stopifnot(!((is.factor(x) && is.factor(y)) || (is.numeric(x) && is.numeric(y))))
     d <- data.frame(x=x, y=y)
     d$group <- group
     g <- ggplot(d) +
@@ -205,12 +231,15 @@ plotPairedFactorNumeric <- function(x, y, group=NULL, ...){
     if(!is.null(group)){
         g <- g + facet_grid(group~.)
     }
-    g <- formatFactor(g, d$x)
-    g <- formatNumeric(g, d, ...)
     return(g)
 }
 
-plotPairedFactorFactor <- function(x, y, group=NULL, ...){
+plotPairedNumericFactor <- function(x, y, group=NULL){
+    g <- plotPairedFactorNumeric(x=y, y=x, group=group) + coord_flip()
+    return(g)
+}
+
+plotPairedFactorFactor <- function(x, y, group=NULL){
     stopifnot(is.factor(x), is.factor(y))
     d <- data.frame(x=x, y=y)
     d$group <- group
@@ -221,5 +250,5 @@ plotPairedFactorFactor <- function(x, y, group=NULL, ...){
     if(!is.null(group)){
         g <- g + facet_grid(group~.)
     }
-    return(formatFactor(g, d$x))
+    return(g)
 }

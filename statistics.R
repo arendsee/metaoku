@@ -1,6 +1,7 @@
 comparisonSummary <- function(d){
     cat('entering comparisonSummary()\n', stderr())
     if(is.null(d) || nlevels(d$variable) < 1){
+        cat('bad input\n', stderr())
         return()
     }
 
@@ -29,7 +30,10 @@ comparisonSummary <- function(d){
 
 columnSummary <- function(d){
     cat('entering selection_summary_1()\n', stderr())
-    if(is.null(d) || nlevels(d$variable) != 1){ return() }
+    if(is.null(d) || nlevels(d$variable) != 1){
+        cat('bad input\n', stderr())
+        return()
+    }
 
     luniq <- length(unique(d$value))
 
