@@ -142,12 +142,6 @@ shinyServer(function(input, output, session){
         return(g)
     })
 
-    # Generate a summary of the dataset
-    output$summary <- renderPrint({
-        cat('entering output.summary.rendePrint()\n')
-        summary(dat()[input$main_table_rows_all, ])
-    })
-
     output$column_summary <- renderTable(
         columnSummary(sel()),
         include.rownames=FALSE
@@ -173,14 +167,27 @@ shinyServer(function(input, output, session){
         style='bootstrap',
         selection=list(
             mode='single',
-            target='column',
-            select=7
+            target='column'
         ),
         options = list(
             autoWidth=TRUE,
             orderMulti=TRUE,
             searching=TRUE,
             search.regex=TRUE
+    ))
+
+    output$column_table <- DT::renderDataTable(
+        read.delim('data/METADATA')[, c('column_name', 'description')],
+        filter="none",
+        rownames=FALSE,
+        selection="none",
+        options=list(
+            autoWidth=FALSE,
+            scrollX=TRUE,
+            scrollCollapse=FALSE,
+            scrollY=FALSE,
+            searching=FALSE,
+            sorting=FALSE
     ))
 
     output$downloadData <- downloadHandler(
