@@ -33,7 +33,7 @@ mergeByName <- function(dat, by.colname){
     return(dat)
 }
 
-shinyServer(function(input, output){
+shinyServer(function(input, output, session){
     dat <- reactive({
         cat('entering dat()\n')
         out <- data.table(model=as.vector(global$models), locus=as.vector(global$loci))
@@ -49,6 +49,11 @@ shinyServer(function(input, output){
         }
         return(out)
     })
+
+    observe({
+        updateSelectInput(session, 'compare.to', choices=c('None', input$columns))
+    })
+    
 
     # Read input from textInput box, parse out ids, and if they are present in
     # the key column of the main dataset, return them
