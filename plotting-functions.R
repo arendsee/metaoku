@@ -50,44 +50,49 @@ formatPlot <- function(g,
     return(g)
 }
 
-plotAnything <- function(x, y=NULL, x.name='x', y.name='y', fmt.opts=NULL, corpa=NULL){
+plotAnything <- function(x, y=NULL, group=NULL, selected=NULL,
+                         x.name='x', y.name='y', fmt.opts=NULL, corpa=NULL){
     cat('entering plotAnything\n', stderr())
 
-    # exit if more than one column is selected
-    if(is.null(x) || nrow(x) < 1 || nlevels(x$variable) != 1){
+    if(is.null(x) || length(x) == 0){
         cat('\tstuff is null\n', stderr())
         return()
     }
 
-    stopifnot(is.data.frame(x))
-    stopifnot(c('value', 'variable', 'selected') %in% colnames(x))
+    if(!is.null(group)) { group <- factor(group) }
 
-    x.is_txt <- x.name %in% names(corpa)
-    x.is_num <- is.numeric(x$value)
-    x.is_fac <- is.factor(x$value)
-    is_all <- all(x$selected)
+    x.is_txt  <- x.name %in% names(corpa)
+    x.is_num  <- is.numeric(x)
+    x.is_fac  <- is.factor(x)
+    is_single <- is.null(group) || nlevels(group) == 1
     is_com <- !is.null(y)
 
-    logx <- fmt.opts$logx && is.numeric(x$value)
-    logy <- fmt.opts$logy && is_com && is.numeric(y$value)
+    logx <- fmt.opts$logx && is.numeric(x)
+    logy <- fmt.opts$logy && is_com && is.numeric(y)
 
     if(x.is_txt){
+        if(is.null(selected)){
+            rows <- 1:length(x)
+        } else {
+            rows <- which(selected)
+        }
         m = corpa[[x.name]]
-        return(plotText(m=m, rows=which(x$selected)))
+        return(plotText(m=m, rows=rows))
+    }
+    
+    # ignore huge factors
+    if (is.factor(x) && nlevels(x) > 20){
+        return()
     }
 
     ggtitle <- x.name
     xlab <- NULL
     ylab <- NULL
 
-    selection <- if(is_all) NULL else ifelse(x$selected, 'selected', 'not-selected')
-
     g <- NULL
     if(is_com){
-        stopifnot(is.data.frame(y))
-        stopifnot(c('value', 'variable', 'selected') %in% colnames(y))
-        y.is_num <- is.numeric(y$value)
-        y.is_fac <- is.factor(y$value)
+        y.is_num <- is.numeric(y)
+        y.is_fac <- is.factor(y)
         ggtitle <- '2-column comparison'
         xlab <- x.name
         ylab <- y.name 
@@ -110,27 +115,27 @@ plotAnything <- function(x, y=NULL, x.name='x', y.name='y', fmt.opts=NULL, corpa
         } else {
            return() 
         }
-        g <- func(x=x$value, y=y$value, group=selection)
+        g <- func(x=x, y=y, group=group)
     } else {
-        if(is_all){
+        if(is_single){
             if(x.is_num){
                 func <- plotNumeric
             } else if(x.is_fac){
                 func <- plotFactor
             }
-            g <- func(x=x$value)
+            g <- func(x=x)
         } else {
             if(x.is_num){
                 func <- plotSampledNumeric
             } else if(x.is_fac){
                 func <- plotSampledFactor
             }
-            g <- func(x=x$value, group=selection)
+            g <- func(x=x, group=group)
         }
     }
 
     if(!is.null(g)){
-        g <- formatPlot(g, logx=logx, logy=logy, x.values=x$value,
+        g <- formatPlot(g, logx=logx, logy=logy, x.values=x,
                         ggtitle=ggtitle, xlab=xlab, ylab=ylab)
     }
     return(g)

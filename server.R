@@ -11,7 +11,7 @@ source('statistics.R')
 source('plotting-functions.R')
 
 mergeByName <- function(dat, by.colname){
-    cat('entering mergeByName()\n', stderr())
+    cat('entering mergeByName()\n')
     if(is.null(by.colname)){
         return(dat)
     }
@@ -35,7 +35,7 @@ mergeByName <- function(dat, by.colname){
 
 shinyServer(function(input, output){
     dat <- reactive({
-        cat('entering dat()\n', stderr())
+        cat('entering dat()\n')
         out <- data.table(model=as.vector(global$models), locus=as.vector(global$loci))
         for(column in input$columns){
             out <- mergeByName(out, column)
@@ -50,15 +50,10 @@ shinyServer(function(input, output){
         return(out)
     })
 
-    # observe({
-    #     updateSelectInput(session, "compare.to", choices = c('None', input$columns))
-    # })
-
-
     # Read input from textInput box, parse out ids, and if they are present in
     # the key column of the main dataset, return them
     user.rows <- reactive({
-        cat('entering user.rows()\n', stderr())
+        cat('entering user.rows()\n')
         txt <- input$user_ids
         ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
         ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
@@ -71,72 +66,81 @@ shinyServer(function(input, output){
         return(rows)
     })
 
-    sel.nonreactive <- function(cols=NULL, column.names=NULL, rows=input$main_table_rows_all){
-        cat('entering sel.nonreactive()\n', stderr())
-        # cat(cols, column.names, rows[1], stderr())
-        if(is.null(cols) && ! is.null(column.names)){
-            cols <- which(colnames(dat()) %in% column.names)
+    sel.nonreactive <- function(col.name, rows=input$main_table_rows_all){
+        cat('entering sel.nonreactive()\n')
+
+        if(length(col.name) > 0 && col.name %in% colnames(dat())){
+            out <- data.frame(
+                value=dat()[, col.name],
+                selected=rep(FALSE, nrow(dat()))
+            )
+            out$selected[rows] <- TRUE
+            out$group = ifelse(out$selected, 'selected', 'non-selected')
+            cat('\tdim(out):', dim(out), '\n')
+            cat('\tcolnames(out):', colnames(out), '\n')
+            return(out)
+        } else {
+            return(NULL)
         }
-        stopifnot(is.numeric(cols))
-        d <- data.table(dat())
-        if(!is.null(cols) && length(cols) > 0 && ncol(d) >= max(cols)){
-            d <- d[, cols, with=FALSE]
-            d$selected       <- FALSE
-            d$selected[rows] <- TRUE
-            d <- data.frame(d)
-            d <- melt(d, id.vars=c('selected'), value.name='value')
-            d$group = ifelse(d$selected, 'selected', 'non-selected')
-            cat('\tsuccessfully loaded\n', stderr())
-            return(d)
-        }
-        cat('\tfailed to load\n', stderr())
     }
 
     sel <- reactive({
-        cat('entering sel()\n', stderr())
-        cols  <- input$main_table_columns_selected + 1
+        cat('entering sel()\n')
+        col.id  <- input$main_table_columns_selected + 1
+        col.name <- colnames(dat())[col.id]
         rows  <- input$main_table_rows_all
-        return(sel.nonreactive(cols=cols, rows=rows))
+        cat('leaving sel(), col.name = ', col.name, '\n')
+        return(sel.nonreactive(col.name=col.name, rows=rows))
     })
-
-    # Generate a summary of the dataset
-    output$summary <- renderPrint({
-        cat('entering output.summary.rendePrint()\n', stderr())
-        summary(dat()[input$main_table_rows_all, ])
-    })
-
-    refactor <- function(x, column.name){
-        cat('entering refactor\n', stderr())
-        if(is.factor(dat()[, column.name])){
-            x = factor(x, levels=levels(dat()[, column.name]))
-        }
-        return(x)
-    }
 
     output$plot <- renderPlot({
-        cat('entering renderPlot()\n', stderr())
+        cat('entering renderPlot()\n')
 
         # Dataframe for selected column
         x = sel()
+        x.name <- colnames(dat())[input$main_table_columns_selected + 1]
+
+        if(is.null(x)){
+            cat('\tnull in renderPlot\n')
+            return()
+        }
+
+        cat('\there\n')
+
         # Dataframe for the column selected from the 'Compare to' dropdown, may be NULL
-        y = sel.nonreactive(column.names=input$compare.to)
+        y = sel.nonreactive(col.name=input$compare.to)
+        y.name <- input$compare.to
         fmt.opts <- list(
             logy=input$logy,
             logx=input$logx
         )
 
-        x.name <- levels(x$variable)[1]
-        y.name <- levels(y$variable)[1]
+        cat('\talso here\n')
 
-        x$value <- refactor(x$value, x.name)
-        if(!is.null(y)){
-            y$value <- refactor(y$value, y.name)
+        if(!any(x$selected)){
+            cat('\tnothing selected:', nrow(x), length(input$main_table_rows_all), '\n')
+            return()
         }
-        g <- plotAnything(x=x, y=y,
-                          x.name=x.name, y.name=y.name,
-                          fmt.opts=fmt.opts,
-                          corpa=global$corpa)
+
+        cat('\tplotting\n')
+
+        g <- plotAnything(
+            x=x$value,
+            y=y$value,
+            group=x$group,
+            selected=x$selected,
+            x.name=x.name,
+            y.name=y.name,
+            fmt.opts=fmt.opts,
+            corpa=global$corpa
+        )
         return(g)
+    })
+
+    # Generate a summary of the dataset
+    output$summary <- renderPrint({
+        cat('entering output.summary.rendePrint()\n')
+        summary(dat()[input$main_table_rows_all, ])
     })
 
     output$column_summary <- renderTable(
@@ -150,7 +154,7 @@ shinyServer(function(input, output){
     )
 
     get_user_data <- function(){
-        cat('entering get_user_data()\n', stderr())
+        cat('entering get_user_data()\n')
         if(length(user.rows()) > 0){
             return(dat()[user.rows(), ])
         } else {
@@ -165,7 +169,7 @@ shinyServer(function(input, output){
         selection=list(
             mode='single',
             target='column',
-            selected=7
+            select=7
         ),
         options = list(
             autoWidth=TRUE,
@@ -181,33 +185,3 @@ shinyServer(function(input, output){
         }
     )
 })
-
-    # sel.nonreactive <- function(cols=NULL, column.names=NULL, rows=input$main_table_rows_all){
-    #     cat('entering sel.nonreactive()\n', stderr())
-    #     # cat(cols, column.names, rows[1], stderr())
-    #     if(is.null(cols) && ! is.null(column.names)){
-    #         cols <- which(colnames(dat()) %in% column.names)
-    #     }
-    #     stopifnot(is.numeric(cols))
-    #     d <- data.table(dat())
-    #     if(!is.null(cols) && length(cols) > 0 && ncol(d) >= max(cols)){
-    #         d <- d[, cols, with=FALSE]
-    #         d$selected       <- FALSE
-    #         d$selected[rows] <- TRUE
-    #         d <- data.frame(d)
-    #         d <- melt(d, id.vars=c('selected'), value.name='value')
-    #         d$group = ifelse(d$selected, 'selected', 'non-selected')
-    #         cat('\tsuccessfully loaded\n', stderr())
-    #         return(d)
-    #     }
-    #     cat('\tfailed to load\n', stderr())
-    # }
-    #
-    # sel <- reactive({
-    #     cat('entering sel()\n', stderr())
-    #     cols  <- input$main_table_columns_selected + 1
-    #     rows  <- input$main_table_rows_all
-    #     return(sel.nonreactive(cols=cols, rows=rows))
-    # })
-
-

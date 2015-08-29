@@ -1,11 +1,11 @@
 comparisonSummary <- function(d){
     cat('entering comparisonSummary()\n', stderr())
-    if(is.null(d) || nlevels(d$variable) < 1){
-        cat('bad input\n', stderr())
+    if(is.null(d)){
+        cat('null input\n', stderr())
         return()
     }
 
-    stopifnot(c('variable', 'value', 'selected') %in% colnames(d))
+    stopifnot(c('value', 'selected', 'group') %in% colnames(d))
 
     if(is.numeric(d$value)){
         cat('\tentering numeric\n', stderr())
@@ -30,10 +30,12 @@ comparisonSummary <- function(d){
 
 columnSummary <- function(d){
     cat('entering selection_summary_1()\n', stderr())
-    if(is.null(d) || nlevels(d$variable) != 1){
-        cat('bad input\n', stderr())
+    if(is.null(d)){
+        cat('null input\n', stderr())
         return()
     }
+
+    stopifnot(c('value', 'selected', 'group') %in% colnames(d))
 
     luniq <- length(unique(d$value))
 
@@ -65,5 +67,4 @@ columnSummary <- function(d){
         return()
     }
     return(out)
-
 }
