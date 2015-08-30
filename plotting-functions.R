@@ -26,6 +26,8 @@ formatPlot <- function(g,
          theme(
             axis.text.x       = element_text(size=14), 
             axis.text.y       = element_text(size=14),
+            strip.text        = element_text(size=14),
+            legend.text       = element_text(size=14),
             legend.title      = element_blank(),
             legend.background = element_blank()
         )
