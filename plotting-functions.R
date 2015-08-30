@@ -248,14 +248,18 @@ plotPairedNumericFactor <- function(x, y, group=NULL){
     return(g)
 }
 
+# === plot log(N_exp / N_obs)
 plotPairedFactorFactor <- function(x, y, group=NULL){
     stopifnot(is.factor(x), is.factor(y))
     d <- data.frame(x=x, y=y)
     d$group <- group
-    d <- ddply(d, colnames(d), summarize, count=length(x))
-    d <- ddply(d, 'x', mutate, rescaled=count / sum(count))
+    d <- ddply(d, colnames(d), summarize, obs=length(x))
+    d <- ddply(d, 'x', mutate, X=sum(obs))
+    d <- ddply(d, 'y', mutate, Y=sum(obs))
+    d$exp <- d$X * d$Y / sum(d$obs)
+    d$lograt <- log(d$obs / d$exp)
     g <- ggplot(d) +
-        geom_tile(aes(x=x, y=y, fill=rescaled))
+        geom_tile(aes(x=x, y=y, fill=lograt))
     if(!is.null(group)){
         g <- g + facet_grid(group~.)
     }
