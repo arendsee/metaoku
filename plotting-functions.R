@@ -93,10 +93,14 @@ plotAnything <- function(x, y=NULL, group=NULL, selected=NULL,
     if(is_com){
         y.is_num <- is.numeric(y)
         y.is_fac <- is.factor(y)
+        y.is_txt <- y.name %in% names(corpa)
         ggtitle <- '2-column comparison'
         xlab <- x.name
         ylab <- y.name 
-        if(x.is_num && y.is_num){
+        if(y.is_txt){
+            # cannot (yet) compare anything to text
+            return()
+        } else if(x.is_num && y.is_num){
             func <- plotPairedNumericNumeric
         } else if (x.is_num && y.is_fac){
             # I flip the coordinates, so need to swap values
