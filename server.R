@@ -182,6 +182,7 @@ shinyServer(function(input, output, session){
         rownames=FALSE,
         selection="none",
         options=list(
+            paging=FALSE,
             autoWidth=FALSE,
             scrollX=TRUE,
             scrollCollapse=FALSE,
