@@ -225,7 +225,7 @@ plotPairedNumericNumeric <- function(x, y, group=NULL){
     d$group <- group
     g <- ggplot(d) +
         geom_point(aes(x=x, y=y))
-    if(!is.null(group)){
+    if(!is.null(group) && nlevels(group) > 1){
         g <- g + facet_grid(group~.)
     }
     return(g)
@@ -237,7 +237,7 @@ plotPairedFactorNumeric <- function(x, y, group=NULL){
     d$group <- group
     g <- ggplot(d) +
         geom_boxplot(aes(x=x, y=y))
-    if(!is.null(group)){
+    if(!is.null(group) && nlevels(group) > 1){
         g <- g + facet_grid(group~.)
     }
     return(g)
@@ -260,7 +260,7 @@ plotPairedFactorFactor <- function(x, y, group=NULL){
     d$lograt <- log(d$obs / d$exp)
     g <- ggplot(d) +
         geom_tile(aes(x=x, y=y, fill=lograt))
-    if(!is.null(group)){
+    if(!is.null(group) && nlevels(group) > 1){
         g <- g + facet_grid(group~.)
     }
     return(g)
