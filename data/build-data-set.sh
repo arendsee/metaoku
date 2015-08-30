@@ -87,8 +87,8 @@ sed -ri "/UTR\t/s/Parent=([^;]+).*/\1/"  $gff_file
 awk '
     BEGIN {
         OFS="\t"
-        print "chromosome",
-              "locus",
+        print "locus",
+              "chromosome",
               "gene_length",
               "gene_start",
               "gene_end",
@@ -101,7 +101,7 @@ awk '
         stop=$5
         len=stop - start + 1
         strand=$7
-        print chr, locus, len, start, stop, strand
+        print locus, chr, len, start, stop, strand
     }
 ' $gff_file > locus_data.tab
 

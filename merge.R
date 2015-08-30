@@ -17,12 +17,19 @@ if(! file.exists(rdat.filename)){
     global$loci     = c()
     global$corpa    = list()
 
+    metadata <- read.delim('data/METADATA')
+
     for(f in list.files('data/', '*.tab')){
         d <- as.data.table(read.delim(paste0('data/', f), quote="", stringsAsFactors=FALSE))
 
         global$columns <- c(global$columns, colnames(d))
         global$indx    <- c(global$indx, colnames(d)[1])
         global$files   <- c(global$files, f)
+
+        # assert all NON-KEY (i.e. first row) fields are represented within the metadata
+        if(!all(colnames(d)[-1] %in% metadata$column_name)){
+            cat('One of these is missing from metadata:', colnames(d)[-1], stderr())
+        }
 
         # if the first column is 'locus' of 'model', index on this column
         # otherwise skip this dataset
@@ -57,9 +64,12 @@ if(! file.exists(rdat.filename)){
         global$datasets[[f]] <- d
     }
 
-    global$columns <- unique(global$columns[-which(global$columns %in% c('model', 'locus'))])
-    global$loci    <- sub('\\.\\d+', '', global$models)
-    global$columns <- sort(global$columns)
+    global$columns  <- unique(global$columns[-which(global$columns %in% c('model', 'locus'))])
+    global$loci     <- sub('\\.\\d+', '', global$models)
+    global$columns  <- sort(global$columns)
+    global$metadata <- metadata
+    global$selected.columns <- c('GC', 'gene_length', 'confidence_overall', 'short_description', 'location', 'stratum_name')
+    stopifnot(global$selected.columns %in% metadata$column_name)
 
     # model.data <- MergeData(d)
     save(global, file=rdat.filename)

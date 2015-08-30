@@ -4,8 +4,6 @@ require(shinyBS)
 require(DT)
 source('global.R')
 
-selected.columns <- c('GC', 'gene_length', 'confidence_overall', 'short_description', 'location', 'stratum_name')
-
 # Define UI for dataset viewer application
 shinyUI(
     fluidPage(theme = shinytheme('spacelab'),
@@ -16,7 +14,7 @@ shinyUI(
             fluidRow(
                 column(2, checkboxInput('logx', 'log2 x-axis')),
                 column(2, checkboxInput('logy', 'log2 y-axis')),
-                column(6, selectInput('compare.to', 'Compare to', c('None', selected.columns)))),
+                column(6, selectInput('compare.to', 'Compare to', c('None', global$selected.columns)))),
             fluidRow(
                 column(6, tableOutput('column_summary')),
                 column(6, tableOutput('comparison_summary'))),
@@ -34,16 +32,8 @@ shinyUI(
         # section.
         mainPanel(
             tabsetPanel(
-                tabPanel('Data', DT::dataTableOutput("main_table")),
-                tabPanel('Columns',
-                    fluidRow(
-                        column(2, checkboxGroupInput("columns",
-                                                     "Choose columns to include", 
-                                                     global$columns,
-                                                     selected=selected.columns)),
-                        column(10, DT::dataTableOutput("column_table")))
-                ),
-                bsModal("summaryBox", "Summary", "summarize", verbatimTextOutput("summary"))
+                    tabPanel('Columns', DT::dataTableOutput("column_table")),
+                    tabPanel('Data', DT::dataTableOutput("main_table"))
             )
         )
     )

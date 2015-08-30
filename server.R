@@ -37,7 +37,9 @@ shinyServer(function(input, output, session){
     dat <- reactive({
         cat('entering dat()\n')
         out <- data.table(model=as.vector(global$models), locus=as.vector(global$loci))
-        for(column in input$columns){
+        columns <- global$metadata$column_name[input$column_table_rows_selected]
+        cat('\tdat - columns:', columns, '\n', stderr())
+        for(column in columns){
             out <- mergeByName(out, column)
         }
         out <- data.frame(out)
@@ -51,7 +53,8 @@ shinyServer(function(input, output, session){
     })
 
     observe({
-        updateSelectInput(session, 'compare.to', choices=c('None', input$columns))
+        columns <- global$metadata$column_name[input$column_table_rows_selected]
+        updateSelectInput(session, 'compare.to', choices=c('None', columns))
     })
     
 
@@ -177,10 +180,17 @@ shinyServer(function(input, output, session){
     ))
 
     output$column_table <- DT::renderDataTable(
-        read.delim('data/METADATA')[, c('column_name', 'description')],
+        {
+            cat('entering column_table\n', stderr())
+            global$metadata
+        },
         filter="none",
         rownames=FALSE,
-        selection="none",
+        selection=list(
+            mode='multiple',
+            target='row',
+            selected=which(global$metadata$column_name %in% global$selected.columns)
+        ),
         options=list(
             paging=FALSE,
             autoWidth=FALSE,
