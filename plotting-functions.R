@@ -166,7 +166,12 @@ makeWordCloud <- function(mat, rows){
 }
 
 plotText <- function(m, rows){
-    return(makeWordCloud(m, rows))
+    # For some reason, wordcloud segfaults when there are too few rows
+    if(length(rows) > 5){
+        return(makeWordCloud(m, rows))
+    } else {
+        return()
+    }
 }
 
 plotNumeric <- function(x){

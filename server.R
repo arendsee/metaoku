@@ -54,7 +54,7 @@ shinyServer(function(input, output, session){
 
     observe({
         columns <- global$metadata$column_name[input$column_table_rows_selected]
-        updateSelectInput(session, 'compare.to', choices=c('None', columns))
+        updateSelectInput(session, 'compare.to', choices=c('None', as.character(columns)))
     })
     
 
