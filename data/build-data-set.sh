@@ -343,3 +343,32 @@ load-meta \
     "disorder" \
     "predicted regions of unassignable electron densities (see the paper)" \
     $disembl_src $disembl_lnk $disembl_ref
+
+
+cp $datadir/Arabidopsis-thaliana_SS.tab ./ss.tab
+load-meta \
+    protein_length \
+    "protein properties" \
+    "protein length" \
+    "TAIR10" "" ""
+
+ss_src='predicted with psipred'
+ss_lnk='arendsee@iastate.edu'
+ss_ref='10.1093/bioinformatics/16.4.404'
+load-meta \
+    helix \
+    "protein secondary structure" \
+    "predicted proportion of protein helical content" \
+    "$ss_src" "$ss_lnk" "$ss_ref"
+
+load-meta \
+    sheet \
+    "protein secondary structure" \
+    "predicted proportion of protein beta-sheet content" \
+    "$ss_src" "$ss_lnk" "$ss_ref"
+
+load-meta \
+    coil \
+    "protein secondary structure" \
+    "predicted proportion of protein coil content" \
+    "$ss_src" "$ss_lnk" "$ss_ref"

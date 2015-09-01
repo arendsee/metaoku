@@ -1,5 +1,6 @@
 require(data.table)
 require(Matrix)
+require(tm)
 
 # All datasets are
 # 1. TAB-delimited
@@ -26,11 +27,6 @@ if(! file.exists(rdat.filename)){
         global$indx    <- c(global$indx, colnames(d)[1])
         global$files   <- c(global$files, f)
 
-        # assert all NON-KEY (i.e. first row) fields are represented within the metadata
-        if(!all(colnames(d)[-1] %in% metadata$column_name)){
-            cat('One of these is missing from metadata:', colnames(d)[-1], stderr())
-        }
-
         # if the first column is 'locus' of 'model', index on this column
         # otherwise skip this dataset
         if('model' %in% colnames(d)) {
@@ -45,7 +41,12 @@ if(! file.exists(rdat.filename)){
             next
         }
 
-        for (cname in colnames(d)){
+        for (cname in colnames(d)[-1]){
+            # assert all NON-KEY fields are represented within the metadata
+            if(!cname %in% metadata$column_name){
+                cat(cname, 'is missing from METADATA file\n', stderr())
+            }
+
             txt = as.character(data.frame(d)[, cname])
             longest.line = max(nchar(txt))
             if(longest.line > 50){
