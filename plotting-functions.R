@@ -29,7 +29,8 @@ formatPlot <- function(g,
             strip.text        = element_text(size=14),
             legend.text       = element_text(size=14),
             legend.title      = element_blank(),
-            legend.background = element_blank()
+            legend.background = element_blank(),
+            legend.position   = 'bottom'
         )
     if(is.null(title)){
         g <- g + theme(plot.title = element_blank())
