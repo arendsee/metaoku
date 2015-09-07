@@ -5,7 +5,8 @@ require(DT)
 source('global.R')
 
 homehtml <- '
-<h1>Welcome to my <i>Arabidopsis thaliana</i> data portal</h1>
+<h1>Welcome to my data portal (not yet named)</h1>
+<h2>Usage</h2>
 <ul>
     <li>To choose data for analysis and view column info, go to <strong>Columns</strong> tab</li>
     <li>To view, subset and plot data, go to <strong>Data</strong> tab. In this window you can
@@ -16,7 +17,14 @@ homehtml <- '
         The subset of the data will be contrasted to the full data in every plot.</li>
     </ul>
 </ul>
-If you have any questions write Zebulun Arendsee at <a href=arendsee@iastate.edu>arendsee@iastate.edu</a>'
+<h2>Contact</h2>
+<div>Zebulun Arendsee</div>
+<div>Iowa State University</div>
+<div>532 Science II</div>
+<div>Ames, IA 50010</div>
+<div>Email: <a href=arendsee@iastate.edu>arendsee@iastate.edu</a></div>
+<h2>Citation</h2>
+Arendsee, Zebulun W., Ling Li, and Eve Syrkin Wurtele. "Coming of age: orphan genes in plants." Trends in plant science 19.11 (2014): 698-708.'
 
 # Define UI for dataset viewer application
 shinyUI(
