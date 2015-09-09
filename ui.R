@@ -24,7 +24,7 @@ homehtml <- '
 <div>Ames, IA 50010</div>
 <div>Email: <a href=arendsee@iastate.edu>arendsee@iastate.edu</a></div>
 <h2>Citation</h2>
-Arendsee, Zebulun W., Ling Li, and Eve Syrkin Wurtele. "Coming of age: orphan genes in plants." Trends in plant science 19.11 (2014): 698-708.'
+Zebulun Arendsee, Ling Li, and Eve Syrkin Wurtele. "Coming of age: orphan genes in plants." Trends in plant science 19.11 (2014): 698-708.'
 
 # Define UI for dataset viewer application
 shinyUI(
