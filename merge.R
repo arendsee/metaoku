@@ -41,7 +41,7 @@ if(! file.exists(rdat.filename)){
         d <- as.data.frame(d)
 
         # build corpus for columns that look like text
-        for (cname in colnames(d)[-1]){
+        for (cname in colnames(d)){
 
             if(is.null(global$metadata)){
                 global$metadata <- data.frame(column_name = cname, stringsAsFactors=FALSE)
