@@ -43,7 +43,7 @@ shinyUI(
                     fluidRow(
                         column(6, tableOutput('column_summary')),
                         column(6, tableOutput('comparison_summary'))),
-                    fluidRow(column(12, textInput('user_ids', 'Enter ids (e.g. "AT5G28465 AT5G54910 AT5G58170")'))),
+                    fluidRow(column(12, textInput('user_ids', 'Enter ids (e.g. "AT5G28465.1 AT5G54910.1 AT5G58170.1")'))),
                     downloadButton('downloadData', 'Download')
                 ),
                 mainPanel(
