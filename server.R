@@ -10,39 +10,17 @@ source('global.R')
 source('statistics.R')
 source('plotting-functions.R')
 
-mergeByName <- function(dat, by.colname){
-    cat('entering mergeByName()\n')
-    if(is.null(by.colname)){
-        return(dat)
-    }
-
-    # iterate through every dataset
-    for(d in global$datasets){
-        if(by.colname %in% colnames(d)){
-            if('model' %in% colnames(d)){
-                key = 'model'
-            } else if ('locus' %in% colnames(d)) {
-                key = 'locus'
-            } else {
-                return(dat) 
-            }
-            setkeyv(dat, key)
-            dat <- merge(dat, d[, c(key, by.colname), with=FALSE], by=key)
-        }
-    }
-    return(dat)
+eligible_for_compare <- function(x) {
+    is.numeric(x) || length(unique(x)) <= 20
 }
 
 shinyServer(function(input, output, session){
     dat <- reactive({
         cat('entering dat()\n')
-        out <- data.table(model=as.vector(global$models), locus=as.vector(global$loci))
         columns <- global$metadata$column_name[input$column_table_rows_selected]
-        cat('\tdat - columns:', columns, '\n', stderr())
-        for(column in columns){
-            out <- mergeByName(out, column)
-        }
-        out <- data.frame(out)
+        columns <- unique(c(global$key, columns))
+        out <- data.frame(global$table[, columns, with=FALSE])
+
         # This factoring is vital for filtering columns in DT
         for(i in 1:ncol(out)){
             if(length(unique(out[, i])) <= 20){
@@ -54,6 +32,13 @@ shinyServer(function(input, output, session){
 
     observe({
         columns <- global$metadata$column_name[input$column_table_rows_selected]
+        if(length(columns) > 0){
+            for (i in length(columns):1){
+                if(! eligible_for_compare(dat()[, columns[i]])){
+                    columns <- columns[-i]
+                }
+            }
+        }
         updateSelectInput(session, 'compare.to', choices=c('None', as.character(columns)))
     })
     
@@ -62,16 +47,15 @@ shinyServer(function(input, output, session){
     # the key column of the main dataset, return them
     user.rows <- reactive({
         cat('entering user.rows()\n')
-        txt <- input$user_ids
-        ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
-        ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
-        if(input$key == "model"){
-            all.ids = dat()$model
-        } else if(input$key == "locus"){
-            all.ids = dat()$locus
+        if(length(input$user_ids) > 0){
+            txt <- input$user_ids
+            ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
+            ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
+            rows = which(dat()[, global$key] %in% ids)
+            return(rows)
+        } else {
+            return(c())
         }
-        rows = which(all.ids %in% ids)
-        return(rows)
     })
 
     sel.nonreactive <- function(col.name, rows=input$main_table_rows_all){
@@ -188,8 +172,7 @@ shinyServer(function(input, output, session){
         rownames=FALSE,
         selection=list(
             mode='multiple',
-            target='row',
-            selected=which(global$metadata$column_name %in% global$selected.columns)
+            target='row'
         ),
         options=list(
             paging=FALSE,

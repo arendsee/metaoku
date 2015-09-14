@@ -50,6 +50,9 @@ cut -f 1,5 $desc_file | grep -P '^AT' | sed -r 's/; Has [0-9].*//' >> ${dautomat
 
 rm $desc_file
 
+load-meta model "KEY" \
+          'TAIR model' \
+          'TAIR' "" ""
 
 load-meta $dtype $desc_grp \
           'gene type (protein_coding, mirnda, etc.)' \
@@ -80,30 +83,30 @@ gff_link='ftp://ftp.arabidopsis.org/home/tair/Genes/TAIR10_genome_release/TAIR10
 gff_ref='10.1093/nar/gkr1090'
 wget -O $gff_file $gff_link
  
-sed -ri "/gene\t/s/ID=([^;]+);.*/\1/"    $gff_file
-sed -ri "/exon\t/s/Parent=([^;]+).*/\1/" $gff_file
-sed -ri "/UTR\t/s/Parent=([^;]+).*/\1/"  $gff_file
+sed -ri "/\tmRNA/ s/[^\t]*ID=([^;]+);.*/\1/"    $gff_file
+sed -ri "/exon\t/ s/[^\t]*Parent=([^;]+).*/\1/" $gff_file
+sed -ri "/UTR\t/  s/[^\t]*Parent=([^;]+).*/\1/"  $gff_file
 
 awk '
     BEGIN {
         OFS="\t"
-        print "locus",
+        print "model",
               "chromosome",
-              "gene_length",
-              "gene_start",
-              "gene_end",
-              "gene_strand"
+              "mRNA_length",
+              "mRNA_start",
+              "mRNA_end",
+              "mRNA_strand"
     }
-    $3 ~ /gene/  {
+    $3 ~ /mRNA/  {
         chr=$1
-        locus=$9
+        model=$9
         start=$4
         stop=$5
         len=stop - start + 1
         strand=$7
-        print locus, chr, len, start, stop, strand
+        print model, chr, len, start, stop, strand
     }
-' $gff_file > locus_data.tab
+' $gff_file > mRNA_data.tab
 
 awk '
     BEGIN {
@@ -113,9 +116,9 @@ awk '
               "model_5UTR_length",
               "model_3UTR_length"
     }
-    $3 ~ /exon$/            { exons[$9]++ }
-    $3 ~ /five_prime_UTR$/  { utr5[$9] = $5 - $4 + 1 }
-    $3 ~ /three_prime_UTR$/ { utr3[$9] = $5 - $4 + 1 }
+    $3 ~ /exon/            { exons[$9]++ }
+    $3 ~ /five_prime_UTR/  { utr5[$9] = $5 - $4 + 1 }
+    $3 ~ /three_prime_UTR/ { utr3[$9] = $5 - $4 + 1 }
     END {
         for (k in exons){
             print k, exons[k], utr5[k], utr3[k]
@@ -140,19 +143,19 @@ load-meta model_3UTR_length "$gff_grp" \
           "length of gene model's 3-prime UTR" \
           $gff_src $gff_link $gff_ref
 
-load-meta gene_length "$gff_grp" \
-          "total length of the gene" \
+load-meta mRNA_length "$gff_grp" \
+          "total length of the mRNA" \
           $gff_src $gff_link $gff_ref
 
-load-meta gene_start "$gff_grp" \
+load-meta mRNA_start "$gff_grp" \
           'chromosomal starting position' \
           $gff_src $gff_link $gff_ref
 
-load-meta gene_end "$gff_grp" \
+load-meta mRNA_end "$gff_grp" \
           'chromosomal ending position' \
           $gff_src $gff_link $gff_ref
 
-load-meta gene_strand "$gff_grp" \
+load-meta mRNA_strand "$gff_grp" \
           "the orientation of the gene ('+' or '-')" \
           $gff_src $gff_link $gff_ref
 
@@ -230,9 +233,17 @@ datadir=~/research/DATASETS
 # 
 awk '
     BEGIN{FS="\t"; OFS="\t"}
-    NR == 1 {print "locus", "stratum_level", "stratum_name"}
-    NR > 1  {print $2, $1, $3}
-    ' $datadir/strata-loci.tab > strata_loci.tab
+    NR == 1 {print "model", "stratum_level", "stratum_name"}
+    NR > 1 && (stratum_level[$2] == 0 || $1 < stratum_level[$2]) {
+        stratum_level[$2] = $1
+        stratum_name[$2] = $3
+    }
+    END {
+        for(k in stratum_name){
+            print k, stratum_level[k], stratum_name[k]
+        }
+    }
+    ' $datadir/strata-models.tab > strata.tab
 
 # 1   gb
 # 2   length
@@ -265,12 +276,16 @@ awk '
 # 29  rem465
 # 30  hotloops
 awk 'BEGIN{FS="\t"; OFS="\t"}
-     {print $3, $1, $5, $9, $10, $11, $15, $16, $20, $21, $28, $29, $30}
+     {print $3, $1, $4, $5, $9, $10, $11, $15, $16, $20, $21, $28, $29, $30}
     ' ~/research/DATASETS/all-tips-data.tab |
     tr -d '"' |
     sed '1 s/\./_/g' |
     sed '1 s/gb/accession/' > protein_data.tab
 
+load-meta \
+    locus "identifiers" \
+    "TAIR locus id" \
+    "TAIR10" "" ""
 
 load-meta \
     stratum_level "phylostrata" \
@@ -345,7 +360,7 @@ load-meta \
     $disembl_src $disembl_lnk $disembl_ref
 
 
-cp $datadir/Arabidopsis-thaliana_SS.tab ./ss.tab
+cp $datadir/at-ss.tab ./ss.tab
 load-meta \
     protein_length \
     "protein properties" \

@@ -1,4 +1,5 @@
 *.Rdat
 *.tab
+data/METADATA
 rsconnect/
 shinyapps/

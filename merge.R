@@ -5,52 +5,55 @@ require(tm)
 # All datasets are
 # 1. TAB-delimited
 # 2. Have headers
-# 3. The first column is either 'model' or 'locus'
+# 3. All tables must have the same first column (the key column)
 
 rdat.filename = 'global-data.Rdat'
 
 if(! file.exists(rdat.filename)){
-    global          = list()
-    global$datasets = list()
-    global$columns  = c()
-    global$indx     = c()
-    global$files    = c()
-    global$loci     = c()
-    global$corpa    = list()
-
-    metadata <- read.delim('data/METADATA')
+    global          <- list()
+    global$table    <- NULL
+    global$corpa    <- list()
+    global$key      <- NULL
+    if(file.exists('data/METADATA')){
+        global$metadata <- read.delim('data/METADATA', stringsAsFactors=FALSE)
+    } else {
+        global$metadata <- NULL
+    }
 
     for(f in list.files('data/', '*.tab')){
         d <- as.data.table(read.delim(paste0('data/', f), quote="", stringsAsFactors=FALSE))
+        key = colnames(d)[1]
+        setkeyv(d, key)
 
-        global$columns <- c(global$columns, colnames(d))
-        global$indx    <- c(global$indx, colnames(d)[1])
-        global$files   <- c(global$files, f)
-
-        # if the first column is 'locus' of 'model', index on this column
-        # otherwise skip this dataset
-        if('model' %in% colnames(d)) {
-            global$models <- unique(c(global$models, as.character(d$model)))
-            d$model = as.vector(d$model)
-            setkey(d, key='model')
-        } else if('locus' %in% colnames(d)) {
-            d$locus = as.vector(d$locus)
-            setkey(d, key='locus')
+        # All input tables must start with the same key
+        if(is.null(global$key)){
+            global$key <- key
         } else {
-            warning(paste('table', f, 'skipped'))
-            next
+            stopifnot(global$key == key)
         }
 
+        if(is.null(global$table)){
+            global$table <- d
+        } else {
+            global$table <- merge(global$table, d, by=key, all=TRUE)
+        }
+
+        d <- as.data.frame(d)
+
+        # build corpus for columns that look like text
         for (cname in colnames(d)[-1]){
-            # assert all NON-KEY fields are represented within the metadata
-            if(!cname %in% metadata$column_name){
-                cat(cname, 'is missing from METADATA file\n', stderr())
+
+            if(is.null(global$metadata)){
+                global$metadata <- data.frame(column_name = cname, stringsAsFactors=FALSE)
+            }
+            stopifnot(colnames(global$metadata)[1] == 'column_name') 
+            if(! cname %in% global$metadata$column_name){
+                global$metadata[nrow(global$metadata) + 1, 1] <- cname
             }
 
-            txt = as.character(data.frame(d)[, cname])
+            txt = d[, cname]
             longest.line = max(nchar(txt))
             if(longest.line > 50){
-                write(paste(cname), 'log', append=TRUE)
                 corpus <- Corpus(VectorSource(txt))
                 corpus <- tm_map(corpus, content_transformer(function(x) iconv(x, to='ASCII', sub='byte')))
                 corpus <- tm_map(corpus, content_transformer(tolower))
@@ -61,17 +64,6 @@ if(! file.exists(rdat.filename)){
                 global$corpa[[cname]] = m
             }
         }
-
-        global$datasets[[f]] <- d
     }
-
-    global$columns  <- unique(global$columns[-which(global$columns %in% c('model', 'locus'))])
-    global$loci     <- sub('\\.\\d+', '', global$models)
-    global$columns  <- sort(global$columns)
-    global$metadata <- metadata
-    global$selected.columns <- c('GC', 'gene_length', 'confidence_overall', 'short_description', 'location', 'stratum_name')
-    stopifnot(global$selected.columns %in% metadata$column_name)
-
-    # model.data <- MergeData(d)
     save(global, file=rdat.filename)
 }
