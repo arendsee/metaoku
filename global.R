@@ -1,3 +1,3 @@
 require(data.table)
-source('merge.R')
+source('load.R')
 load(rdat.filename)
