@@ -68,8 +68,6 @@ shinyServer(function(input, output, session){
             )
             out$selected[rows] <- TRUE
             out$group = ifelse(out$selected, 'selected', 'non-selected')
-            cat('\tdim(out):', dim(out), '\n')
-            cat('\tcolnames(out):', colnames(out), '\n')
             return(out)
         } else {
             return(NULL)
@@ -81,7 +79,6 @@ shinyServer(function(input, output, session){
         col.id  <- input$main_table_columns_selected + 1
         col.name <- colnames(dat())[col.id]
         rows  <- input$main_table_rows_all
-        cat('leaving sel(), col.name = ', col.name, '\n')
         return(sel.nonreactive(col.name=col.name, rows=rows))
     })
 
@@ -92,12 +89,7 @@ shinyServer(function(input, output, session){
         x = sel()
         x.name <- colnames(dat())[input$main_table_columns_selected + 1]
 
-        if(is.null(x)){
-            cat('\tnull in renderPlot\n')
-            return()
-        }
-
-        cat('\there\n')
+        if(is.null(x)){ return() }
 
         # Dataframe for the column selected from the 'Compare to' dropdown, may be NULL
         y = sel.nonreactive(col.name=input$compare.to)
@@ -107,14 +99,7 @@ shinyServer(function(input, output, session){
             logx=input$logx
         )
 
-        cat('\talso here\n')
-
-        if(!any(x$selected)){
-            cat('\tnothing selected:', nrow(x), length(input$main_table_rows_all), '\n')
-            return()
-        }
-
-        cat('\tplotting\n')
+        if(!any(x$selected)){ return() }
 
         g <- plotAnything(
             x=x$value,
@@ -165,7 +150,7 @@ shinyServer(function(input, output, session){
 
     output$column_table <- DT::renderDataTable(
         {
-            cat('entering column_table\n', stderr())
+            cat('entering column_table()\n')
             global$metadata
         },
         filter="none",

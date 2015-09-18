@@ -1,14 +1,12 @@
 comparisonSummary <- function(d){
-    cat('entering comparisonSummary()\n', stderr())
-    if(is.null(d)){
-        cat('null input\n', stderr())
-        return()
-    }
+    cat('\tentering comparisonSummary()\n')
+
+    if(is.null(d)){ return() }
 
     stopifnot(c('value', 'selected', 'group') %in% colnames(d))
 
     if(is.numeric(d$value)){
-        cat('\tentering numeric\n', stderr())
+        cat('\t  * entering numeric\n')
         if(!all(d$selected)){
             x = subset(d, selected)$value
             y = subset(d, !selected)$value
@@ -19,28 +17,26 @@ comparisonSummary <- function(d){
             return()
         }
     } else if(is.factor(d$value)){
-        cat('\tentering factor\n', stderr())
+        cat('\t  * entering factor\n')
         return() 
     } else {
-        cat('\tentering else\n', stderr())
+        cat('\t  * entering else\n')
         return()
     }
     return(out)
 }
 
 columnSummary <- function(d){
-    cat('entering selection_summary_1()\n', stderr())
-    if(is.null(d)){
-        cat('null input\n', stderr())
-        return()
-    }
+    cat('\tentering columnSummary()\n')
+
+    if(is.null(d)){ return() }
 
     stopifnot(c('value', 'selected', 'group') %in% colnames(d))
 
     luniq <- length(unique(d$value))
 
     if(is.numeric(d$value)){
-        cat('\tentering numeric\n', stderr())
+        cat('\t  * entering numeric\n')
         if(all(d$selected)){
             out <- with(d, data.frame( 
                     N=length(value),
@@ -54,7 +50,7 @@ columnSummary <- function(d){
                        sd=sd(value))
         }
     } else if(luniq <= 20){
-        cat('\tentering factor\n', stderr())
+        cat('\t  * entering factor\n')
         if(all(d$selected)){
             return()
         } else {
@@ -63,7 +59,7 @@ columnSummary <- function(d){
                        sd=mean(summary(value)))
         }
     } else {
-        cat('\tentering else\n', stderr())
+        cat('\t  * entering else\n')
         return()
     }
     return(out)

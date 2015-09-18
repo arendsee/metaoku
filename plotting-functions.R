@@ -5,6 +5,7 @@ formatPlot <- function(g,
                        ggtitle=NULL,
                        xlab=NULL,
                        ylab=NULL){
+    cat('\tentering formatPlot()\n')
     if(logx){
         g <- g + scale_x_continuous(trans='log2')
     }
@@ -55,12 +56,9 @@ formatPlot <- function(g,
 
 plotAnything <- function(x, y=NULL, group=NULL, selected=NULL,
                          x.name='x', y.name='y', fmt.opts=NULL, corpa=NULL){
-    cat('entering plotAnything\n', stderr())
+    cat('\tentering plotAnything()\n')
 
-    if(is.null(x) || length(x) == 0){
-        cat('\tstuff is null\n', stderr())
-        return()
-    }
+    if(is.null(x) || length(x) == 0){ return() }
 
     if(!is.null(group)) { group <- factor(group) }
 
@@ -149,6 +147,7 @@ plotAnything <- function(x, y=NULL, group=NULL, selected=NULL,
 }
 
 makeWordCloud <- function(mat, rows){
+    cat('\tentering makeWordCloud()\n')
     obs.sel <- sort(colSums(mat[rows, ]), decreasing=TRUE)
 
     # # eventually I should do more statistics with this
@@ -167,6 +166,7 @@ makeWordCloud <- function(mat, rows){
 }
 
 plotText <- function(m, rows){
+    cat('\tentering plotText()\n')
     # For some reason, wordcloud segfaults when there are too few rows
     if(length(rows) > 5){
         return(makeWordCloud(m, rows))
@@ -176,6 +176,7 @@ plotText <- function(m, rows){
 }
 
 plotNumeric <- function(x){
+    cat('\tentering plotNumeric()\n')
     d <- data.frame(x=x)
     g <- ggplot(d) +
         geom_histogram(aes(x=x))
@@ -183,6 +184,7 @@ plotNumeric <- function(x){
 }
 
 plotSampledNumeric <- function(x, group){
+    cat('\tentering plotSampledNumeric()\n')
     d <- data.frame(x=x, group=group)
     g <- ggplot(d) +
         geom_histogram(
@@ -201,6 +203,7 @@ plotSampledNumeric <- function(x, group){
 
 
 plotFactor <- function(x){
+    cat('\tentering plotFactor()\n')
     d <- data.frame(x=x)
     g <- ggplot(d) +
         geom_bar(aes(x=x))
@@ -208,6 +211,7 @@ plotFactor <- function(x){
 }
 
 plotSampledFactor <- function(x, group){
+    cat('\tentering plotSampledFactor()\n')
     d <- data.frame(x=x, group=group)
     d <- ddply(d, 'group', mutate, N.group=length(group))
     d <- ddply(d, c('x', 'group'), mutate, N.x=length(x))
@@ -227,6 +231,7 @@ plotSampledFactor <- function(x, group){
 }
 
 plotPairedNumericNumeric <- function(x, y, group=NULL){
+    cat('\tentering plotPairedNumericNumeric()\n')
     stopifnot(is.numeric(x), is.numeric(y))
     stopifnot(length(x) == length(y))
     d <- data.frame(x=x, y=y)
@@ -240,6 +245,7 @@ plotPairedNumericNumeric <- function(x, y, group=NULL){
 }
 
 plotPairedFactorNumeric <- function(x, y, group=NULL){
+    cat('\tentering plotPairedFactorNumeric()\n')
     stopifnot(!((is.factor(x) && is.factor(y)) || (is.numeric(x) && is.numeric(y))))
     d <- data.frame(x=x, y=y)
     d$group <- group
@@ -252,12 +258,14 @@ plotPairedFactorNumeric <- function(x, y, group=NULL){
 }
 
 plotPairedNumericFactor <- function(x, y, group=NULL){
+    cat('\tentering plotPairedNumericFactor()\n')
     g <- plotPairedFactorNumeric(x=y, y=x, group=group) + coord_flip()
     return(g)
 }
 
 # === plot log(N_exp / N_obs)
 plotPairedFactorFactor <- function(x, y, group=NULL){
+    cat('\tentering plotPairedFactorFactor()\n')
     stopifnot(is.factor(x), is.factor(y))
     d <- data.frame(x=x, y=y)
     d$group <- group
