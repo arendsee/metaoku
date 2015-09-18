@@ -1,0 +1,58 @@
+# long factors - e.g. first names, or ids (possibly unique)
+# dates
+# sequence - e.g. protein sequences
+# how to handle paths? or should I?
+# (cat, cat, num) or (cat, cat) -> network?
+
+x     y     z
+num   -     -     histogram
+cat   -     -     barplot
+cor   -     -     wordcloud
+num   num   -     scatter
+cat   num   -     boxplot
+cor   num   -     dispatch(x, cut(y))
+num   cat   -     boxplot
+cat   cat   -     heatmap
+cor   cat   -     n*n wordclouds matrix
+num   cor   -     dispatch(cut(x), y)
+cat   cor   -     dispatch(y, x)
+cor   cor   -     3 wordcloud
+                  
+num   -     num   boxplot
+cat   -     num   barplot
+cor   -     num   dispatch(x, cut(num))
+num   num   num   colored scatter
+cat   num   num   dispatch(x, y, cut(z))
+cor   num   num   dispatch(x, cut(y), cut(z))
+num   cat   num   dispatch(x, y, cut(z))
+cat   cat   num   dispatch(x, y, cut(z))
+cor   cat   num   dispatch(x, y, cut(z))
+num   cor   num   dispatch(y, cut(x), cut(z))
+cat   cor   num   dispatch(y, x, cut(z))
+cor   cor   num   dispatch(x, y, cut(z))
+                  
+num   -     cat   dispatch(x, z)
+cat   -     cat   dispatch(x, z)
+cor   -     cat   dispatch(x, z)
+num   num   cat   facet_wrap scatterplot 
+cat   num   cat   2d boxplot
+cor   num   cat   dispatch(x, cut(num), cat) 
+num   cat   cat   2d boxplot 
+cat   cat   cat   facet_wrap heatmap 
+cor   cat   cat   2d wordcloud 
+num   cor   cat   dispatch(y, cut(x), z) 
+cat   cor   cat   dispatch(y, x, z) 
+cor   cor   cat   facet_wrap 3 wordcloud 
+                  
+num   -     cor   dispatch(z, cut(x))
+cat   -     cor   dispatch(z, x)
+cor   -     cor   dispatch(x, z)
+num   num   cor   dispatch(z, cut(x), cut(y))
+cat   num   cor   dispatch(z, x, cut(y))
+cor   num   cor   dispatch(x, z, cut(y))
+num   cat   cor   dispatch(z, cut(x), y)
+cat   cat   cor   dispatch(z, x, y)
+cor   cat   cor   dispatch(y, x, z)
+num   cor   cor   dispatch(y, z, cut(x))
+cat   cor   cor   dispatch(y, z, x)
+cor   cor   cor   NA
