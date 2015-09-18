@@ -4,34 +4,18 @@ require(shinyBS)
 require(DT)
 source('global.R')
 
-homehtml <- '
-<h1>Welcome to my data portal (not yet named)</h1>
-<h2>Usage</h2>
-<ul>
-    <li>To choose data for analysis and view column info, go to <strong>Columns</strong> tab</li>
-    <li>To view, subset and plot data, go to <strong>Data</strong> tab. In this window you can
-    <ul>
-        <li> View a table of raw data </li>
-        <li> Click on a column to plot it </li>
-        <li> Create subsets of the data by adding filters to the columns or loading a list of identifiers.
-        The subset of the data will be contrasted to the full data in every plot.</li>
-    </ul>
-</ul>
-<h2>Contact</h2>
-<div>Zebulun Arendsee</div>
-<div>Iowa State University</div>
-<div>532 Science II</div>
-<div>Ames, IA 50010</div>
-<div>Email: <a href=arendsee@iastate.edu>arendsee@iastate.edu</a></div>
-<h2>Citation</h2>
-Zebulun Arendsee, Ling Li, and Eve Syrkin Wurtele. "Coming of age: orphan genes in plants." Trends in plant science 19.11 (2014): 698-708.'
+if(file.exists('home.html')){
+    home.html <- paste(readLines('home.html'), collapse='')
+} else {
+    home.html <- "'home.html' not found"
+}
 
 # Define UI for dataset viewer application
 shinyUI(
     fluidPage(
         theme = shinytheme('spacelab'),
         tabsetPanel(
-            tabPanel('Home', tags$div(HTML(homehtml))),     
+            tabPanel('Home', tags$div(shiny::HTML(home.html))),
             tabPanel('Columns', DT::dataTableOutput("column_table")),
             tabPanel('Data', sidebarLayout(
                 sidebarPanel(
