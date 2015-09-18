@@ -10,35 +10,20 @@ source('global.R')
 source('statistics.R')
 source('plotting-functions.R')
 
-eligible_for_compare <- function(x) {
-    is.numeric(x) || length(unique(x)) <= 20
-}
-
 shinyServer(function(input, output, session){
     dat <- reactive({
         cat('entering dat()\n')
         columns <- global$metadata$column_name[input$column_table_rows_selected]
         columns <- unique(c(global$key, columns))
+        # assert all fields in the metadata are in the actual data
+        stopifnot(columns %in% names(global$table))
         out <- data.frame(global$table[, columns, with=FALSE])
-
-        # This factoring is vital for filtering columns in DT
-        for(i in 1:ncol(out)){
-            if(length(unique(out[, i])) <= 20){
-                out[, i] <- factor(out[, i])
-            }
-        }
         return(out)
     })
 
     observe({
         columns <- global$metadata$column_name[input$column_table_rows_selected]
-        if(length(columns) > 0){
-            for (i in length(columns):1){
-                if(! eligible_for_compare(dat()[, columns[i]])){
-                    columns <- columns[-i]
-                }
-            }
-        }
+        columns <- columns[global$type[columns] %in% c('cat', 'num')]
         updateSelectInput(session, 'compare.to', choices=c('None', as.character(columns)))
     })
     

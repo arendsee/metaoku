@@ -148,6 +148,25 @@ build.corpa <- function(global){
 
 
 
+set.types <- function(d, types){
+    # cat               -> factor
+    # longcat, cor, seq -> character vectors
+    # num               -> numeric vector
+    for(cname in names(d)){
+        if(types[cname] == 'cat'){
+            d[[cname]] <- factor(d[[cname]])
+        } else {
+            d[[cname]] <- as.character(d[[cname]])
+            if(types[cname] == 'num'){
+                d[[cname]] <- as.numeric(d[[cname]])
+            }
+        }
+    }
+    return(d)
+}
+
+
+
 build.global <- function(){
     global <- list(
         table    = NULL,   # a data.frame holding all data
@@ -161,6 +180,7 @@ build.global <- function(){
     global$metadata <- process.metadata(columns=names(global$table))
     global$type     <- determine.type(global$table)
     global$corpa    <- build.corpa(global)
+    global$table    <- set.types(global$table, global$type)
 
     return(global)
 }
