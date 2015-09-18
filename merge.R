@@ -7,7 +7,7 @@ require(tm)
 # 2. Have headers
 # 3. All tables must have the same first column (the key column)
 
-rdat.filename = 'global-data.Rdat'
+rdat.filename = '.global-data.Rdat'
 
 if(! file.exists(rdat.filename)){
     global          <- list()
