@@ -125,6 +125,7 @@ determine.type <- function(d){
         }
         types[cname] <- typ
     }
+    types['Selection'] <- 'cat'
     return(types)
 }
 

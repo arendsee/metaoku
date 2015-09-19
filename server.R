@@ -67,36 +67,56 @@ shinyServer(function(input, output, session){
         return(sel.nonreactive(col.name=col.name, rows=rows))
     })
 
+    selected.column.name <- reactive({
+        cat('entering selected.column.name()')
+        selcol <- colnames(dat())[input$main_table_columns_selected + 1]
+        return(selcol)
+    })
+
+    selection <- reactive({
+        cat('entering selected.row.indices()')
+        selection <- rep(FALSE, nrow(dat()))
+        selection[input$column_table_rows_selected] <- TRUE
+        return(selection)
+    })
+
     output$plot <- renderPlot({
         cat('entering renderPlot()\n')
 
-        # Dataframe for selected column
-        x = sel()
-        x.name <- colnames(dat())[input$main_table_columns_selected + 1]
+        prepare.axis <- function(aname){
+            a <- list()
+            a$name    <- aname
+            a$type    <- global$type[a$name]
+            a$values  <- dat()[[a$name]]
+            a$defined <- length(a$values > 0)
+            if(is.na(a$type)){
+                a$type == '-'
+            }
+        }
+        
+        # x-axis comes from the selected column
+        x <- prepare.axis(selected.column.name())
 
-        if(is.null(x)){ return() }
+        # y-axis currently comes from 'Compare to' dropdown, may be NULL
+        y <- prepare.axis(input$compare.to)
 
-        # Dataframe for the column selected from the 'Compare to' dropdown, may be NULL
-        y = sel.nonreactive(col.name=input$compare.to)
-        y.name <- input$compare.to
+        # currently there is no handling for other z fields
+        z <- prepare.axis('Selection')
+
+        if(z$name == 'Selection'){
+            z$values <- as.factor(ifelse(selection(), 'selected', 'unselected'))
+        } else {
+            x$values <- x$values[selection()]
+            y$values <- y$values[selection()]
+            z$values <- z$values[selection()]
+        }
+
         fmt.opts <- list(
             logy=input$logy,
             logx=input$logx
         )
 
-        if(!any(x$selected)){ return() }
-
-        g <- plotAnything(
-            x=x$value,
-            y=y$value,
-            group=x$group,
-            selected=x$selected,
-            x.name=x.name,
-            y.name=y.name,
-            fmt.opts=fmt.opts,
-            corpa=global$corpa
-        )
-        return(g)
+        plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
     })
 
     output$column_summary <- renderTable(

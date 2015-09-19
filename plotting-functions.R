@@ -54,96 +54,17 @@ formatPlot <- function(g,
     return(g)
 }
 
-plotAnything <- function(x, y=NULL, group=NULL, selected=NULL,
-                         x.name='x', y.name='y', fmt.opts=NULL, corpa=NULL){
+plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa){
     cat('\tentering plotAnything()\n')
 
-    if(is.null(x) || length(x) == 0){ return() }
-
-    if(!is.null(group)) { group <- factor(group) }
-
-    x.is_txt  <- x.name %in% names(corpa)
-    x.is_num  <- is.numeric(x)
-    x.is_fac  <- is.factor(x)
-    is_single <- is.null(group) || nlevels(group) == 1
-    is_com <- !is.null(y)
-
-    logx <- fmt.opts$logx && is.numeric(x)
-    logy <- fmt.opts$logy && is_com && is.numeric(y)
-
-    if(x.is_txt){
-        if(is.null(selected)){
-            rows <- 1:length(x)
-        } else {
-            rows <- which(selected)
-        }
-        m = corpa[[x.name]]
-        return(plotText(m=m, rows=rows))
-    }
-    
-    # ignore huge factors
-    if (is.factor(x) && nlevels(x) > 20){
+    all.types <- c(x.type, y.type, z.type)
+    if(!x.defined || any(all.types == 'longcat') || any(all.types == 'seq')){
         return()
     }
 
-    ggtitle <- x.name
-    xlab <- NULL
-    ylab <- NULL
+    # TODO implement the dispatch table
+    # adapt functions accordingly
 
-    g <- NULL
-    if(is_com){
-        y.is_num <- is.numeric(y)
-        y.is_fac <- is.factor(y)
-        y.is_txt <- y.name %in% names(corpa)
-        ggtitle <- '2-column comparison'
-        xlab <- x.name
-        ylab <- y.name 
-        if(y.is_txt){
-            # cannot (yet) compare anything to text
-            return()
-        } else if(x.is_num && y.is_num){
-            func <- plotPairedNumericNumeric
-        } else if (x.is_num && y.is_fac){
-            # I flip the coordinates, so need to swap values
-            tmp  <- xlab
-            xlab <- ylab
-            ylab <- tmp
-            tmp  <- logx
-            logx <- logy
-            logy <- tmp
-            rm(tmp)
-            func <- plotPairedNumericFactor
-        } else if (x.is_fac && y.is_num){
-            func <- plotPairedFactorNumeric
-        } else if (x.is_fac && y.is_fac){
-            func <- plotPairedFactorFactor
-        } else {
-           return() 
-        }
-        g <- func(x=x, y=y, group=group)
-    } else {
-        if(is_single){
-            if(x.is_num){
-                func <- plotNumeric
-            } else if(x.is_fac){
-                func <- plotFactor
-            }
-            g <- func(x=x)
-        } else {
-            if(x.is_num){
-                func <- plotSampledNumeric
-            } else if(x.is_fac){
-                func <- plotSampledFactor
-            }
-            g <- func(x=x, group=group)
-        }
-    }
-
-    if(!is.null(g)){
-        g <- formatPlot(g, logx=logx, logy=logy, x.values=x,
-                        ggtitle=ggtitle, xlab=xlab, ylab=ylab)
-    }
-    return(g)
 }
 
 makeWordCloud <- function(mat, rows){
