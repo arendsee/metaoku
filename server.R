@@ -8,7 +8,7 @@ require(reshape2)
 
 source('lib/global.R')
 source('lib/statistics.R')
-source('lib/plotting-functions.R')
+source('lib/dispatch.R')
 
 shinyServer(function(input, output, session){
     dat <- reactive({
