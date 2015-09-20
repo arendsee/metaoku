@@ -52,9 +52,6 @@ build.dispatch.table <- function(){
     d[,'longcat',] <- 'dispatch(x, as.cat(y), z, fmt.opts)'
     d['longcat',,] <- 'dispatch(as.cat(x), y, z, fmt.opts)'
 
-    # --- if y is seq and x isn't, switch
-    # d[,'seq',]     <- 'dispatch(x, as.cat(y), z, fmt.opts)'
-
     # --- if z is defined but not y, promote z
     d[, '-', -i['-']] <- 'dispatch(x, z, y, fmt.opts)'
 
@@ -135,8 +132,10 @@ build.dispatch.table <- function(){
     return(d)
 }
 
+dispatch.table <- build.dispatch.table()
 dispatch <- function(x, y, z, fmt.opts){
-
+    action <- dispatch.table(x.type, y.type, z.type)
+    eval(parse(text=action))
 }
 
 plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa){
