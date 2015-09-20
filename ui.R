@@ -22,7 +22,8 @@ shinyUI(
                     fluidRow(
                         column(2, checkboxInput('logx', 'log2 x-axis')),
                         column(2, checkboxInput('logy', 'log2 y-axis')),
-                        column(6, selectInput('compare.to', 'Compare to', choices='None'))),
+                        column(4, selectInput('compare.to', 'Compare to', choices='None')),
+                        column(4, selectInput('group.by', 'Group by', choices='None'))),
                     fluidRow(
                         column(6, tableOutput('column_summary')),
                         column(6, tableOutput('comparison_summary'))),

@@ -1,12 +1,7 @@
 require(shiny)
-require(plyr)
-require(ggplot2)
 require(DT)
-require(wordcloud) 
-require(tm)
-require(reshape2)
 
-source('lib/global.R')
+source('lib/load.R')
 source('lib/statistics.R')
 source('lib/dispatch.R')
 
@@ -22,9 +17,12 @@ shinyServer(function(input, output, session){
     })
 
     observe({
+        # set compare.to (y) choices
         columns <- global$metadata$column_name[input$column_table_rows_selected]
-        columns <- columns[global$type[columns] %in% c('cat', 'num')]
         updateSelectInput(session, 'compare.to', choices=c('None', as.character(columns)))
+        # set group.by (z) choices (this may not be cor or seq)
+        columns <- columns[global$type[columns] %in% c('cor', 'seq')]
+        updateSelectInput(session, 'group.by', choices=c('None', 'Selection', as.character(columns)))
     })
     
 
@@ -116,7 +114,9 @@ shinyServer(function(input, output, session){
             logx=input$logx
         )
 
-        plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
+        return(NULL)
+
+        #plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
     })
 
     output$column_summary <- renderTable(

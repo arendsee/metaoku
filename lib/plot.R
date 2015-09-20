@@ -1,3 +1,8 @@
+require(ggplot2)
+require(wordcloud) 
+require(tm)
+require(reshape2)
+
 # common word clouds for each category (n wordclouds)
 cor.cor.cat.plot <- function(x, y, z, fmt.opts){
 
