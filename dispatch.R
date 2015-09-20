@@ -1,3 +1,5 @@
+source('plot.R')
+
 NUM2CAT_LEVELS <- 7
 MAX_LEVELS <- 20
 
@@ -7,10 +9,10 @@ num2cat <- function(x){
 
 longcat2cat <- function(x){
     x <- as.factor(x)
-    top.n <- names(summary(xs, maxsum=MAX_LEVELS))[-MAX_LEVELS]
+    top.n <- names(summary(x, maxsum=MAX_LEVELS))[-MAX_LEVELS]
     x <- as.character(x)
     x <- ifelse(x %in% top.n, x, 'other')
-    x <- as.factor(x, levels=c(top.n, 'other'))
+    x <- factor(x, levels=c(top.n, 'other'))
     x
 }
 
@@ -134,14 +136,13 @@ build.dispatch.table <- function(){
 
 dispatch.table <- build.dispatch.table()
 dispatch <- function(x, y, z, fmt.opts){
-    action <- dispatch.table(x.type, y.type, z.type)
+    cat('\tentering dispatch\n')
+    action <- dispatch.table[x$type, y$type, z$type]
     eval(parse(text=action))
 }
 
 plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa){
     cat('\tentering plotAnything()\n')
-
     g <- dispatch(x, y, z, fmt.opts)
-
     return(g)
 }

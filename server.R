@@ -1,9 +1,10 @@
 require(shiny)
 require(DT)
 
-source('lib/load.R')
-source('lib/statistics.R')
-source('lib/dispatch.R')
+source('load.R')
+source('statistics.R')
+source('plot.R')
+source('dispatch.R')
 
 shinyServer(function(input, output, session){
     dat <- reactive({
@@ -66,13 +67,18 @@ shinyServer(function(input, output, session){
     })
 
     selected.column.name <- reactive({
-        cat('entering selected.column.name()')
-        selcol <- colnames(dat())[input$main_table_columns_selected + 1]
-        return(selcol)
+        cat('entering selected.column.name()\n')
+        cols <- colnames(dat())
+        i <- input$main_table_columns_selected
+        if(is.null(i)){
+            return(NULL)
+        } else {
+            return(cols[i + 1])
+        }
     })
 
     selection <- reactive({
-        cat('entering selected.row.indices()')
+        cat('entering selected.row.indices()\n')
         selection <- rep(FALSE, nrow(dat()))
         selection[input$column_table_rows_selected] <- TRUE
         return(selection)
@@ -84,16 +90,23 @@ shinyServer(function(input, output, session){
         prepare.axis <- function(aname){
             a <- list()
             a$name    <- aname
-            a$type    <- global$type[a$name]
             a$values  <- dat()[[a$name]]
             a$defined <- length(a$values > 0)
-            if(is.na(a$type)){
-                a$type == '-'
+            if(aname %in% names(global$type)){
+                a$type <- global$type[aname]
+            } else {
+                a$type <- '-'
             }
+            return(a)
+        }
+
+        cname <- selected.column.name()
+        if(is.null(cname)){
+            return(NULL)
         }
         
         # x-axis comes from the selected column
-        x <- prepare.axis(selected.column.name())
+        x <- prepare.axis(cname)
 
         # y-axis currently comes from 'Compare to' dropdown, may be NULL
         y <- prepare.axis(input$compare.to)
@@ -114,9 +127,7 @@ shinyServer(function(input, output, session){
             logx=input$logx
         )
 
-        return(NULL)
-
-        #plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
+        plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
     })
 
     output$column_summary <- renderTable(
