@@ -6,9 +6,9 @@ require(wordcloud)
 require(tm)
 require(reshape2)
 
-source('global.R')
-source('statistics.R')
-source('plotting-functions.R')
+source('lib/global.R')
+source('lib/statistics.R')
+source('lib/plotting-functions.R')
 
 shinyServer(function(input, output, session){
     dat <- reactive({

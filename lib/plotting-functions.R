@@ -66,8 +66,8 @@ build.dispatch.table <- function(){
     d['cor', 'num', c('-', 'cat')] <- 'dispatch(x, as.cat(y), z, fmt.opts)'
 
     # --- can't compare seq and cor
-    d['seq', 'cor', ]      <- ''
-    d['cor', 'seq', ]      <- ''
+    d['seq', 'cor', ] <- ''
+    d['cor', 'seq', ] <- ''
 
     # --- seq vs num plots already make nlevels of plots, can't do more
     d['seq', 'num', 'cat'] <- ''
@@ -84,67 +84,48 @@ build.dispatch.table <- function(){
 
     # common word clouds for each category (n wordclouds)
     d['cor', 'cor', 'cat'] <- 'cor.cor.cat.plot(x, y, z, fmt.opts)'
-
     # common words between the categories (n*m wordclouds)
     d['cor', 'cat', 'cat'] <- 'cor.cat.cat.plot(x, y, z, fmt.opts)'
-
     # z heatmaps OR z dodged barplots
     d['cat', 'cat', 'cat'] <- 'cat.cat.cat.plot(x, y, z, fmt.opts)'
-
     # z boxplots (coord flip)
     d['num', 'cat', 'cat'] <- 'num.cat.cat.plot(x, y, z, fmt.opts)'
-
     # z boxplots
     d['cat', 'num', 'cat'] <- 'cat.num.cat.plot(x, y, z, fmt.opts)'
-
     # z scatter plots OR colored scatter plot
     d['num', 'num', 'cat'] <- 'num.num.cat.plot(x, y, z, fmt.opts)'
-
     # z dodged barplots (comparing sequence composition)
     d['seq', 'seq', 'cat'] <- 'seq.seq.cat.plot(x, y, fmt.opts)'
-
     # y*z barplots
     d['seq', 'cat', 'cat'] <- 'seq.cat.cat.plot(x, y, fmt.opts)'
 
     # dodged barplot of sequence composition
     d['seq', 'seq', '-'] <- 'seq.seq.plot(x, y, fmt.opts)'
-
     # scatter/density map for character in seq versus num
     d['seq', 'num', '-'] <- 'seq.num.plot(x, y, fmt.opts)'
-
     # as above with coord flip
     d['num', 'seq', '-'] <- 'num.seq.plot(x, y, fmt.opts)'
-
     # y barplots
     d['seq', 'cat', '-'] <- 'seq.cat.plot(x, y, fmt.opts)'
-
     # 3 word clouds (x/y, x+y, y/x)
     d['cor', 'cor', '-'] <- 'cor.cor.plot(x, y, fmt.opts)'
-
     # y*y word clouds
     d['cor', 'cat', '-'] <- 'cor.cat.plot(x, y, fmt.opts)'
-
     # heatmap OR dodged barplot OR network
     d['cat', 'cat', '-'] <- 'cat.cat.plot(x, y, fmt.opts)'
-
     # boxplot
     d['cat', 'num', '-'] <- 'cat.num.plot(x, y, fmt.opts)'
-
     # boxplot coord flip
     d['num', 'cat', '-'] <- 'num.cat.plot(x, y, fmt.opts)'
-
     # scatter OR density map
     d['num', 'num', '-'] <- 'num.num.plot(x, y, fmt.opts)'
 
     # barplot
     d['cat', '-', '-'] <- 'cat.plot(x, fmt.opts)'
-
     # histogram
     d['num', '-', '-'] <- 'num.plot(x, fmt.opts)'
-
     # wordcloud
     d['cor', '-', '-'] <- 'cor.plot(x, fmt.opts)'
-
     # composition barplot
     d['seq', '-', '-'] <- 'seq.plot(x, fmt.opts)'
 

@@ -2,10 +2,9 @@ require(shiny)
 require(shinythemes)
 require(shinyBS)
 require(DT)
-source('global.R')
 
-if(file.exists('home.html')){
-    home.html <- paste(readLines('home.html'), collapse='')
+if(file.exists('html/home.html')){
+    home.html <- paste(readLines('html/home.html'), collapse='')
 } else {
     home.html <- "'home.html' not found"
 }
@@ -30,9 +29,8 @@ shinyUI(
                     fluidRow(column(12, textInput('user_ids', 'Enter ids (e.g. "AT5G28465.1 AT5G54910.1 AT5G58170.1")'))),
                     downloadButton('downloadData', 'Download')
                 ),
-                mainPanel(
-                    DT::dataTableOutput("main_table"))
-                ))
-            )
+                mainPanel(DT::dataTableOutput("main_table"))
+            ))
         )
+    )
 )
