@@ -22,7 +22,7 @@ shinyServer(function(input, output, session){
         columns <- global$metadata$column_name[input$column_table_rows_selected]
         updateSelectInput(session, 'compare.to', choices=c('None', as.character(columns)))
         # set group.by (z) choices (this may not be cor or seq)
-        columns <- columns[global$type[columns] %in% c('cor', 'seq')]
+        columns <- columns[global$type[columns] %in% c('cat', 'num', 'longcat')]
         updateSelectInput(session, 'group.by', choices=c('None', 'Selection', as.character(columns)))
     })
     
