@@ -29,22 +29,48 @@ cor.cat.cat.plot <- function(x, y, z, fmt.opts){
 
 # z heatmaps OR z dodged barplots
 cat.cat.cat.plot <- function(x, y, z, fmt.opts){
-    cat.cat.plot(x, y, fmt.opts) + facet_grid(z ~ .)
+    d <- build.dt(x, y, z)
+    d <- ddply(d, colnames(d), summarize, obs=length(x))
+    d <- ddply(d, 'x', mutate, X=sum(obs))
+    d <- ddply(d, 'y', mutate, Y=sum(obs))
+    d$exp <- d$X * d$Y / sum(d$obs)
+    d$lograt <- log(d$obs / d$exp)
+    ggplot(d) +
+        geom_tile(aes(x=x, y=y, fill=lograt)) +
+        facet_wrap(~z) +
+        labs(x=x$name, y=y$name)
 }
 
 # z boxplots (coord flip)
 num.cat.cat.plot <- function(x, y, z, fmt.opts){
-
+    g <- ggplot(build.dt(x, y, z)) +
+        geom_boxplot(aes(x=y, y=x)) +
+        coord_flip() +
+        labs(x=y$name, y=x$name) +
+        facet_wrap(~z)
+    if(fmt.opts$logx){ g <- g + logy }
+    g
 }
 
 # z boxplots
 cat.num.cat.plot <- function(x, y, z, fmt.opts){
-
+    g <- ggplot(build.dt(x, y, z)) +
+        geom_boxplot(aes(x=x, y=y)) +
+        labs(x=x$name, y=y$name) +
+        facet_wrap(~z)
+    if(fmt.opts$logy){ g <- g + logy }
+    g
 }
 
 # z scatter plots OR colored scatter plot
 num.num.cat.plot <- function(x, y, z, fmt.opts){
-
+    g <- ggplot(build.dt(x, y, z)) +
+        geom_point(aes(x=x, y=y)) +
+        labs(x=x$name, y=y$name) +
+        facet_wrap(~z)
+    if(fmt.opts$logx){ g <- g + logx }
+    if(fmt.opts$logy){ g <- g + logy }
+    g
 }
 
 # z dodged barplots (comparing sequence composition)
@@ -96,12 +122,12 @@ cat.cat.plot <- function(x, y, fmt.opts){
     d$exp <- d$X * d$Y / sum(d$obs)
     d$lograt <- log(d$obs / d$exp)
     ggplot(d) +
-        geom_tile(aes(x=x, y=y, fill=lograt))
+        geom_tile(aes(x=x, y=y, fill=lograt)) +
+        labs(x=x$name, y=y$name)
 }
 
 # boxplot
 cat.num.plot <- function(x, y, fmt.opts){
-    cat('\tentering cat.num.plot()\n')
     g <- ggplot(build.dt(x, y)) +
         geom_boxplot(aes(x=x, y=y)) +
         labs(x=x$name, y=y$name)
@@ -111,7 +137,6 @@ cat.num.plot <- function(x, y, fmt.opts){
 
 # boxplot coord flip
 num.cat.plot <- function(x, y, fmt.opts){
-    cat('\tentering num.cat.plot()\n')
     g <- ggplot(build.dt(x, y)) +
         geom_boxplot(aes(x=y, y=x)) +
         coord_flip() +
