@@ -100,6 +100,9 @@ shinyServer(function(input, output, session){
             if(a$type == 'cor'){
                 a$mat <- global$corpa[[a$name]]
             }
+            if(a$type == 'seq'){
+                a$seq <- global$seq[[a$name]]
+            }
             return(a)
         }
 
@@ -107,6 +110,10 @@ shinyServer(function(input, output, session){
             cat('entering get.column.selection()\n')
             if(a$type == 'cor'){
                 a$mat <- a$mat[selection(), ]
+            }
+            if(a$type == 'seq'){
+                m <- a$seq[,1] %in% dat()[selection(), global$key]
+                a$seq <- a$seq[m, ]
             }
             a$values <- a$values[selection()]
             return(a)

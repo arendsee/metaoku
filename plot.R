@@ -157,7 +157,21 @@ cor.plot <- function(x, fmt.opts){
 
 # composition barplot
 seq.plot <- function(x, fmt.opts){
-
+    d <- x$seq
+    xlab <- names(d)[2]
+    names(d) <- c('key', 'x', 'count')
+    d <- data.table(d)
+    setkey(d, key)
+    d <- merge(d, d[, sum(count), by=key])
+    d$prop <- d$count / d$V1
+    d <- d[, list(median(prop),
+                  quantile(prop, probs=0.25),
+                  quantile(prop, probs=0.75)), by=x]
+    setnames(d, c('V1', 'V2', 'V3'), c('prop', 'q25', 'q75'))
+    ggplot(d) +
+        geom_pointrange(aes(x=x, y=prop, ymin=q25, ymax=q75)) +
+        labs(x=xlab, y='Percent composition') +
+        ggtitle('Sequence composition')
 }
 
 
