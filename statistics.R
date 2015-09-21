@@ -1,3 +1,5 @@
+require(plyr)
+
 comparisonSummary <- function(d){
     cat('\tentering comparisonSummary()\n')
 

@@ -80,7 +80,7 @@ shinyServer(function(input, output, session){
     selection <- reactive({
         cat('entering selected.row.indices()\n')
         selection <- rep(FALSE, nrow(dat()))
-        selection[input$column_table_rows_selected] <- TRUE
+        selection[input$main_table_rows_all] <- TRUE
         return(selection)
     })
 
@@ -97,6 +97,18 @@ shinyServer(function(input, output, session){
             } else {
                 a$type <- '-'
             }
+            if(a$type == 'cor'){
+                a$mat <- global$corpa[[a$name]]
+            }
+            return(a)
+        }
+
+        get.column.selection <- function(a){
+            cat('entering get.column.selection()\n')
+            if(a$type == 'cor'){
+                a$mat <- a$mat[selection(), ]
+            }
+            a$values <- a$values[selection()]
             return(a)
         }
 
@@ -111,15 +123,20 @@ shinyServer(function(input, output, session){
         # y-axis currently comes from 'Compare to' dropdown, may be NULL
         y <- prepare.axis(input$compare.to)
 
-        # currently there is no handling for other z fields
-        z <- prepare.axis('Selection')
+        # z-axis from 'Group by' dropdown
+        z <- prepare.axis(input$group.by)
 
         if(z$name == 'Selection'){
-            z$values <- as.factor(ifelse(selection(), 'selected', 'unselected'))
-        } else {
-            x$values <- x$values[selection()]
-            y$values <- y$values[selection()]
-            z$values <- z$values[selection()]
+            k <- sum(selection())
+            if(k > 0 && k < nrow(dat())){
+                z$values <- as.factor(ifelse(selection(), 'selected', 'unselected'))
+            } else {
+                z$type = '-'
+            }
+        } else if(sum(selection()) > 0){
+            x <- get.column.selection(x)
+            y <- get.column.selection(y)
+            z <- get.column.selection(z)
         }
 
         fmt.opts <- list(

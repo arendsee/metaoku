@@ -138,7 +138,10 @@ dispatch.table <- build.dispatch.table()
 dispatch <- function(x, y, z, fmt.opts){
     cat('\tentering dispatch\n')
     action <- dispatch.table[x$type, y$type, z$type]
-    eval(parse(text=action))
+    cat('\t * types: ', x$type, y$type, z$type, '\n')
+    cat('\t * names: ', x$name, y$name, z$name, '\n')
+    cat('\t * action: ', action, '\n')
+    return(eval(parse(text=action)))
 }
 
 plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa){

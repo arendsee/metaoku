@@ -3,6 +3,20 @@ require(wordcloud)
 require(tm)
 require(reshape2)
 
+build.dt <- function(x, y=NULL, z=NULL){
+    d <- data.frame(x=x$value)
+    if(!is.null(y)){
+        d$y <- y$value
+    }
+    if(!is.null(z)){
+        d$z <- z$value
+    }
+    d
+}
+
+logx <- scale_x_continuous(trans='log2')
+logy <- scale_y_continuous(trans='log2')
+
 # common word clouds for each category (n wordclouds)
 cor.cor.cat.plot <- function(x, y, z, fmt.opts){
 
@@ -80,39 +94,71 @@ cat.cat.plot <- function(x, y, fmt.opts){
 
 # boxplot
 cat.num.plot <- function(x, y, fmt.opts){
-
+    cat('\tentering cat.num.plot()\n')
+    g <- ggplot(build.dt(x, y)) +
+        geom_boxplot(aes(x=x, y=y)) +
+        labs(x=x$name, y=y$name)
+    if(fmt.opts$logy){ g <- g + logy }
+    g
 }
 
 # boxplot coord flip
 num.cat.plot <- function(x, y, fmt.opts){
-
+    cat('\tentering num.cat.plot()\n')
+    g <- ggplot(build.dt(x, y)) +
+        geom_boxplot(aes(x=y, y=x)) +
+        coord_flip() +
+        labs(x=y$name, y=x$name)
+    if(fmt.opts$logx){ g <- g + logy }
+    g
 }
 
 # scatter OR density map
 num.num.plot <- function(x, y, fmt.opts){
-
+    cat('\tentering num.num.plot()\n')
+    g <- ggplot(build.dt(x, y)) +
+        geom_point(aes(x=x, y=y)) +
+        labs(x=x$name, y=y$name)
+    if(fmt.opts$logx){ g <- g + logx }
+    if(fmt.opts$logy){ g <- g + logy }
+    g
 }
 
 # barplot
 cat.plot <- function(x, fmt.opts){
-
+    cat('\tentering cat.plot()\n')
+    ggplot(build.dt(x)) +
+        geom_bar(aes(x=x)) +
+        labs(x=x$name)
 }
 
 # histogram
 num.plot <- function(x, fmt.opts){
-
+    cat('\tentering num.plot()\n')
+    g <- ggplot(build.dt(x)) +
+        geom_histogram(aes(x=x)) +
+        labs(x=x$name)
+    if(fmt.opts$logx){ g <- g + logx }
+    g
 }
 
 # wordcloud
 cor.plot <- function(x, fmt.opts){
-
+    cat('\tentering cor.plot()\n')
+    obs.sel <- sort(colSums(x$mat), decreasing=TRUE)
+    d <- data.frame(word = names(obs.sel), freq=obs.sel)
+    pal2 <- brewer.pal(8, "Dark2")
+    wordcloud(d$word, d$freq,
+              min.freq=3, max.words=100,
+              random.order=FALSE,
+              rot.per=.15,
+              colors=pal2)
 }
 
 # composition barplot
 seq.plot <- function(x, fmt.opts){
 
 }
-
 
 
 
