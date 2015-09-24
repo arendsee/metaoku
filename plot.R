@@ -95,21 +95,43 @@ cat.cat.plot <- function(x, y, fmt.opts){
 # boxplot
 cat.num.plot <- function(x, y, fmt.opts){
     cat('\tentering cat.num.plot()\n')
-    g <- ggplot(build.dt(x, y)) +
-        geom_boxplot(aes(x=x, y=y)) +
-        labs(x=x$name, y=y$name)
-    if(fmt.opts$logy){ g <- g + logy }
+    if(nlevels(x$value) > 3){
+        g <- ggplot(build.dt(x, y)) +
+            geom_boxplot(aes(x=x, y=y)) +
+            labs(x=x$name, y=y$name)
+        if(fmt.opts$logy){ g <- g + logy }
+    } else {
+        if(fmt.opts$logy){ fmt.opts$logx <- TRUE }
+        g <- num.cat.plot(y, x, fmt.opts)
+    }
     g
 }
 
 # boxplot coord flip
 num.cat.plot <- function(x, y, fmt.opts){
     cat('\tentering num.cat.plot()\n')
-    g <- ggplot(build.dt(x, y)) +
-        geom_boxplot(aes(x=y, y=x)) +
-        coord_flip() +
-        labs(x=y$name, y=x$name)
-    if(fmt.opts$logx){ g <- g + logy }
+    d <- build.dt(x, y)
+    if(nlevels(y$value) > 3){
+        g <- ggplot(d) +
+            geom_boxplot(aes(x=y, y=x)) +
+            coord_flip() +
+            labs(x=y$name, y=x$name)
+        if(fmt.opts$logx){ g <- g + logy }
+    } else {
+        g <- ggplot(d) +
+            geom_histogram(
+                aes(
+                    x=x,
+                    y=..density..,
+                    fill=y
+                ),
+                alpha=.75,
+                position='identity'
+            ) + theme(axis.text.y=element_blank(),
+                      axis.ticks.y=element_blank()) +
+              labs(x=x$name)
+        if(fmt.opts$logx){ g <- g + logx }
+    }
     g
 }
 
