@@ -1,6 +1,8 @@
 require(data.table)
 require(Matrix)
 require(tm)
+require(plyr)
+require(reshape2)
 
 # All datasets are
 # 1. TAB-delimited
@@ -32,7 +34,7 @@ merge.files <- function(){
     global.d <- NULL
     for (f in list.files(path=DATA_DIR, pattern=DATA_PAT, full.names=TRUE)){
         d <- as.data.table(read.delim(f, quote="", stringsAsFactors=FALSE))
-        key = colnames(d)[1]
+        key = names(d)[1]
         setkeyv(d, key)
 
         # All input tables must start with the same key
@@ -94,9 +96,6 @@ determine.type <- function(d){
         u <- length(unique(x))
         N <- length(x)
 
-        # if the input isn't numeric or character, something weird is going on
-        stopifnot(is.numeric(x) || is.character(x))
-
         if(is.numeric(x)){
             # determine whether to treat a numeric vector as num or cat
             if(all(x %% 1 == 0, na.rm=TRUE) && u <= MAX_LEVELS && u / N < MAX_PROP){
@@ -149,6 +148,30 @@ build.corpa <- function(global){
 
 
 
+build.seqs <- function(seqs){
+    seqs <- list()
+    for(cname in names(global$type[global$type == 'seq'])){
+        s1     <- global$table[[cname]]
+        hasseq <- !is.na(s1)
+        s2     <- strsplit(toupper(s1[hasseq]), '')
+        let    <- unique(unlist(s2))
+        s3     <- lapply(s2, table)
+        d <- matrix(rep(0, sum(hasseq) * length(let)),
+                    ncol=length(let),
+                    dim=list(global$table[[global$key]][hasseq], let))
+        for(i in 1:nrow(d)){
+            d[i, names(s3[[i]])] <- s3[[i]]
+        }
+
+        d <- melt(d)
+        colnames(d) <- c('model', 'aa', 'count')
+        seqs[[cname]] <- d
+    }
+    return(seqs)
+}
+
+
+
 set.types <- function(d, types){
     # cat               -> factor
     # longcat, cor, seq -> character vectors
@@ -176,13 +199,13 @@ build.global <- function(){
         metadata = NULL,   # metadata for each columns
         type     = NULL
     )
-
     global$table    <- merge.files()
+    global$key      <- names(global$table)[1]
     global$metadata <- process.metadata(columns=names(global$table))
     global$type     <- determine.type(global$table)
     global$corpa    <- build.corpa(global)
     global$table    <- set.types(global$table, global$type)
-
+    global$seqs     <- build.seqs(global)
     return(global)
 }
 

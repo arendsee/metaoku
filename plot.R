@@ -29,22 +29,48 @@ cor.cat.cat.plot <- function(x, y, z, fmt.opts){
 
 # z heatmaps OR z dodged barplots
 cat.cat.cat.plot <- function(x, y, z, fmt.opts){
-
+    d <- build.dt(x, y, z)
+    d <- ddply(d, colnames(d), summarize, obs=length(x))
+    d <- ddply(d, 'x', mutate, X=sum(obs))
+    d <- ddply(d, 'y', mutate, Y=sum(obs))
+    d$exp <- d$X * d$Y / sum(d$obs)
+    d$lograt <- log(d$obs / d$exp)
+    ggplot(d) +
+        geom_tile(aes(x=x, y=y, fill=lograt)) +
+        facet_wrap(~z) +
+        labs(x=x$name, y=y$name)
 }
 
 # z boxplots (coord flip)
 num.cat.cat.plot <- function(x, y, z, fmt.opts){
-
+    g <- ggplot(build.dt(x, y, z)) +
+        geom_boxplot(aes(x=y, y=x)) +
+        coord_flip() +
+        labs(x=y$name, y=x$name) +
+        facet_wrap(~z)
+    if(fmt.opts$logx){ g <- g + logy }
+    g
 }
 
 # z boxplots
 cat.num.cat.plot <- function(x, y, z, fmt.opts){
-
+    g <- ggplot(build.dt(x, y, z)) +
+        geom_boxplot(aes(x=x, y=y)) +
+        labs(x=x$name, y=y$name) +
+        facet_wrap(~z)
+    if(fmt.opts$logy){ g <- g + logy }
+    g
 }
 
 # z scatter plots OR colored scatter plot
 num.num.cat.plot <- function(x, y, z, fmt.opts){
-
+    g <- ggplot(build.dt(x, y, z)) +
+        geom_point(aes(x=x, y=y)) +
+        labs(x=x$name, y=y$name) +
+        facet_wrap(~z)
+    if(fmt.opts$logx){ g <- g + logx }
+    if(fmt.opts$logy){ g <- g + logy }
+    g
 }
 
 # z dodged barplots (comparing sequence composition)
@@ -89,7 +115,15 @@ cor.cat.plot <- function(x, y, fmt.opts){
 
 # heatmap OR dodged barplot OR network
 cat.cat.plot <- function(x, y, fmt.opts){
-
+    d <- build.dt(x, y)
+    d <- ddply(d, colnames(d), summarize, obs=length(x))
+    d <- ddply(d, 'x', mutate, X=sum(obs))
+    d <- ddply(d, 'y', mutate, Y=sum(obs))
+    d$exp <- d$X * d$Y / sum(d$obs)
+    d$lograt <- log(d$obs / d$exp)
+    ggplot(d) +
+        geom_tile(aes(x=x, y=y, fill=lograt)) +
+        labs(x=x$name, y=y$name)
 }
 
 # boxplot
@@ -179,48 +213,25 @@ cor.plot <- function(x, fmt.opts){
 
 # composition barplot
 seq.plot <- function(x, fmt.opts){
-
+    d <- x$seq
+    xlab <- names(d)[2]
+    names(d) <- c('key', 'x', 'count')
+    d <- data.table(d)
+    setkey(d, key)
+    d <- merge(d, d[, sum(count), by=key])
+    d$prop <- d$count / d$V1
+    d <- d[, list(median(prop),
+                  quantile(prop, probs=0.25),
+                  quantile(prop, probs=0.75)), by=x]
+    setnames(d, c('V1', 'V2', 'V3'), c('prop', 'q25', 'q75'))
+    ggplot(d) +
+        geom_pointrange(aes(x=x, y=prop, ymin=q25, ymax=q75)) +
+        labs(x=xlab, y='Percent composition') +
+        ggtitle('Sequence composition')
 }
 
 
 
-# makeWordCloud <- function(mat, rows){
-#     cat('\tentering makeWordCloud()\n')
-#     obs.sel <- sort(colSums(mat[rows, ]), decreasing=TRUE)
-# 
-#     # # eventually I should do more statistics with this
-#     # v.ori <- sort(colSums(mat), decreasing=TRUE)
-#     # exp.sel <- sum(v.sel) * (v.ori / sum(v.ori))
-#     # sel <- data.frame(exp=exp.sel, obs=obs.sel, rat=log(obs.sel / exp.sel))
-# 
-#     d <- data.frame(word = names(obs.sel), freq=obs.sel)
-#     pal2 <- brewer.pal(8, "Dark2")
-#     g = wordcloud(d$word, d$freq,
-#                   min.freq=3, max.words=100,
-#                   random.order=FALSE,
-#                   rot.per=.15,
-#                   colors=pal2)
-#     return(g)
-# }
-# 
-# plotText <- function(m, rows){
-#     cat('\tentering plotText()\n')
-#     # For some reason, wordcloud segfaults when there are too few rows
-#     if(length(rows) > 5){
-#         return(makeWordCloud(m, rows))
-#     } else {
-#         return()
-#     }
-# }
-# 
-# plotNumeric <- function(x){
-#     cat('\tentering plotNumeric()\n')
-#     d <- data.frame(x=x)
-#     g <- ggplot(d) +
-#         geom_histogram(aes(x=x))
-#     return(g)
-# }
-# 
 # plotSampledNumeric <- function(x, group){
 #     cat('\tentering plotSampledNumeric()\n')
 #     d <- data.frame(x=x, group=group)
@@ -239,14 +250,6 @@ seq.plot <- function(x, fmt.opts){
 # }
 # 
 # 
-# 
-# plotFactor <- function(x){
-#     cat('\tentering plotFactor()\n')
-#     d <- data.frame(x=x)
-#     g <- ggplot(d) +
-#         geom_bar(aes(x=x))
-#     return(g)
-# }
 # 
 # plotSampledFactor <- function(x, group){
 #     cat('\tentering plotSampledFactor()\n')

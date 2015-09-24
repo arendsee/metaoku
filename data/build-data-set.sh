@@ -387,3 +387,13 @@ load-meta \
     "protein secondary structure" \
     "predicted proportion of protein coil content" \
     "$ss_src" "$ss_lnk" "$ss_ref"
+
+echo -e "model\taa_seq" > at-prot.tab
+smof clean -w 0 $datadir/at.faa |
+    perl -pe 's/>(\S*).*\n/$1\t/' >> at-prot.tab
+
+load-meta \
+    'aa_seq' \
+    'sequence' \
+    'full protein sequence' \
+    'TAIR10' "" '10.1093/nar/gkr1090'
