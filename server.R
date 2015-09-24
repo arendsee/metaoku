@@ -2,7 +2,6 @@ require(shiny)
 require(DT)
 
 source('load.R')
-source('statistics.R')
 source('plot.R')
 source('dispatch.R')
 
@@ -40,30 +39,6 @@ shinyServer(function(input, output, session){
         } else {
             return(c())
         }
-    })
-
-    sel.nonreactive <- function(col.name, rows=input$main_table_rows_all){
-        cat('entering sel.nonreactive()\n')
-
-        if(length(col.name) > 0 && col.name %in% colnames(dat())){
-            out <- data.frame(
-                value=dat()[, col.name],
-                selected=rep(FALSE, nrow(dat()))
-            )
-            out$selected[rows] <- TRUE
-            out$group = ifelse(out$selected, 'selected', 'non-selected')
-            return(out)
-        } else {
-            return(NULL)
-        }
-    }
-
-    sel <- reactive({
-        cat('entering sel()\n')
-        col.id  <- input$main_table_columns_selected + 1
-        col.name <- colnames(dat())[col.id]
-        rows  <- input$main_table_rows_all
-        return(sel.nonreactive(col.name=col.name, rows=rows))
     })
 
     selected.column.name <- reactive({
@@ -153,16 +128,6 @@ shinyServer(function(input, output, session){
 
         plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
     })
-
-    output$column_summary <- renderTable(
-        columnSummary(sel()),
-        include.rownames=FALSE
-    )
-
-    output$comparison_summary <- renderTable(
-        comparisonSummary(d=sel()),
-        include.rownames=FALSE
-    )
 
     get_user_data <- function(){
         cat('entering get_user_data()\n')
