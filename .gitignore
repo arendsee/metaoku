@@ -1,5 +1,6 @@
 *.Rdat
 *.tab
+.Rprofile
 packrat/lib*
 data/METADATA
 rsconnect/
