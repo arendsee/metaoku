@@ -1,4 +1,6 @@
-# An app for sharing, subsetting and automagically plotting data of any type
+# Unnamed app
+
+A shiny app for sharing, subsetting and automagically plotting data of any type
 
 # Installation
 
