@@ -2,10 +2,18 @@ require(shiny)
 require(DT)
 
 source('load.R')
-source('plot.R')
 source('dispatch.R')
 
 shinyServer(function(input, output, session){
+
+    # =========================================================================
+    # Update working dataset when columns are selected from the Column Table
+    # 1. get the column names from the rows of the Column Table (which is built
+    #    based on the METADATA file)
+    # 2. return the UNIQUE rows
+    #    * NOTE: this breaks the 1-to-1 correlation between row number and row
+    #      content, so rows must be accessed by KEY when linking out.
+    # =========================================================================
     dat <- reactive({
         cat('entering dat()\n')
         columns <- global$metadata$column_name[input$column_table_rows_selected]
@@ -17,6 +25,14 @@ shinyServer(function(input, output, session){
         return(out)
     })
 
+
+
+    # =========================================================================
+    # Record column names as they are selected from the Column Table
+    #  * Update choices in the "Compare to" menu
+    #  * Update choices in the "Group by" menu
+    #    - limit options to datatypes that can be cast as categorical
+    # =========================================================================
     observe({
         # set compare.to (y) choices
         columns <- global$metadata$column_name[input$column_table_rows_selected]
@@ -27,8 +43,11 @@ shinyServer(function(input, output, session){
     })
     
 
-    # Read input from textInput box, parse out ids, and if they are present in
-    # the key column of the main dataset, return them
+
+    # =========================================================================
+    # Read input from textInput box, extract ids, and return if they are
+    # present in the key column of the main dataset
+    # =========================================================================
     user.keys <- reactive({
         cat('entering user.rows()\n')
         # this prevents whitespace in the box from stopping plotting
@@ -45,6 +64,12 @@ shinyServer(function(input, output, session){
         }
     })
 
+
+
+    # =========================================================================
+    # Get the name of the column selected in the main_table
+    # Return NULL if no columns are selected
+    # =========================================================================
     selected.column.name <- reactive({
         cat('entering selected.column.name()\n')
         cols <- names(dat())
@@ -56,6 +81,12 @@ shinyServer(function(input, output, session){
         }
     })
 
+
+
+    # =========================================================================
+    # Return a logical vector recording the rows in the table present after
+    # application of the filters
+    # =========================================================================
     selection <- reactive({
         cat('entering selected.row.indices()\n')
         selection <- rep(FALSE, nrow(dat()))
@@ -63,6 +94,17 @@ shinyServer(function(input, output, session){
         return(selection)
     })
 
+
+
+    # =========================================================================
+    # Render plots
+    # Axes:
+    #   x-axis: The selected column in main_table.
+    #   y-axis: The column selected from the 'Compare to' menu.
+    #   z-axis: The column selected from the 'Group by' menu. This variable
+    #           must be categorical, since it is used to facet, boxplot, or
+    #           barplot the data.
+    # =========================================================================
     output$plot <- renderPlot({
         cat('entering renderPlot()\n')
 
@@ -133,6 +175,12 @@ shinyServer(function(input, output, session){
         plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
     })
 
+
+
+    # =========================================================================
+    # The DataTable shown in the Data tab
+    # Columns selected from this table are plotted in the sidebar
+    # =========================================================================
     output$main_table <- DT::renderDataTable(
         dat()[user.keys()],
         rownames=FALSE,
@@ -149,6 +197,15 @@ shinyServer(function(input, output, session){
             search.regex=TRUE
     ))
 
+
+
+    # =========================================================================
+    # The DataTable shown in the Columns tab
+    # * The rows selected determine which columns of the global dataset are
+    #   dislayed in the Data tab (main_table).
+    # * This table also displays the metadata for each field. There are no
+    #   rules as to what columns may be included.
+    # =========================================================================
     output$column_table <- DT::renderDataTable(
         {
             cat('entering column_table()\n')
@@ -170,8 +227,13 @@ shinyServer(function(input, output, session){
             sorting=FALSE
     ))
 
+
+
+    # =========================================================================
+    # Download the data in main_table after filters are applied
+    # =========================================================================
     output$downloadData <- downloadHandler(
-        filename = 'arabidopsis-data.tsv',
+        filename = 'shinyapp-datadump.tsv',
         content = function(file) {
             write.table(dat()[input$main_table_rows_all], file, row.names=FALSE, sep="\t")
         }
