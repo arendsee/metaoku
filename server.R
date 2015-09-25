@@ -9,10 +9,11 @@ shinyServer(function(input, output, session){
     dat <- reactive({
         cat('entering dat()\n')
         columns <- global$metadata$column_name[input$column_table_rows_selected]
+        # the key column should always be the first column in the data table
         columns <- unique(c(global$key, columns))
         # assert all fields in the metadata are in the actual data
         stopifnot(columns %in% names(global$table))
-        out <- data.frame(global$table[, columns, with=FALSE])
+        out <- unique(global$table[, columns, with=FALSE])
         return(out)
     })
 
@@ -28,22 +29,25 @@ shinyServer(function(input, output, session){
 
     # Read input from textInput box, parse out ids, and if they are present in
     # the key column of the main dataset, return them
-    user.rows <- reactive({
+    user.keys <- reactive({
         cat('entering user.rows()\n')
-        if(length(input$user_ids) > 0){
-            txt <- input$user_ids
+        # this prevents whitespace in the box from stopping plotting
+        txt <- gsub('\n', ' ', input$user_ids)
+        txt <- sub('^\\s+', '', txt, perl=TRUE)
+        if(nchar(txt) > 0){
+            cat(' * >', txt, '<\n')
             ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
             ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
-            rows = which(dat()[, global$key] %in% ids)
-            return(rows)
+            keys <- dat()[ids, nomatch=0][[global$key]]
+            return(keys)
         } else {
-            return(c())
+            return(dat()[[global$key]])
         }
     })
 
     selected.column.name <- reactive({
         cat('entering selected.column.name()\n')
-        cols <- colnames(dat())
+        cols <- names(dat())
         i <- input$main_table_columns_selected
         if(is.null(i)){
             return(NULL)
@@ -87,7 +91,7 @@ shinyServer(function(input, output, session){
                 a$mat <- a$mat[selection(), ]
             }
             if(a$type == 'seq'){
-                m <- a$seq[,1] %in% dat()[selection(), global$key]
+                m <- a$seq[[1]] %in% dat()[selection()][[global$key]]
                 a$seq <- a$seq[m, ]
             }
             a$values <- a$values[selection()]
@@ -129,16 +133,8 @@ shinyServer(function(input, output, session){
         plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
     })
 
-    get_user_data <- function(){
-        cat('entering get_user_data()\n')
-        if(length(user.rows()) > 0){
-            return(dat()[user.rows(), ])
-        } else {
-            return(dat())
-        }
-    }
     output$main_table <- DT::renderDataTable(
-        get_user_data(),
+        dat()[user.keys()],
         rownames=FALSE,
         filter='top',
         style='bootstrap',
@@ -177,7 +173,7 @@ shinyServer(function(input, output, session){
     output$downloadData <- downloadHandler(
         filename = 'arabidopsis-data.tsv',
         content = function(file) {
-            write.table(dat()[input$main_table_rows_all, ], file, row.names=FALSE, sep="\t")
+            write.table(dat()[input$main_table_rows_all], file, row.names=FALSE, sep="\t")
         }
     )
 })
