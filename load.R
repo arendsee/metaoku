@@ -4,11 +4,6 @@ require(tm)
 require(plyr)
 require(reshape2)
 
-# All datasets must
-# 1. be TAB-delimited
-# 2. have headers
-# 3. share a common first column (key column)
-
 source('config')
 
 merge.files <- function(){
