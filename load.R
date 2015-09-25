@@ -1,15 +1,13 @@
 require(data.table)
 require(Matrix)
 require(tm)
-require(plyr)
 require(reshape2)
 
-source('config')
-
-merge.files <- function(){
+merge.files <- function(data.dir, data.pat){
+    cat('entering merge.files\n')
     global.key <- NULL
     global.d <- NULL
-    for (f in list.files(path=DATA_DIR, pattern=DATA_PAT, full.names=TRUE)){
+    for (f in list.files(path=data.dir, pattern=data.pat, full.names=TRUE)){
         d <- as.data.table(read.delim(f, quote="", stringsAsFactors=FALSE))
         key = names(d)[1]
         setkeyv(d, key)
@@ -32,9 +30,10 @@ merge.files <- function(){
 
 
 
-process.metadata <- function(columns){
-    if(file.exists(METADATA)){
-        md <- read.delim(METADATA, stringsAsFactors=FALSE)
+process.metadata <- function(columns, metadata){
+    cat('entering process.metadata\n')
+    if(file.exists(metadata)){
+        md <- read.delim(metadata, stringsAsFactors=FALSE)
     } else {
         md <- NULL
     }
@@ -55,17 +54,18 @@ process.metadata <- function(columns){
     return(md)
 }
 
-
-
-determine.type <- function(d){
-    # Deterine the internal type. This is essential for dispatching to the
-    # correct plotting functions.
-    # Datatypes:
-    #    num     - numeric
-    #    cat     - categorical
-    #    longcat - categorical with many elements (e.g. too many for x-axis in boxplot)
-    #    cor     - textual data
-    #    seq     - sequence data, e.g. protein or nucleotide sequence
+# ========================================================================
+# Deterine the internal type. This is essential for dispatching to the
+# correct plotting functions.
+# Datatypes:
+#    num     - numeric
+#    cat     - categorical
+#    longcat - categorical with many elements (e.g. too many for x-axis in boxplot)
+#    cor     - textual data
+#    seq     - sequence data, e.g. protein or nucleotide sequence
+# ========================================================================
+determine.type <- function(d, max.levels, max.prop, max.length){
+    cat('entering determine.type\n')
     types <- rep(NA, ncol(d))
     names(types) <- names(d)
     for (cname in names(types)){
@@ -75,14 +75,14 @@ determine.type <- function(d){
 
         if(is.numeric(x)){
             # determine whether to treat a numeric vector as num or cat
-            if(all(x %% 1 == 0, na.rm=TRUE) && u <= MAX_LEVELS && u / N < MAX_PROP){
+            if(all(x %% 1 == 0, na.rm=TRUE) && u <= max.levels && u / N < max.prop){
                 typ <- 'cat'
             } else {
                 typ <- 'num'
             }
         } else if(is.character(x)) {
             # determine whether a character vector is cat, longcat, cor, or seq
-            if(max(nchar(x)) > MAX_LENGTH){
+            if(max(nchar(x)) > max.length){
                 # if there are any spaces, treat the string as textual
                 # otherwise, consider it a sequence
                 if(any(grepl(' ', x))){
@@ -92,7 +92,7 @@ determine.type <- function(d){
                 }
             } else {
                 # if there are lots of levels, it is a longcat 
-                if(u > MAX_LEVELS){
+                if(u > max.levels){
                     typ <- 'longcat'
                 } else {
                     typ <- 'cat'
@@ -108,16 +108,17 @@ determine.type <- function(d){
 
 
 build.corpa <- function(global){
+    cat('entering build.corpa\n')
     corpa <- list()
     for(cname in names(global$type[global$type == 'cor'])){
         txt <- global$table[[cname]]
-        corpus <- Corpus(VectorSource(txt))
-        corpus <- tm_map(corpus, content_transformer(function(x) iconv(x, to='ASCII', sub='byte')))
-        corpus <- tm_map(corpus, content_transformer(tolower))
-        corpus <- tm_map(corpus, removePunctuation, preserve_intra_word_dashes=TRUE)
-        corpus <- tm_map(corpus, function(x) removeWords(x, stopwords("english")))
-        dtm <- DocumentTermMatrix(corpus)
-        m <- sparseMatrix(i=dtm$i, j=dtm$j, x=dtm$v, dims=c(dtm$nrow, dtm$ncol), dimnames=dtm$dimnames)
+        corpus <- tm::Corpus(tm::VectorSource(txt))
+        corpus <- tm::tm_map(corpus, tm::content_transformer(function(x) iconv(x, to='ASCII', sub='byte')))
+        corpus <- tm::tm_map(corpus, tm::content_transformer(tolower))
+        corpus <- tm::tm_map(corpus, tm::removePunctuation, preserve_intra_word_dashes=TRUE)
+        corpus <- tm::tm_map(corpus, function(x) tm::removeWords(x, stopwords("english")))
+        dtm <- tm::DocumentTermMatrix(corpus)
+        m <- Matrix::sparseMatrix(i=dtm$i, j=dtm$j, x=dtm$v, dims=c(dtm$nrow, dtm$ncol), dimnames=dtm$dimnames)
         corpa[[cname]] = m
     }
     return(corpa)
@@ -126,6 +127,7 @@ build.corpa <- function(global){
 
 
 build.seqs <- function(global){
+    cat('entering build.seqs\n')
     seqs <- list()
     for(cname in names(global$type[global$type == 'seq'])){
         s1     <- global$table[[cname]]
@@ -140,7 +142,7 @@ build.seqs <- function(global){
             d[i, names(s3[[i]])] <- s3[[i]]
         }
 
-        d <- melt(d)
+        d <- reshape2::melt(d)
         colnames(d) <- c('model', 'aa', 'count')
         seqs[[cname]] <- d
     }
@@ -149,10 +151,15 @@ build.seqs <- function(global){
 
 
 
+# ========================================================================
+# Convert columns to the appopriate type
+# Specifically:
+#  * cat               -> factor
+#  * longcat, cor, seq -> character vectors
+#  * num               -> numeric vector
+# ========================================================================
 set.types <- function(d, types){
-    # cat               -> factor
-    # longcat, cor, seq -> character vectors
-    # num               -> numeric vector
+    cat('entering set.types\n')
     for(cname in names(d)){
         if(types[cname] == 'cat'){
             d[[cname]] <- factor(d[[cname]])
@@ -167,30 +174,50 @@ set.types <- function(d, types){
 }
 
 
-
+# ========================================================================
+# Build the main dataset and required metadata
+# Imports the following variables from the config file
+#  * DATA_PAT
+#  * DATA_DIR
+#  * METADATA
+#  * MAX_PROP
+#  * MAX_LEVELS
+#  * MAX_LENGTH
+# see config for details
+# ========================================================================
 build.global <- function(){
+    source('config')
+
+    # If a data file already exists, load and return it
+    if(file.exists(DAT_NAME)) {
+        load(DAT_NAME)
+        if(exists('global')){
+            return(global)
+        }
+    }
+
     global <- list(
         table    = NULL,   # a data.frame holding all data
         corpa    = list(), # word usage matrices for building word clouds
         key      = NULL,   # the name of the key column
         metadata = NULL,   # metadata for each columns
-        type     = NULL
+        type     = NULL    # the type of data contained in each column
     )
-    global$table    <- merge.files()
+    global$table    <- merge.files(
+                            data.pat=DATA_PAT,
+                            data.dir=DATA_DIR)
     global$key      <- names(global$table)[1]
-    global$metadata <- process.metadata(columns=names(global$table))
-    global$type     <- determine.type(global$table)
+    global$metadata <- process.metadata(
+                            columns=names(global$table),
+                            metadata=METADATA)
+    global$type     <- determine.type(
+                            global$table,
+                            max.prop=MAX_PROP,
+                            max.levels=MAX_LEVELS,
+                            max.length=MAX_LENGTH)
     global$corpa    <- build.corpa(global)
     global$table    <- set.types(global$table, global$type)
     global$seqs     <- build.seqs(global)
-    return(global)
-}
-
-
-
-if(file.exists(DAT_NAME)) {
-    load(DAT_NAME)
-} else {
-    global <- build.global()
     save(global, file=DAT_NAME)
+    return(global)
 }

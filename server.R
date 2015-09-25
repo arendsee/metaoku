@@ -1,10 +1,28 @@
 require(shiny)
 require(DT)
 
-source('load.R')
 source('dispatch.R')
 
 shinyServer(function(input, output, session){
+
+
+    # =========================================================================
+    # Load global list of data and metadata
+    # includes:
+    #  * table    - the full data.table
+    #  * key      - the data.table key
+    #  * metadata - the associated metadata
+    #  * type     - contains the type of each column in table
+    #  * corpa    - matrices for building wordclouds from text
+    #  * seqs     - character counts for each sequence column
+    # =========================================================================
+    load.data <- function(){
+        cat('entering load.data()\n')
+        source('load.R')
+        return(build.global())
+    }
+    global <- load.data()
+
 
     # =========================================================================
     # Update working dataset when columns are selected from the Column Table
@@ -172,7 +190,7 @@ shinyServer(function(input, output, session){
             logx=input$logx
         )
 
-        plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa)
+        plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts)
     })
 
 

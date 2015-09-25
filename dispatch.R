@@ -146,7 +146,7 @@ dispatch <- function(x, y, z, fmt.opts){
     return(eval(parse(text=action)))
 }
 
-plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts, corpa=global$corpa){
+plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts){
     cat('\tentering plotAnything()\n')
     g <- dispatch(x, y, z, fmt.opts)
     return(g)
