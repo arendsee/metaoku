@@ -4,30 +4,12 @@ require(tm)
 require(plyr)
 require(reshape2)
 
-# All datasets are
-# 1. TAB-delimited
-# 2. Have headers
-# 3. All tables must have the same first column (the key column)
+# All datasets must
+# 1. be TAB-delimited
+# 2. have headers
+# 3. share a common first column (key column)
 
-# --- Input constants
-DATA_DIR = 'data'              # folder holding all data
-DATA_PAT = '.tab$'             # regular expression identifying data files
-METADATA = 'data/METADATA'     # metadata filename
-DAT_NAME = '.global-data.Rdat' # filename for saved R data
-
-# --- Constants for determining whether to consider an integer a factor
-#   let x be a vector of integers of total length N
-#   let u equal the number of unique values in the vector
-#   we consider x to be categorical if the following is true:
-#      u < MAX_LEVELS and u/N < MAX_PROP
-MAX_LEVELS = 20
-MAX_PROP   = 0.1
-
-# --- Constants for classifying character vector as cat, longcat, cor, or seq
-# if the longest element is greater than MAX_LENGTH, classify as cor or seq
-MAX_LENGTH = 50
-
-
+source('config')
 
 merge.files <- function(){
     global.key <- NULL

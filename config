@@ -1,0 +1,47 @@
+# =========================================================================
+# File names and extensions
+# =========================================================================
+
+DATA_DIR = 'data'              # folder holding all data
+DATA_PAT = '.tab$'             # regular expression identifying data files
+METADATA = 'data/METADATA'     # metadata filename
+DAT_NAME = '.global-data.Rdat' # filename for saved R data
+
+
+
+# =========================================================================
+# Constants for distinguishing between integers and factors
+# =========================================================================
+#   Sometimes a column of integers should be treated as categorical data.
+#
+#   We consider x to be categorical if the following is true:
+#      u < MAX_LEVELS and u/N < MAX_PROP
+#   where
+#      * x is the vector of integers
+#      * N is the total length of the vector
+#      * u is the number of unique values in x
+#
+#   MAX_LEVELS determines the maximum number of
+#      * boxplots displayed in a single pane
+#      * rows and columns in a heat map
+#      * subplots when faceting
+#   MAX_PROP prevents integer data from being categorized when, for example,
+#   the number of rows in your dataset is less than MAX_LEVELS.
+
+MAX_LEVELS = 20
+MAX_PROP   = 0.1
+
+
+
+# =========================================================================
+# Constants for distinguishing between categorical and textual data
+# =========================================================================
+#   It is important to distinguish between factors (like 'Cat' and 'Dog'),
+#   which may neatly be added to axes, and text or long sequence. You don't
+#   want to have a chromosome as a label on your axis.
+#
+#   Whether a string is considered a categorical or text is determined by
+#   the length of its longest element. If the column has an element longer
+#   than MAX_LENGTH, it is considered text.
+
+MAX_LENGTH = 50
