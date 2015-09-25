@@ -1,5 +1,7 @@
 *.Rdat
 *.tab
+packrat/lib*
 data/METADATA
 rsconnect/
 shinyapps/
+packrat/lib*/
