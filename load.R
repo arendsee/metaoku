@@ -148,7 +148,7 @@ build.corpa <- function(global){
 
 
 
-build.seqs <- function(seqs){
+build.seqs <- function(global){
     seqs <- list()
     for(cname in names(global$type[global$type == 'seq'])){
         s1     <- global$table[[cname]]
