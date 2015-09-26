@@ -1,12 +1,10 @@
 require(data.table)
-require(Matrix)
-require(tm)
 require(reshape2)
 
 merge.files <- function(data.dir, data.pat){
     cat('entering merge.files\n')
     global.key <- NULL
-    global.d <- NULL
+    global.d   <- NULL
     for (f in list.files(path=data.dir, pattern=data.pat, full.names=TRUE)){
         d <- as.data.table(read.delim(f, quote="", stringsAsFactors=FALSE))
         key = names(d)[1]
@@ -24,6 +22,9 @@ merge.files <- function(data.dir, data.pat){
         } else {
             global.d <- merge(global.d, d, by=key, all=TRUE)
         }
+    }
+    if(length(global.d) == 0){
+        cat('WARNING: no data found')
     }
     return(global.d)
 }
@@ -111,6 +112,9 @@ build.corpa <- function(global){
     cat('entering build.corpa\n')
     corpa <- list()
     for(cname in names(global$type[global$type == 'cor'])){
+        # only load these if necessary (Matrix, especially, is big)
+        require(Matrix)
+        require(tm)
         txt <- global$table[[cname]]
         corpus <- tm::Corpus(tm::VectorSource(txt))
         corpus <- tm::tm_map(corpus, tm::content_transformer(function(x) iconv(x, to='ASCII', sub='byte')))
