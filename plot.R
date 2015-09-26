@@ -107,12 +107,46 @@ seq.seq.plot <- function(x, y, fmt.opts){
 
 # scatter/density map for character in seq versus num
 seq.num.plot <- function(x, y, fmt.opts){
-
+    d <- x$seq
+    d$y <- y$value
+    g <- ggplot(d) +
+        stat_density2d(
+            aes(x=prop, y=y, fill=..density..),
+            geom='tile',
+            contour=FALSE
+        ) +
+        scale_fill_gradientn(colours = rainbow(7)) +
+        facet_wrap(~char)
+    format.plot(
+        g,
+        xlab='Letter',
+        ylab=y$name,
+        logx=fmt.opts$logx,
+        logy=fmt.opts$logy,
+        x.values=x$value
+    )
 }
 
 # as above with coord flip
 num.seq.plot <- function(x, y, fmt.opts){
-
+    d <- y$seq
+    d$x <- x$value
+    g <- ggplot(d) +
+        stat_density2d(
+            aes(x=x, y=prop, fill=..density..),
+            geom='tile',
+            contour=FALSE
+        ) +
+        scale_fill_gradientn(colours = rainbow(7)) +
+        facet_wrap(~char)
+    format.plot(
+        g,
+        xlab=x$name,
+        ylab='Letter',
+        logx=fmt.opts$logx,
+        logy=fmt.opts$logy,
+        x.values=x$value
+    )
 }
 
 # y barplots
@@ -265,22 +299,18 @@ cor.plot <- function(x, fmt.opts){
 
 # composition barplot
 seq.plot <- function(x, fmt.opts){
+    # check my assumptions about column names
+    stopifnot(c('key', 'char', 'count', 'prop') %in% names(x$seq))
     d <- x$seq
-    xlab <- names(d)[2]
-    names(d) <- c('key', 'x', 'count')
-    d <- data.table(d)
-    setkey(d, key)
-    d <- merge(d, d[, sum(count), by=key])
-    d$prop <- d$count / d$V1
     d <- d[, list(median(prop),
-                  quantile(prop, probs=0.25),
-                  quantile(prop, probs=0.75)), by=x]
+                  quantile(prop, probs=0.25, na.rm=TRUE),
+                  quantile(prop, probs=0.75, na.rm=TRUE)), by=char]
     setnames(d, c('V1', 'V2', 'V3'), c('prop', 'q25', 'q75'))
     g <- ggplot(d) +
-        geom_pointrange(aes(x=x, y=prop, ymin=q25, ymax=q75))
+        geom_pointrange(aes(x=char, y=prop, ymin=q25, ymax=q75))
     format.plot(
         g,
-        xlab=xlab,
+        xlab='Letter',
         ylab='Percent composition',
         ggtitle='Sequence composition',
         x.values=x$value

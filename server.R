@@ -151,8 +151,8 @@ shinyServer(function(input, output, session){
                 a$mat <- a$mat[selection(), ]
             }
             if(a$type == 'seq'){
-                m <- a$seq[[1]] %in% dat()[selection()][[global$key]]
-                a$seq <- a$seq[m, ]
+                keys  <- dat()[selection()][[global$key]]
+                a$seq <- a$seq[keys, allow.cartesian=TRUE]
             }
             a$values <- a$values[selection()]
             return(a)

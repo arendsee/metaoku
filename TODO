@@ -1,9 +1,9 @@
 # Minor things
  * toggle select for columns
  * add regression line to num-num comparisons 
+ * fix x.seq and seq.x plots
 
 # Major things
  * add top-level 'Plot' tab where you can select x, y, and group columns.
- * refactor the plot dispatch function
  * write dispatch table for statistics
  * classify data by statistical type? classify by distribution type?

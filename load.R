@@ -147,7 +147,11 @@ build.seqs <- function(global){
         }
 
         d <- reshape2::melt(d)
-        colnames(d) <- c('model', 'aa', 'count')
+        colnames(d) <- c('key', 'char', 'count')
+        d <- data.table(d)
+        setkey(d, key)
+        d[, total := sum(count), by=key]
+        d[, prop  := count / total]
         seqs[[cname]] <- d
     }
     return(seqs)
