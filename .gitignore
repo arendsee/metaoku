@@ -1,5 +1,6 @@
 *.Rdat
 *.tab
+*.tsv
 .Rprofile
 packrat/lib*
 data/METADATA
