@@ -2,6 +2,9 @@ require(ggplot2)
 require(wordcloud) 
 require(tm)
 require(reshape2)
+require(plyr)
+
+source('format.R')
 
 build.dt <- function(x, y=NULL, z=NULL){
     d <- data.frame(x=x$value)
@@ -13,9 +16,6 @@ build.dt <- function(x, y=NULL, z=NULL){
     }
     d
 }
-
-logx <- scale_x_continuous(trans='log2')
-logy <- scale_y_continuous(trans='log2')
 
 # common word clouds for each category (n wordclouds)
 cor.cor.cat.plot <- function(x, y, z, fmt.opts){
@@ -35,10 +35,15 @@ cat.cat.cat.plot <- function(x, y, z, fmt.opts){
     d <- ddply(d, 'y', mutate, Y=sum(obs))
     d$exp <- d$X * d$Y / sum(d$obs)
     d$lograt <- log(d$obs / d$exp)
-    ggplot(d) +
+    g <- ggplot(d) +
         geom_tile(aes(x=x, y=y, fill=lograt)) +
-        facet_wrap(~z) +
-        labs(x=x$name, y=y$name)
+        facet_wrap(~z)
+    format.plot(
+        g,
+        xlab=x$name,
+        ylab=y$name,
+        x.values=x$value
+    )
 }
 
 # z boxplots (coord flip)
@@ -46,31 +51,43 @@ num.cat.cat.plot <- function(x, y, z, fmt.opts){
     g <- ggplot(build.dt(x, y, z)) +
         geom_boxplot(aes(x=y, y=x)) +
         coord_flip() +
-        labs(x=y$name, y=x$name) +
         facet_wrap(~z)
-    if(fmt.opts$logx){ g <- g + logy }
-    g
+    format.plot(
+        g,
+        xlab=x$name,
+        ylab=y$name,
+        logy=fmt.opts$logx,
+        x.values=x$value
+    )
 }
 
 # z boxplots
 cat.num.cat.plot <- function(x, y, z, fmt.opts){
     g <- ggplot(build.dt(x, y, z)) +
         geom_boxplot(aes(x=x, y=y)) +
-        labs(x=x$name, y=y$name) +
         facet_wrap(~z)
-    if(fmt.opts$logy){ g <- g + logy }
-    g
+    format.plot(
+        g,
+        xlab=x$name,
+        ylab=y$name,
+        logy=fmt.opts$logy,
+        x.values=x$value
+    )
 }
 
 # z scatter plots OR colored scatter plot
 num.num.cat.plot <- function(x, y, z, fmt.opts){
     g <- ggplot(build.dt(x, y, z)) +
         geom_point(aes(x=x, y=y)) +
-        labs(x=x$name, y=y$name) +
         facet_wrap(~z)
-    if(fmt.opts$logx){ g <- g + logx }
-    if(fmt.opts$logy){ g <- g + logy }
-    g
+    format.plot(
+        g,
+        xlab=x$name,
+        ylab=y$name,
+        logx=fmt.opts$logx,
+        logy=fmt.opts$logy,
+        x.values=x$value
+    )
 }
 
 # z dodged barplots (comparing sequence composition)
@@ -121,9 +138,14 @@ cat.cat.plot <- function(x, y, fmt.opts){
     d <- ddply(d, 'y', mutate, Y=sum(obs))
     d$exp <- d$X * d$Y / sum(d$obs)
     d$lograt <- log(d$obs / d$exp)
-    ggplot(d) +
-        geom_tile(aes(x=x, y=y, fill=lograt)) +
-        labs(x=x$name, y=y$name)
+    g <- ggplot(d) +
+        geom_tile(aes(x=x, y=y, fill=lograt))
+    format.plot(
+        g,
+        xlab=x$name,
+        ylab=y$name,
+        x.values=x$value
+    )
 }
 
 # boxplot
@@ -131,14 +153,20 @@ cat.num.plot <- function(x, y, fmt.opts){
     cat('\tentering cat.num.plot()\n')
     if(nlevels(x$value) > 3){
         g <- ggplot(build.dt(x, y)) +
-            geom_boxplot(aes(x=x, y=y)) +
-            labs(x=x$name, y=y$name)
-        if(fmt.opts$logy){ g <- g + logy }
+            geom_boxplot(aes(x=x, y=y))
     } else {
-        if(fmt.opts$logy){ fmt.opts$logx <- TRUE }
-        g <- num.cat.plot(y, x, fmt.opts)
+        if(fmt.opts$logy){
+            fmt.opts$logx <- TRUE
+        }
+        return(num.cat.plot(y, x, fmt.opts))
     }
-    g
+    format.plot(
+        g,
+        xlab=x$name,
+        ylab=y$name,
+        logy=fmt.opts$logy,
+        x.values=x$value
+    )
 }
 
 # boxplot coord flip
@@ -148,9 +176,14 @@ num.cat.plot <- function(x, y, fmt.opts){
     if(nlevels(y$value) > 3){
         g <- ggplot(d) +
             geom_boxplot(aes(x=y, y=x)) +
-            coord_flip() +
-            labs(x=y$name, y=x$name)
-        if(fmt.opts$logx){ g <- g + logy }
+            coord_flip()
+        return(format.plot(
+            g,
+            xlab=y$name,
+            ylab=x$name,
+            logy=fmt.opts$logx,
+            x.values=y$value
+        ))
     } else {
         g <- ggplot(d) +
             geom_histogram(
@@ -165,37 +198,56 @@ num.cat.plot <- function(x, y, fmt.opts){
                       axis.ticks.y=element_blank()) +
               labs(x=x$name)
         if(fmt.opts$logx){ g <- g + logx }
+        return(format.plot(
+            g,
+            xlab=x$name,
+            ylab=y$name,
+            logx=fmt.opts$logx,
+            x.values=x$value
+        ))
     }
-    g
 }
 
 # scatter OR density map
 num.num.plot <- function(x, y, fmt.opts){
     cat('\tentering num.num.plot()\n')
     g <- ggplot(build.dt(x, y)) +
-        geom_point(aes(x=x, y=y)) +
-        labs(x=x$name, y=y$name)
-    if(fmt.opts$logx){ g <- g + logx }
-    if(fmt.opts$logy){ g <- g + logy }
-    g
+        geom_point(aes(x=x, y=y))
+    format.plot(
+        g,
+        xlab=x$name,
+        ylab=y$name,
+        logx=fmt.opts$logx,
+        logy=fmt.opts$logy,
+        x.values=x$value
+    )
 }
 
 # barplot
 cat.plot <- function(x, fmt.opts){
     cat('\tentering cat.plot()\n')
-    ggplot(build.dt(x)) +
+    g <- ggplot(build.dt(x)) +
         geom_bar(aes(x=x)) +
         labs(x=x$name)
+    format.plot(
+        g,
+        xlab=x$name,
+        logy=fmt.opts$logy,
+        x.values=x$value
+    )
 }
 
 # histogram
 num.plot <- function(x, fmt.opts){
     cat('\tentering num.plot()\n')
     g <- ggplot(build.dt(x)) +
-        geom_histogram(aes(x=x)) +
-        labs(x=x$name)
-    if(fmt.opts$logx){ g <- g + logx }
-    g
+        geom_histogram(aes(x=x))
+    format.plot(
+        g,
+        xlab=x$name,
+        logx=fmt.opts$logx,
+        x.values=x$value
+    )
 }
 
 # wordcloud
@@ -224,101 +276,13 @@ seq.plot <- function(x, fmt.opts){
                   quantile(prop, probs=0.25),
                   quantile(prop, probs=0.75)), by=x]
     setnames(d, c('V1', 'V2', 'V3'), c('prop', 'q25', 'q75'))
-    ggplot(d) +
-        geom_pointrange(aes(x=x, y=prop, ymin=q25, ymax=q75)) +
-        labs(x=xlab, y='Percent composition') +
-        ggtitle('Sequence composition')
+    g <- ggplot(d) +
+        geom_pointrange(aes(x=x, y=prop, ymin=q25, ymax=q75))
+    format.plot(
+        g,
+        xlab=xlab,
+        ylab='Percent composition',
+        ggtitle='Sequence composition',
+        x.values=x$value
+    )
 }
-
-
-
-# plotSampledNumeric <- function(x, group){
-#     cat('\tentering plotSampledNumeric()\n')
-#     d <- data.frame(x=x, group=group)
-#     g <- ggplot(d) +
-#         geom_histogram(
-#             aes(
-#                 x=x,
-#                 y=..density..,
-#                 fill=group
-#             ),
-#             alpha=.75,
-#             position='identity'
-#         ) + theme(axis.text.y=element_blank(),
-#                   axis.ticks.y=element_blank())
-#     return(g)
-# }
-# 
-# 
-# 
-# plotSampledFactor <- function(x, group){
-#     cat('\tentering plotSampledFactor()\n')
-#     d <- data.frame(x=x, group=group)
-#     d <- ddply(d, 'group', mutate, N.group=length(group))
-#     d <- ddply(d, c('x', 'group'), mutate, N.x=length(x))
-#     d$proportion = d$N.x / d$N.group
-#     
-#     g <- ggplot(d) +
-#         geom_bar(
-#             aes(
-#                 x=x,
-#                 y=proportion,
-#                 fill=group
-#             ),
-#             position='dodge',
-#             stat='identity'
-#         )
-#     return(g)
-# }
-# 
-# plotPairedNumericNumeric <- function(x, y, group=NULL){
-#     cat('\tentering plotPairedNumericNumeric()\n')
-#     stopifnot(is.numeric(x), is.numeric(y))
-#     stopifnot(length(x) == length(y))
-#     d <- data.frame(x=x, y=y)
-#     d$group <- group
-#     g <- ggplot(d) +
-#         geom_point(aes(x=x, y=y))
-#     if(!is.null(group) && nlevels(group) > 1){
-#         g <- g + facet_grid(group~.)
-#     }
-#     return(g)
-# }
-# 
-# plotPairedFactorNumeric <- function(x, y, group=NULL){
-#     cat('\tentering plotPairedFactorNumeric()\n')
-#     stopifnot(!((is.factor(x) && is.factor(y)) || (is.numeric(x) && is.numeric(y))))
-#     d <- data.frame(x=x, y=y)
-#     d$group <- group
-#     g <- ggplot(d) +
-#         geom_boxplot(aes(x=x, y=y))
-#     if(!is.null(group) && nlevels(group) > 1){
-#         g <- g + facet_grid(group~.)
-#     }
-#     return(g)
-# }
-# 
-# plotPairedNumericFactor <- function(x, y, group=NULL){
-#     cat('\tentering plotPairedNumericFactor()\n')
-#     g <- plotPairedFactorNumeric(x=y, y=x, group=group) + coord_flip()
-#     return(g)
-# }
-# 
-# # === plot log(N_exp / N_obs)
-# plotPairedFactorFactor <- function(x, y, group=NULL){
-#     cat('\tentering plotPairedFactorFactor()\n')
-#     stopifnot(is.factor(x), is.factor(y))
-#     d <- data.frame(x=x, y=y)
-#     d$group <- group
-#     d <- ddply(d, colnames(d), summarize, obs=length(x))
-#     d <- ddply(d, 'x', mutate, X=sum(obs))
-#     d <- ddply(d, 'y', mutate, Y=sum(obs))
-#     d$exp <- d$X * d$Y / sum(d$obs)
-#     d$lograt <- log(d$obs / d$exp)
-#     g <- ggplot(d) +
-#         geom_tile(aes(x=x, y=y, fill=lograt))
-#     if(!is.null(group) && nlevels(group) > 1){
-#         g <- g + facet_grid(group~.)
-#     }
-#     return(g)
-# }

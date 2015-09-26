@@ -1,4 +1,4 @@
-formatPlot <- function(g,
+format.plot <- function(g,
                        logx=FALSE,
                        logy=FALSE,
                        x.values=NULL,
