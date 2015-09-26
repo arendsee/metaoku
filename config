@@ -3,7 +3,7 @@
 # =========================================================================
 
 DATA_DIR = 'data'              # folder holding all data
-DATA_PAT = '.tab$'             # regular expression identifying data files
+DATA_PAT = '.(tab|tsv)$'       # regular expression identifying data files
 METADATA = 'data/METADATA'     # metadata filename
 DAT_NAME = '.global-data.Rdat' # filename for saved R data
 
