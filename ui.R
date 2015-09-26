@@ -15,7 +15,14 @@ shinyUI(
         theme = shinytheme('spacelab'),
         tabsetPanel(
             tabPanel('Home', tags$div(shiny::HTML(home.html))),
-            tabPanel('Columns', DT::dataTableOutput("column_table")),
+            tabPanel('Columns', sidebarLayout(
+                sidebarPanel(
+                    radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none'))
+                ),
+                mainPanel(
+                    DT::dataTableOutput("column_table")
+                )
+            )),
             tabPanel('Data', sidebarLayout(
                 sidebarPanel(
                     plotOutput('plot'),

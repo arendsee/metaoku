@@ -3,25 +3,37 @@ require(DT)
 
 source('dispatch.R')
 
+# =========================================================================
+# Initialize a dataset as a list of data and metadata
+# includes:
+#  * table    - the full data.table
+#  * key      - the data.table key
+#  * metadata - the associated metadata
+#  * type     - contains the type of each column in table
+#  * corpa    - matrices for building wordclouds from text
+#  * seqs     - character counts for each sequence column
+# =========================================================================
+source('load.R')
+datasets <- build.all.datasets()
+
+
 shinyServer(function(input, output, session){
 
+    updateRadioButtons(session,
+                       'selected.dataset',
+                       choices=names(datasets),
+                       selected=names(datasets)[1])
 
-    # =========================================================================
-    # Load global list of data and metadata
-    # includes:
-    #  * table    - the full data.table
-    #  * key      - the data.table key
-    #  * metadata - the associated metadata
-    #  * type     - contains the type of each column in table
-    #  * corpa    - matrices for building wordclouds from text
-    #  * seqs     - character counts for each sequence column
-    # =========================================================================
-    load.data <- function(){
-        cat('entering load.data()\n')
-        source('load.R')
-        return(build.global())
-    }
-    global <- load.data()
+    global <- reactive({
+        cat('entering global()\n')
+        if(input$selected.dataset == 'none'){
+            dataset <- datasets[1]
+        } else {
+            dataset <- datasets[input$selected.dataset]
+        }
+        load(dataset)
+        return(global)
+    })
 
 
     # =========================================================================
@@ -34,12 +46,13 @@ shinyServer(function(input, output, session){
     # =========================================================================
     dat <- reactive({
         cat('entering dat()\n')
-        columns <- global$metadata$column_name[input$column_table_rows_selected]
+        columns <- global()$metadata$column_name[input$column_table_rows_selected]
         # the key column should always be the first column in the data table
-        columns <- unique(c(global$key, columns))
+        columns <- unique(c(global()$key, columns))
         # assert all fields in the metadata are in the actual data
-        stopifnot(columns %in% names(global$table))
-        out <- unique(global$table[, columns, with=FALSE])
+        stopifnot(columns %in% names(global()$table))
+        out <- global()$table[, columns, with=FALSE]
+        setkeyv(out, global()$key)
         return(out)
     })
 
@@ -53,10 +66,10 @@ shinyServer(function(input, output, session){
     # =========================================================================
     observe({
         # set compare.to (y) choices
-        columns <- global$metadata$column_name[input$column_table_rows_selected]
+        columns <- global()$metadata$column_name[input$column_table_rows_selected]
         updateSelectInput(session, 'compare.to', choices=c('None', as.character(columns)))
         # set group.by (z) choices (this may not be cor or seq)
-        columns <- columns[global$type[columns] %in% c('cat', 'num', 'longcat')]
+        columns <- columns[global()$type[columns] %in% c('cat', 'num', 'longcat')]
         updateSelectInput(session, 'group.by', choices=c('None', 'Selection', as.character(columns)))
     })
     
@@ -67,18 +80,17 @@ shinyServer(function(input, output, session){
     # present in the key column of the main dataset
     # =========================================================================
     user.keys <- reactive({
-        cat('entering user.rows()\n')
+        cat('entering user.keys()\n')
         # this prevents whitespace in the box from stopping plotting
         txt <- gsub('\n', ' ', input$user_ids)
         txt <- sub('^\\s+', '', txt, perl=TRUE)
         if(nchar(txt) > 0){
-            cat(' * >', txt, '<\n')
             ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
             ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
-            keys <- dat()[ids, nomatch=0][[global$key]]
+            keys <- dat()[ids, nomatch=0][[global()$key]]
             return(keys)
         } else {
-            return(dat()[[global$key]])
+            return(dat()[[global()$key]])
         }
     })
 
@@ -131,16 +143,16 @@ shinyServer(function(input, output, session){
             a$name    <- aname
             a$values  <- dat()[[a$name]]
             a$defined <- length(a$values > 0)
-            if(aname %in% names(global$type)){
-                a$type <- global$type[aname]
+            if(aname %in% names(global()$type)){
+                a$type <- global()$type[aname]
             } else {
                 a$type <- '-'
             }
             if(a$type == 'cor'){
-                a$mat <- global$corpa[[a$name]]
+                a$mat <- global()$corpa[[a$name]]
             }
             if(a$type == 'seq'){
-                a$seq <- global$seq[[a$name]]
+                a$seq <- global()$seq[[a$name]]
             }
             return(a)
         }
@@ -151,7 +163,7 @@ shinyServer(function(input, output, session){
                 a$mat <- a$mat[selection(), ]
             }
             if(a$type == 'seq'){
-                keys  <- dat()[selection()][[global$key]]
+                keys  <- dat()[selection()][[global()$key]]
                 a$seq <- a$seq[keys, allow.cartesian=TRUE]
             }
             a$values <- a$values[selection()]
@@ -227,7 +239,7 @@ shinyServer(function(input, output, session){
     output$column_table <- DT::renderDataTable(
         {
             cat('entering column_table()\n')
-            global$metadata
+            global()$metadata
         },
         filter="none",
         rownames=FALSE,

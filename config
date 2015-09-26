@@ -2,10 +2,10 @@
 # File names and extensions
 # =========================================================================
 
-DATA_DIR = 'data'              # folder holding all data
-DATA_PAT = '.(tab|tsv)$'       # regular expression identifying data files
-METADATA = 'data/METADATA'     # metadata filename
-DAT_NAME = '.global-data.Rdat' # filename for saved R data
+DATA_DIR = 'data'        # folder holding all data
+SAVE_DIR = 'saved'       # folder holding all saved data
+DATA_PAT = '.(tab|tsv)$' # regular expression identifying data files
+METADATA = 'METADATA'    # metadata filename
 
 
 

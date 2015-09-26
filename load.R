@@ -24,7 +24,7 @@ merge.files <- function(data.dir, data.pat){
         }
     }
     if(length(global.d) == 0){
-        cat('WARNING: no data found')
+        cat('WARNING: no data found\n')
     }
     return(global.d)
 }
@@ -183,25 +183,25 @@ set.types <- function(d, types){
 
 
 # ========================================================================
-# Build the main dataset and required metadata
+# Build a dataset and required metadata
 # Imports the following variables from the config file
 #  * DATA_PAT
 #  * DATA_DIR
-#  * METADATA
+#  * SAVE_DIR
 #  * MAX_PROP
 #  * MAX_LEVELS
 #  * MAX_LENGTH
 # see config for details
 # ========================================================================
-build.global <- function(){
+build.one.dataset <- function(dataname){
     source('config')
 
-    # If a data file already exists, load and return it
-    if(file.exists(DAT_NAME)) {
-        load(DAT_NAME)
-        if(exists('global')){
-            return(global)
-        }
+    data.dir <- paste0(DATA_DIR, '/', dataname)
+    rdat <- paste0(SAVE_DIR, '/', dataname, '.Rdat')
+
+    # If a data file already exists, return it
+    if(file.exists(rdat)) {
+        return(rdat)
     }
 
     global <- list(
@@ -211,13 +211,13 @@ build.global <- function(){
         metadata = NULL,   # metadata for each columns
         type     = NULL    # the type of data contained in each column
     )
-    global$table    <- merge.files(
-                            data.pat=DATA_PAT,
-                            data.dir=DATA_DIR)
-    global$key      <- names(global$table)[1]
+    global$table <- merge.files(
+                         data.pat=DATA_PAT,
+                         data.dir=data.dir)
+    global$key <- names(global$table)[1]
     global$metadata <- process.metadata(
                             columns=names(global$table),
-                            metadata=METADATA)
+                            metadata=paste0(data.dir, '/', METADATA))
     global$type     <- determine.type(
                             global$table,
                             max.prop=MAX_PROP,
@@ -226,6 +226,21 @@ build.global <- function(){
     global$corpa    <- build.corpa(global)
     global$table    <- set.types(global$table, global$type)
     global$seqs     <- build.seqs(global)
-    save(global, file=DAT_NAME)
-    return(global)
+
+    if(!dir.exists(SAVE_DIR)){
+        dir.create(SAVE_DIR)
+    }
+    save(global, file=rdat)
+    return(rdat)
+}
+
+# ========================================================================
+# Returns of filenames of saved datasets
+# * The names of the datasets are from the names of folders in the data
+#   directory
+# ========================================================================
+build.all.datasets <- function(){
+    source('config') 
+    datadirs <- basename(list.dirs(path=DATA_DIR, recursive=FALSE))
+    sapply(datadirs, build.one.dataset)
 }
