@@ -1,5 +1,6 @@
 require(shiny)
 require(DT)
+require(markdown)
 
 source('dispatch.R')
 
@@ -83,6 +84,13 @@ shinyServer(function(input, output, session){
         sample_ids <- sample(global()$table[[global()$key]], size=3)
         label <- sprintf('Enter ids (e.g. "%s")', paste(sample_ids, collapse=", "))
         updateTextInput(session, 'user_ids', label=label)
+         
+        # set the dataset description
+        desc <- paste0('data/', dataset, '/README.md')
+        if(!file.exists(desc)){
+            desc <- 'defaults/dataset-description.md'
+        }
+        output$dataset_description <- renderUI({shiny::includeMarkdown(desc)})
     })
     
 

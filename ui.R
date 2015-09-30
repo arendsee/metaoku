@@ -17,7 +17,8 @@ shinyUI(
             tabPanel('Home', shiny::includeMarkdown(home)),
             tabPanel('Columns', sidebarLayout(
                 sidebarPanel(
-                    radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none'))
+                    radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none')),
+                    uiOutput('dataset_description')
                 ),
                 mainPanel(
                     DT::dataTableOutput("column_table")
