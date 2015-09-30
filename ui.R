@@ -4,9 +4,15 @@ require(DT)
 require(markdown)
 
 if(file.exists('data/home.md')){
-    home <- 'data/home.md'
+    home_tab <- 'data/home.md'
 } else {
-    home <- 'defaults/home.md'
+    home_tab <- 'defaults/home.md'
+}
+
+if(file.exists('data/help.md')){
+    help_tab <- 'data/help.md'
+} else {
+    help_tab <- 'defaults/help.md'
 }
 
 # Define UI for dataset viewer application
@@ -14,7 +20,7 @@ shinyUI(
     fluidPage(
         theme = shinytheme('spacelab'),
         tabsetPanel(
-            tabPanel('Home', shiny::includeMarkdown(home)),
+            tabPanel('Home', shiny::includeMarkdown(home_tab)),
             tabPanel('Columns', sidebarLayout(
                 sidebarPanel(
                     radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none')),
@@ -38,7 +44,8 @@ shinyUI(
                     downloadButton('downloadData', 'Download')
                 ),
                 mainPanel(DT::dataTableOutput("main_table"))
-            ))
+            )),
+            tabPanel('Help', shiny::includeMarkdown(help_tab))
         )
     )
 )
