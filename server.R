@@ -1,5 +1,6 @@
 require(shiny)
 require(DT)
+require(markdown)
 
 source('dispatch.R')
 
@@ -36,6 +37,7 @@ shinyServer(function(input, output, session){
     })
 
 
+
     # =========================================================================
     # Update working dataset when columns are selected from the Column Table
     # 1. get the column names from the rows of the Column Table (which is built
@@ -48,11 +50,10 @@ shinyServer(function(input, output, session){
         cat('entering dat()\n')
         columns <- global()$metadata$column_name[input$column_table_rows_selected]
         # the key column should always be the first column in the data table
-        columns <- unique(c(global()$key, columns))
+        columns <- unique(c('KEY', columns))
         # assert all fields in the metadata are in the actual data
         stopifnot(columns %in% names(global()$table))
         out <- global()$table[, columns, with=FALSE]
-        setkeyv(out, global()$key)
         return(out)
     })
 
@@ -67,10 +68,50 @@ shinyServer(function(input, output, session){
     observe({
         # set compare.to (y) choices
         columns <- global()$metadata$column_name[input$column_table_rows_selected]
-        updateSelectInput(session, 'compare.to', choices=c('None', as.character(columns)))
+        updateSelectInput(session,
+                          'compare.to',
+                          choices=c('None', as.character(columns)))
         # set group.by (z) choices (this may not be cor or seq)
-        columns <- columns[global()$type[columns] %in% c('cat', 'num', 'longcat')]
-        updateSelectInput(session, 'group.by', choices=c('None', 'Selection', as.character(columns)))
+        neat_columns <- columns[global()$type[columns] %in% c('cat', 'num', 'longcat')]
+        updateSelectInput(session,
+                          'group.by',
+                          choices=c('None', 'Selection', as.character(neat_columns)))
+        # update keys in 'Select ids'
+        updateSelectInput(session,
+                          'user_key',
+                          choices=as.character(neat_columns))
+    })
+
+
+
+    # =========================================================================
+    # Update dataset description when new dataset is selected
+    # =========================================================================
+    observe({
+        dataset <- input$selected.dataset
+
+        # set the dataset description
+        desc <- paste0('data/', dataset, '/README.md')
+        if(!file.exists(desc)){
+            desc <- 'defaults/dataset-description.md'
+        }
+        output$dataset_description <- renderUI({shiny::includeMarkdown(desc)})
+    })
+
+
+
+    # =========================================================================
+    # Make relevant changes when a dataset is selected
+    # =========================================================================
+    observe({
+        dataset <- input$selected.dataset
+        key <- input$user_key
+        # set the label for the user selected id textInput box
+        if(key %in% colnames(global()$table)){
+            sample_ids <- sample(unique(global()$table[[key]]), size=3)
+            label <- sprintf('Enter ids (e.g. "%s")', paste(sample_ids, collapse=", "))
+            updateTextInput(session, 'user_ids', label=label)
+        }
     })
     
 
@@ -87,10 +128,10 @@ shinyServer(function(input, output, session){
         if(nchar(txt) > 0){
             ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
             ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
-            keys <- dat()[ids, nomatch=0][[global()$key]]
+            keys <- dat()[dat()[[input$user_key]] %in% ids, KEY]
             return(keys)
         } else {
-            return(dat()[[global()$key]])
+            return(dat()$KEY)
         }
     })
 
@@ -99,15 +140,18 @@ shinyServer(function(input, output, session){
     # =========================================================================
     # Get the name of the column selected in the main_table
     # Return NULL if no columns are selected
+    # NOTE: dat() contains the internal KEY column, but main_table does not. So
+    #       when we must add 1 when mapping column numbers from main_table to
+    #       the dat()
     # =========================================================================
     selected.column.name <- reactive({
         cat('entering selected.column.name()\n')
         cols <- names(dat())
-        i <- input$main_table_columns_selected
-        if(is.null(i)){
-            return(NULL)
-        } else {
+        i <- input$main_table_columns_selected + 1
+        if(length(i) > 0){
             return(cols[i + 1])
+        } else {
+            return(NULL)
         }
     })
 
@@ -163,7 +207,7 @@ shinyServer(function(input, output, session){
                 a$mat <- a$mat[selection(), ]
             }
             if(a$type == 'seq'){
-                keys  <- dat()[selection()][[global()$key]]
+                keys  <- dat()[selection()]$KEY
                 a$seq <- a$seq[keys, allow.cartesian=TRUE]
             }
             a$values <- a$values[selection()]
@@ -212,7 +256,12 @@ shinyServer(function(input, output, session){
     # Columns selected from this table are plotted in the sidebar
     # =========================================================================
     output$main_table <- DT::renderDataTable(
-        dat()[user.keys()],
+        {
+            cat('entering main_table\n')
+            d <- dat()[user.keys()]
+            d$KEY <- NULL
+            return(d)
+        },
         rownames=FALSE,
         filter='top',
         style='bootstrap',
