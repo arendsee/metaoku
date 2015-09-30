@@ -155,7 +155,7 @@ build.seqs <- function(global){
         s3     <- lapply(s2, table)
         d <- matrix(rep(0, sum(hasseq) * length(let)),
                     ncol=length(let),
-                    dim=list(global$table[[global$key]][hasseq], let))
+                    dim=list(global$table$KEY[hasseq], let))
         for(i in 1:nrow(d)){
             d[i, names(s3[[i]])] <- s3[[i]]
         }
@@ -225,7 +225,7 @@ build.one.dataset <- function(dataname){
     global$table <- merge.files(
                          data.pat=DATA_PAT,
                          data.dir=data.dir)
-    global$key <- names(global$table)[1]
+    global$table$KEY <- 1:nrow(global$table)
     global$metadata <- process.metadata(
                             columns=names(global$table),
                             metadata=paste0(data.dir, '/', METADATA))

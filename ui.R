@@ -38,9 +38,11 @@ shinyUI(
                         column(2, checkboxInput('logy', 'log2 y-axis')),
                         column(4, selectInput('compare.to', 'Compare to', choices='None')),
                         column(4, selectInput('group.by', 'Group by', choices='None'))),
-                    fluidRow(column(12, textInput(inputId='user_ids',
-                                                  label='Enter ids',
-                                                  value=NULL))),
+                    fluidRow(
+                        column(8, textInput(inputId='user_ids',
+                                            label='Enter ids',
+                                            value=NULL)),
+                        column(4, selectInput('user_key', 'Select Key', choices='None'))),
                     downloadButton('downloadData', 'Download')
                 ),
                 mainPanel(DT::dataTableOutput("main_table"))
