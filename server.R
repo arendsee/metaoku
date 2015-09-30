@@ -72,6 +72,18 @@ shinyServer(function(input, output, session){
         columns <- columns[global()$type[columns] %in% c('cat', 'num', 'longcat')]
         updateSelectInput(session, 'group.by', choices=c('None', 'Selection', as.character(columns)))
     })
+
+    # =========================================================================
+    # Make relevant changes when a dataset is selected
+    # =========================================================================
+    observe({
+        dataset <- input$selected.dataset
+
+        # set the label for the user selected id textInput box
+        sample_ids <- sample(global()$table[[global()$key]], size=3)
+        label <- sprintf('Enter ids (e.g. "%s")', paste(sample_ids, collapse=", "))
+        updateTextInput(session, 'user_ids', label=label)
+    })
     
 
 

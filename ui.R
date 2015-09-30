@@ -32,7 +32,7 @@ shinyUI(
                         column(4, selectInput('compare.to', 'Compare to', choices='None')),
                         column(4, selectInput('group.by', 'Group by', choices='None'))),
                     fluidRow(column(12, textInput(inputId='user_ids',
-                                                  label='Enter ids (e.g. "AT5G28465.1 AT5G54910.1 AT5G58170.1")',
+                                                  label='Enter ids',
                                                   value=NULL))),
                     downloadButton('downloadData', 'Download')
                 ),
