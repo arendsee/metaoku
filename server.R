@@ -39,6 +39,15 @@ shinyServer(function(input, output, session){
 
 
     # =========================================================================
+    # Read the version from VERSION
+    # =========================================================================
+    output$version <- renderText({
+        paste0('v', readLines('VERSION'))
+    })
+
+
+
+    # =========================================================================
     # Update working dataset when columns are selected from the Column Table
     # 1. get the column names from the rows of the Column Table (which is built
     #    based on the METADATA file)

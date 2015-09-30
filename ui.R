@@ -15,6 +15,12 @@ if(file.exists('data/help.md')){
     help_tab <- 'defaults/help.md'
 }
 
+if(file.exists('data/about.md')){
+    about_tab <- 'data/about.md'
+} else {
+    about_tab <- 'defaults/about.md'
+}
+
 # Define UI for dataset viewer application
 shinyUI(
     fluidPage(
@@ -47,7 +53,10 @@ shinyUI(
                 ),
                 mainPanel(DT::dataTableOutput("main_table"))
             )),
-            tabPanel('Help', shiny::includeMarkdown(help_tab))
+            tabPanel('Help', shiny::includeMarkdown(help_tab)),
+            tabPanel('About',
+                textOutput('version'),
+                shiny::includeMarkdown(about_tab))
         )
     )
 )
