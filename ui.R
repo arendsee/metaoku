@@ -1,11 +1,12 @@
 require(shiny)
 require(shinythemes)
 require(DT)
+require(markdown)
 
-if(file.exists('html/home.html')){
-    home.html <- paste(readLines('html/home.html'), collapse='')
+if(file.exists('data/home.md')){
+    home <- 'data/home.md'
 } else {
-    home.html <- "'home.html' not found"
+    home <- 'defaults/home.md'
 }
 
 # Define UI for dataset viewer application
@@ -13,7 +14,7 @@ shinyUI(
     fluidPage(
         theme = shinytheme('spacelab'),
         tabsetPanel(
-            tabPanel('Home', tags$div(shiny::HTML(home.html))),
+            tabPanel('Home', shiny::includeMarkdown(home)),
             tabPanel('Columns', sidebarLayout(
                 sidebarPanel(
                     radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none'))
