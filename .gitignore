@@ -3,7 +3,7 @@
 *.tsv
 .Rprofile
 packrat/lib*
-data/METADATA
+data/
 rsconnect/
 shinyapps/
 packrat/lib*/
