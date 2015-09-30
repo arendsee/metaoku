@@ -231,7 +231,6 @@ num.cat.plot <- function(x, y, fmt.opts){
             ) + theme(axis.text.y=element_blank(),
                       axis.ticks.y=element_blank()) +
               labs(x=x$name)
-        if(fmt.opts$logx){ g <- g + logx }
         return(format.plot(
             g,
             xlab=x$name,
