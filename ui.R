@@ -1,6 +1,5 @@
 require(shiny)
 require(shinythemes)
-require(shinyBS)
 require(DT)
 
 if(file.exists('html/home.html')){
