@@ -1,6 +1,10 @@
 require(data.table)
 require(reshape2)
 
+# ==============================================================================
+# If there are multiple datafiles in one data folder, try to merge them by the
+# first column. Die on failure.
+# ==============================================================================
 merge.files <- function(data.dir, data.pat){
     cat('entering merge.files\n')
     global.key <- NULL
@@ -9,14 +13,12 @@ merge.files <- function(data.dir, data.pat){
         d <- as.data.table(read.delim(f, quote="", stringsAsFactors=FALSE))
         key = names(d)[1]
         setkeyv(d, key)
-
         # All input tables must start with the same key
         if(is.null(global.key)){
             global.key <- key
         } else {
             stopifnot(global.key == key)
         }
-
         if(is.null(global.d)){
             global.d <- d
         } else {
@@ -31,31 +33,32 @@ merge.files <- function(data.dir, data.pat){
 
 
 
+# ====================================================================================
+# Load the METADATA file
+#   - This file should contains info on each column in a dataset
+#   - If the METADATA file is missing, build it based on column names.
+# ====================================================================================
 process.metadata <- function(columns, metadata){
     cat('entering process.metadata\n')
     if(file.exists(metadata)){
         md <- read.delim(metadata, stringsAsFactors=FALSE)
+        stopifnot(names(md)[1] == 'column_name') 
     } else {
         md <- NULL
     }
-
     for (cname in columns){
-        # if no metadata fiel is found, 
+        # if no metadata file exists, create one
         if(is.null(md)){
             md <- data.frame(column_name = cname, stringsAsFactors=FALSE)
         }
-
-        stopifnot(names(md)[1] == 'column_name') 
-
         if(! cname %in% md$column_name){
             md[nrow(md) + 1, 1] <- cname
         }
     }
-
     return(md)
 }
 
-# ========================================================================
+# ====================================================================================
 # Deterine the internal type. This is essential for dispatching to the
 # correct plotting functions.
 # Datatypes:
@@ -64,7 +67,7 @@ process.metadata <- function(columns, metadata){
 #    longcat - categorical with many elements (e.g. too many for x-axis in boxplot)
 #    cor     - textual data
 #    seq     - sequence data, e.g. protein or nucleotide sequence
-# ========================================================================
+# ==============================================================================
 determine.type <- function(d, max.levels, max.prop, max.length){
     cat('entering determine.type\n')
     types <- rep(NA, ncol(d))
@@ -73,7 +76,6 @@ determine.type <- function(d, max.levels, max.prop, max.length){
         x = d[[cname]]
         u <- length(unique(x))
         N <- length(x)
-
         if(is.numeric(x)){
             # determine whether to treat a numeric vector as num or cat
             if(all(x %% 1 == 0, na.rm=TRUE) && u <= max.levels && u / N < max.prop){
@@ -108,6 +110,9 @@ determine.type <- function(d, max.levels, max.prop, max.length){
 
 
 
+# ====================================================================================
+# Build a word usage matrix for a textual column
+# ====================================================================================
 build.corpa <- function(global){
     cat('entering build.corpa\n')
     corpa <- list()
@@ -130,6 +135,15 @@ build.corpa <- function(global){
 
 
 
+# ====================================================================================
+# For each column of sequences, build a data.table with the following columns:
+#   1. key   - the unique key associated with the row
+#   2. char  - a letter from the sequence (e.g. for DNA {'A', 'C', 'G', 'T'})
+#   3. count - the number of times *char* appears in the sequence *key*
+#   4. total - the total number of *char* in *key*, i.e. the sequence length
+#   5. prop  - the proportion of *char* in *key*
+# Return: A list containing one data.table for each sequence column
+# ====================================================================================
 build.seqs <- function(global){
     cat('entering build.seqs\n')
     seqs <- list()
@@ -145,7 +159,6 @@ build.seqs <- function(global){
         for(i in 1:nrow(d)){
             d[i, names(s3[[i]])] <- s3[[i]]
         }
-
         d <- reshape2::melt(d)
         colnames(d) <- c('key', 'char', 'count')
         d <- data.table(d)
@@ -159,13 +172,13 @@ build.seqs <- function(global){
 
 
 
-# ========================================================================
+# ==============================================================================
 # Convert columns to the appopriate type
 # Specifically:
 #  * cat               -> factor
 #  * longcat, cor, seq -> character vectors
 #  * num               -> numeric vector
-# ========================================================================
+# ==============================================================================
 set.types <- function(d, types){
     cat('entering set.types\n')
     for(cname in names(d)){
@@ -182,7 +195,8 @@ set.types <- function(d, types){
 }
 
 
-# ========================================================================
+
+# ==============================================================================
 # Build a dataset and required metadata
 # Imports the following variables from the config file
 #  * DATA_PAT
@@ -192,18 +206,15 @@ set.types <- function(d, types){
 #  * MAX_LEVELS
 #  * MAX_LENGTH
 # see config for details
-# ========================================================================
+# ==============================================================================
 build.one.dataset <- function(dataname){
     source('config')
-
     data.dir <- paste0(DATA_DIR, '/', dataname)
     rdat <- paste0(SAVE_DIR, '/', dataname, '.Rdat')
-
     # If a data file already exists, return it
     if(file.exists(rdat)) {
         return(rdat)
     }
-
     global <- list(
         table    = NULL,   # a data.frame holding all data
         corpa    = list(), # word usage matrices for building word clouds
@@ -226,7 +237,6 @@ build.one.dataset <- function(dataname){
     global$corpa    <- build.corpa(global)
     global$table    <- set.types(global$table, global$type)
     global$seqs     <- build.seqs(global)
-
     if(!dir.exists(SAVE_DIR)){
         dir.create(SAVE_DIR)
     }
@@ -234,11 +244,13 @@ build.one.dataset <- function(dataname){
     return(rdat)
 }
 
-# ========================================================================
+
+
+# ==============================================================================
 # Returns of filenames of saved datasets
 # * The names of the datasets are from the names of folders in the data
 #   directory
-# ========================================================================
+# ==============================================================================
 build.all.datasets <- function(){
     source('config') 
     datadirs <- basename(list.dirs(path=DATA_DIR, recursive=FALSE))
