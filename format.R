@@ -4,7 +4,8 @@ format.plot <- function(g,
                        x.values=NULL,
                        ggtitle=NULL,
                        xlab=NULL,
-                       ylab=NULL){
+                       ylab=NULL,
+                       legend.position='bottom'){
     cat('\tentering formatPlot()\n')
     if(logx){
         g <- g + scale_x_continuous(trans='log2')
@@ -31,7 +32,7 @@ format.plot <- function(g,
             legend.text       = element_text(size=14),
             legend.title      = element_blank(),
             legend.background = element_blank(),
-            legend.position   = 'bottom'
+            legend.position   = legend.position
         )
     if(is.null(title)){
         g <- g + theme(plot.title = element_blank())
