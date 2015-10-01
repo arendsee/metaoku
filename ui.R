@@ -27,7 +27,7 @@ shinyUI(
         theme = shinytheme('spacelab'),
         tabsetPanel(
             tabPanel('Home', shiny::includeMarkdown(home_tab)),
-            tabPanel('Columns', sidebarLayout(
+            tabPanel('Select Data', sidebarLayout(
                 sidebarPanel(
                     radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none')),
                     uiOutput('dataset_description')
@@ -36,7 +36,7 @@ shinyUI(
                     DT::dataTableOutput("column_table")
                 )
             )),
-            tabPanel('Data', sidebarLayout(
+            tabPanel('View Data', sidebarLayout(
                 sidebarPanel(
                     plotOutput('plot'),
                     fluidRow(
