@@ -18,21 +18,34 @@ source('load.R')
 datasets <- build.all.datasets()
 
 
+
 shinyServer(function(input, output, session){
 
+    
+    # =========================================================================
+    # Retrieve selected dataset
+    #   - Cache every dataset the first time it is loaded. This could cause
+    #     memory issues if there are too many large datasets. But for now,
+    #     it makes everything way snappier.
+    # =========================================================================
     updateRadioButtons(session,
                        'selected.dataset',
                        choices=names(datasets),
                        selected=names(datasets)[1])
-
+    cache <- list()
     global <- reactive({
-        cat('entering global()\n')
+        cat('entering global() ... loading', input$selected.dataset, '\n')
         if(input$selected.dataset == 'none'){
-            dataset <- datasets[1]
+            datafile <- datasets[1]
         } else {
-            dataset <- datasets[input$selected.dataset]
+            datafile <- datasets[input$selected.dataset]
         }
-        load(dataset)
+        if(is.null(cache[[datafile]])){
+            load(datafile)
+            cache[[datafile]] <<- global
+        } else {
+            global <- cache[[datafile]]
+        }
         return(global)
     })
 
