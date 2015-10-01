@@ -77,16 +77,28 @@ cat.num.cat.plot <- function(x, y, z, fmt.opts){
 
 # z scatter plots OR colored scatter plot
 num.num.cat.plot <- function(x, y, z, fmt.opts){
-    g <- ggplot(build.dt(x, y, z)) +
-        geom_point(aes(x=x, y=y)) +
-        facet_wrap(~z)
+    d <- build.dt(x, y, z)
+    if(length(x$value) < 2000){
+        g <- ggplot(d) +
+            geom_point(aes(x=x, y=y)) +
+            facet_wrap(~z)
+    } else {
+        g <- ggplot(d) +
+            stat_density2d(
+                aes(x=x, y=y, fill=..density..),
+                geom='tile',
+                contour=FALSE) +
+            scale_fill_gradientn(colours = rainbow(7)) +
+            facet_wrap(~z)
+    }
     format.plot(
         g,
         xlab=x$name,
         ylab=y$name,
         logx=fmt.opts$logx,
         logy=fmt.opts$logy,
-        x.values=x$value
+        x.values=x$value,
+        legend.position='none'
     )
 }
 
@@ -123,7 +135,8 @@ seq.num.plot <- function(x, y, fmt.opts){
         ylab=y$name,
         logx=fmt.opts$logx,
         logy=fmt.opts$logy,
-        x.values=x$value
+        x.values=x$value,
+        legend.position='none'
     )
 }
 
@@ -145,7 +158,8 @@ num.seq.plot <- function(x, y, fmt.opts){
         ylab='Letter',
         logx=fmt.opts$logx,
         logy=fmt.opts$logy,
-        x.values=x$value
+        x.values=x$value,
+        legend.position='none'
     )
 }
 
@@ -244,15 +258,26 @@ num.cat.plot <- function(x, y, fmt.opts){
 # scatter OR density map
 num.num.plot <- function(x, y, fmt.opts){
     cat('\tentering num.num.plot()\n')
-    g <- ggplot(build.dt(x, y)) +
-        geom_point(aes(x=x, y=y))
+    d <- build.dt(x, y)
+    if(length(x$value) < 2000){
+        g <- ggplot(d) +
+            geom_point(aes(x=x, y=y))
+    } else {
+        g <- ggplot(d) +
+            stat_density2d(
+                aes(x=x, y=y, fill=..density..),
+                geom='tile',
+                contour=FALSE) +
+            scale_fill_gradientn(colours = rainbow(7))
+    }
     format.plot(
         g,
         xlab=x$name,
         ylab=y$name,
         logx=fmt.opts$logx,
         logy=fmt.opts$logy,
-        x.values=x$value
+        x.values=x$value,
+        legend.position='none'
     )
 }
 
