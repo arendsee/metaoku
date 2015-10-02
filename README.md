@@ -17,9 +17,9 @@ cp your-data-set.tsv data/my-dataset
  1. Add one folder per dataset to the data folder
  2. Each input files must be TAB-delimited
  3. There may be multiple data tables if they share a common first key column
- 4. (optional) add a file named *data/HOME.md* to annotate the project
- 5. (optional) add a file named *METADATA* to each table-containing folder to annotate the columns
- 6. (optional) add a file named *README.md* to each table-containing folder to annotate the table
+ 4. (optional) add a file named `data/HOME.md` to annotate the project
+ 5. (optional) add a file named `METADATA` to each table-containing folder to annotate the columns
+ 6. (optional) add a file named `README.md` to each table-containing folder to annotate the table
 
 Example folder:
 
@@ -36,14 +36,14 @@ Example folder:
     │   └── type.tab
     ├── diamonds
     │   ├── diamonds.tab
-    │   └── README
+    │   └── README.md
     └── yeast
         └── yeast.tab
 ```
 
 ## Launching the app
 
-You may run the app locally by calling the script *run-locally.R*, which
+You may run the app locally by calling the script `run-locally.R`, which
 requires R be installed on your system.
 
 ## Example
