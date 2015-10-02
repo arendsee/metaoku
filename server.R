@@ -337,7 +337,8 @@ shinyServer(function(input, output, session){
         rownames=FALSE,
         selection=list(
             mode='multiple',
-            target='row'
+            target='row',
+            selected=1:(nrow(global()$metadata))
         ),
         options=list(
             paging=FALSE,
