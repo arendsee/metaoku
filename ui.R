@@ -27,7 +27,7 @@ shinyUI(
         theme = shinytheme('spacelab'),
         tabsetPanel(
             tabPanel('Home', shiny::includeMarkdown(home_tab)),
-            tabPanel('Select Data', sidebarLayout(
+            tabPanel('Select', sidebarLayout(
                 sidebarPanel(
                     radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none')),
                     uiOutput('dataset_description')
@@ -36,7 +36,7 @@ shinyUI(
                     DT::dataTableOutput("column_table")
                 )
             )),
-            tabPanel('View Data', sidebarLayout(
+            tabPanel('View', sidebarLayout(
                 sidebarPanel(
                     plotOutput('view_data_plot'),
                     fluidRow(
@@ -53,7 +53,7 @@ shinyUI(
                 ),
                 mainPanel(DT::dataTableOutput("main_table"))
             )),
-            tabPanel('Plot Data', sidebarLayout(
+            tabPanel('Plot', sidebarLayout(
                 sidebarPanel(
                     fluidRow(
                         column(4, selectInput('x.axis', 'x-axis', choices='None')),
@@ -63,6 +63,22 @@ shinyUI(
                 ),
                 mainPanel(
                     plotOutput('plot_data_plot', height='800px')
+                )
+            )),
+            tabPanel('Analyze', sidebarLayout(
+                sidebarPanel(
+                    h1('STUB')
+                ),
+                mainPanel(
+                    h1('STUB')
+                )
+            )),
+            tabPanel('Upload', sidebarLayout(
+                sidebarPanel(
+                    h1('STUB')
+                ),
+                mainPanel(
+                    h1('STUB')
                 )
             )),
             tabPanel('Help', shiny::includeMarkdown(help_tab)),
