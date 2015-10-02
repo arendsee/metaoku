@@ -53,8 +53,10 @@ get.column.selection <- function(a, global, selection){
 # =========================================================================
 factor.selection <- function(a, global, selection){
     if(a$name == 'Selection'){
+        cat('factoring selection\n')
         k <- sum(selection)
         if(k > 0 && k < nrow(global$table)){
+            cat('\tnaming ...\n')
             a$values <- as.factor(ifelse(selection, 'selected', 'unselected'))
         } else {
             a$type = '-'
@@ -74,7 +76,10 @@ factor.selection <- function(a, global, selection){
 #   2) at least one column is selected
 # =========================================================================
 selection.as.factor <- function(axes, selection){
-    any('Selection' %in% names(axes)) && sum(selection) > 0
+    k <- sum(selection)
+    selection.is.axis <- any(sapply(axes, function(x) x$name == 'Selection'))
+    rows.are.selected <- k > 0 && k < length(selection)
+    return(selection.is.axis && rows.are.selected)
 }
 
 
@@ -93,7 +98,7 @@ selection.as.factor <- function(axes, selection){
 dataAxis <- function(axes, global, selection){
     axes <- lapply(axes, prepare.axis, global)
     axes <- lapply(axes, factor.selection, global, selection)
-    if(selection.as.factor(axes, global)){
+    if(!selection.as.factor(axes, selection)){
         axes <- lapply(axes, get.column.selection, global, selection)
     }
     return(axes)
