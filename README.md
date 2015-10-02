@@ -1,4 +1,4 @@
-# Unnamed app
+# Metaoku
 
 A shiny app for sharing, subsetting and automagically plotting data of any type
 
@@ -8,13 +8,38 @@ A shiny app for sharing, subsetting and automagically plotting data of any type
 git clone https://github.com/zbwrnz/shiny-lab-data
 cd shiny-lab-data
 mkdir data
-cp your-data-set.tsv data
+mkdir data/my-dataset
+cp your-data-set.tsv data/my-dataset
 ```
 
-## Dataset requirements
+## Setting up the database
 
- 1. Input files must be TAB-delimited
- 2. The first column of each must be a shared key column
+ 1. Add one folder per dataset to the data folder
+ 2. Each input files must be TAB-delimited
+ 3. There may be multiple data tables if they share a common first key column
+ 4. (optional) add a file named *data/HOME.md* to annotate the project
+ 5. (optional) add a file named *METADATA* to each table-containing folder to annotate the columns
+ 6. (optional) add a file named *README.md* to each table-containing folder to annotate the table
+
+Example folder:
+
+```
+└── data
+    ├── HOME.md
+    ├── arabidopsis
+    │   ├── at-prot.tab
+    │   ├── confidence.tab
+    │   ├── METADATA
+    │   ├── README.md
+    │   ├── short_description.tab
+    │   ├── strata.tab
+    │   └── type.tab
+    ├── diamonds
+    │   ├── diamonds.tab
+    │   └── README
+    └── yeast
+        └── yeast.tab
+```
 
 ## Launching the app
 
