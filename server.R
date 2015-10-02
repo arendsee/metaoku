@@ -3,6 +3,7 @@ require(DT)
 require(markdown)
 
 source('dispatch.R')
+source('axes.R')
 
 # =========================================================================
 # Initialize a dataset as a list of data and metadata
@@ -245,7 +246,8 @@ shinyServer(function(input, output, session){
         # z-axis from 'Group by' dropdown
         z <- input$group.by
 
-        axes <- dataAxis(list(x=x, y=y, z=z))
+        axes <- list(x=x, y=y, z=z)
+        axes <- dataAxis(axes, global=global(), selection=selection())
 
         fmt.opts <- list(
             logy=input$logy,
@@ -270,7 +272,8 @@ shinyServer(function(input, output, session){
     output$plot_data_plot <- renderPlot({
         cat('entering renderPlot()\n')
 
-        axes <- dataAxis(list(x=input$x.axis, y=input$y.axis, z=input$z.axis))
+        axes <- list(x=input$x.axis, y=input$y.axis, z=input$z.axis)
+        axes <- dataAxis(axes, global=global(), selection=selection())
 
         fmt.opts <- list(
             logy=input$logy,

@@ -90,11 +90,11 @@ selection.as.factor <- function(axes, selection){
 #     * seq
 #   selection: a logical vector specifying whether a given row is selected
 # =========================================================================
-dataAxis <- function(axes, ...){
-    axes <- lapply(axes, prepare.axis, ...)
-    axes <- lapply(axes, factor.selection, ...)
-    if(selection.as.factor(axes, ...)){
-        axes <- lapply(axes, get.column.selection, ...)
+dataAxis <- function(axes, global, selection){
+    axes <- lapply(axes, prepare.axis, global)
+    axes <- lapply(axes, factor.selection, global, selection)
+    if(selection.as.factor(axes, global)){
+        axes <- lapply(axes, get.column.selection, global, selection)
     }
     return(axes)
 }
