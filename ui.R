@@ -3,8 +3,8 @@ require(shinythemes)
 require(DT)
 require(markdown)
 
-if(file.exists('data/home.md')){
-    home_tab <- 'data/home.md'
+if(file.exists('data/HOME.md')){
+    home_tab <- 'data/HOME.md'
 } else {
     home_tab <- 'defaults/home.md'
 }
