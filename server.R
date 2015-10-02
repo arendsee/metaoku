@@ -192,17 +192,7 @@ shinyServer(function(input, output, session){
 
 
 
-    # =========================================================================
-    # Render plots
-    # Axes:
-    #   x-axis: The selected column in main_table.
-    #   y-axis: The column selected from the 'Compare to' menu.
-    #   z-axis: The column selected from the 'Group by' menu. This variable
-    #           must be categorical, since it is used to facet, boxplot, or
-    #           barplot the data.
-    # =========================================================================
-    output$plot <- renderPlot({
-        cat('entering renderPlot()\n')
+    dataAxis <- function(axes){
 
         prepare.axis <- function(aname){
             a <- list()
@@ -236,39 +226,66 @@ shinyServer(function(input, output, session){
             return(a)
         }
 
+        factor.selection <- function(a){
+            if(a$name == 'Selection'){
+                k <- sum(selection())
+                if(k > 0 && k < nrow(dat())){
+                    a$values <- as.factor(ifelse(selection(), 'selected', 'unselected'))
+                } else {
+                    a$type = '-'
+                }
+            }
+            return(a)
+        }
+
+        axes <- lapply(axes, prepare.axis)
+        axes <- lapply(axes, factor.selection)
+        selection.as.factor <- any('Selection' %in% names(axes))
+        if(selection.as.factor && sum(selection()) > 0){
+            axes <- lapply(axes, get.column.selection)
+        }
+        return(axes)
+    }
+
+
+
+    # =========================================================================
+    # Render plots
+    # Axes:
+    #   x-axis: The selected column in main_table.
+    #   y-axis: The column selected from the 'Compare to' menu.
+    #   z-axis: The column selected from the 'Group by' menu. This variable
+    #           must be categorical, since it is used to facet, boxplot, or
+    #           barplot the data.
+    # =========================================================================
+    output$plot <- renderPlot({
+        cat('entering renderPlot()\n')
+
         cname <- selected.column.name()
         if(is.null(cname)){
             return(NULL)
         }
-        
+
         # x-axis comes from the selected column
-        x <- prepare.axis(cname)
+        x <- cname
 
         # y-axis currently comes from 'Compare to' dropdown, may be NULL
-        y <- prepare.axis(input$compare.to)
+        y <- input$compare.to
 
         # z-axis from 'Group by' dropdown
-        z <- prepare.axis(input$group.by)
+        z <- input$group.by
 
-        if(z$name == 'Selection'){
-            k <- sum(selection())
-            if(k > 0 && k < nrow(dat())){
-                z$values <- as.factor(ifelse(selection(), 'selected', 'unselected'))
-            } else {
-                z$type = '-'
-            }
-        } else if(sum(selection()) > 0){
-            x <- get.column.selection(x)
-            y <- get.column.selection(y)
-            z <- get.column.selection(z)
-        }
+        axes <- dataAxis(list(x=x, y=y, z=z))
 
         fmt.opts <- list(
             logy=input$logy,
             logx=input$logx
         )
 
-        plotAnything(x=x, y=y, z=z, fmt.opts=fmt.opts)
+        plotAnything(x=axes[['x']],
+                     y=axes[['y']],
+                     z=axes[['z']],
+                     fmt.opts=fmt.opts)
     })
 
 
