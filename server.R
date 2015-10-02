@@ -204,63 +204,6 @@ shinyServer(function(input, output, session){
 
 
 
-    dataAxis <- function(axes){
-
-        prepare.axis <- function(aname){
-            a <- list()
-            a$name    <- aname
-            a$values  <- dat()[[a$name]]
-            a$defined <- length(a$values > 0)
-            if(aname %in% names(global()$type)){
-                a$type <- global()$type[aname]
-            } else {
-                a$type <- '-'
-            }
-            if(a$type == 'cor'){
-                a$mat <- global()$corpa[[a$name]]
-            }
-            if(a$type == 'seq'){
-                a$seq <- global()$seq[[a$name]]
-            }
-            return(a)
-        }
-
-        get.column.selection <- function(a){
-            cat('entering get.column.selection()\n')
-            if(a$type == 'cor'){
-                a$mat <- a$mat[selection(), ]
-            }
-            if(a$type == 'seq'){
-                keys  <- dat()[selection()]$KEY
-                a$seq <- a$seq[keys, allow.cartesian=TRUE]
-            }
-            a$values <- a$values[selection()]
-            return(a)
-        }
-
-        factor.selection <- function(a){
-            if(a$name == 'Selection'){
-                k <- sum(selection())
-                if(k > 0 && k < nrow(dat())){
-                    a$values <- as.factor(ifelse(selection(), 'selected', 'unselected'))
-                } else {
-                    a$type = '-'
-                }
-            }
-            return(a)
-        }
-
-        axes <- lapply(axes, prepare.axis)
-        axes <- lapply(axes, factor.selection)
-        selection.as.factor <- any('Selection' %in% names(axes))
-        if(selection.as.factor && sum(selection()) > 0){
-            axes <- lapply(axes, get.column.selection)
-        }
-        return(axes)
-    }
-
-
-
     # =========================================================================
     # Render plot on 'View Data' tab
     # Axes:
