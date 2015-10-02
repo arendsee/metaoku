@@ -77,7 +77,7 @@ shinyUI(
                 sidebarPanel(
                     fileInput('upload.file', 'Filename', multiple=TRUE),
                     radioButtons('upload.type', 'Select upload type',
-                                 choices=list('Single Table'='single', 'Dataset'='dataset',)),
+                                 choices=list('Single Table'='single', 'Dataset'='dataset')),
                     textOutput('upload.status')
                 ),
                 mainPanel(
