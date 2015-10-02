@@ -93,6 +93,18 @@ shinyServer(function(input, output, session){
         updateSelectInput(session,
                           'compare.to',
                           choices=c('None', as.character(columns)))
+        # set x.axis on 'Plot Data' tab
+        updateSelectInput(session,
+                          'x.axis',
+                          choices=c('None', as.character(columns)))
+        # set y.axis on 'Plot Data' tab
+        updateSelectInput(session,
+                          'y.axis',
+                          choices=c('None', as.character(columns)))
+        # set z.axis on 'Plot Data' tab
+        updateSelectInput(session,
+                          'z.axis',
+                          choices=c('None', as.character(columns)))
         # set group.by (z) choices (this may not be cor or seq)
         neat_columns <- columns[global()$type[columns] %in% c('cat', 'num', 'longcat')]
         updateSelectInput(session,
@@ -250,7 +262,7 @@ shinyServer(function(input, output, session){
 
 
     # =========================================================================
-    # Render plots
+    # Render plot on 'View Data' tab
     # Axes:
     #   x-axis: The selected column in main_table.
     #   y-axis: The column selected from the 'Compare to' menu.
@@ -258,7 +270,7 @@ shinyServer(function(input, output, session){
     #           must be categorical, since it is used to facet, boxplot, or
     #           barplot the data.
     # =========================================================================
-    output$plot <- renderPlot({
+    output$view_data_plot <- renderPlot({
         cat('entering renderPlot()\n')
 
         cname <- selected.column.name()
@@ -276,6 +288,31 @@ shinyServer(function(input, output, session){
         z <- input$group.by
 
         axes <- dataAxis(list(x=x, y=y, z=z))
+
+        fmt.opts <- list(
+            logy=input$logy,
+            logx=input$logx
+        )
+
+        plotAnything(x=axes[['x']],
+                     y=axes[['y']],
+                     z=axes[['z']],
+                     fmt.opts=fmt.opts)
+    })
+
+
+
+    # =========================================================================
+    # Render plot on 'Plot Data' tab
+    # Axes:
+    #   x-axis: From 'x-axis' menu
+    #   y-axis: From 'y-axis' menu
+    #   z-axis: From 'z-axis' menu
+    # =========================================================================
+    output$plot_data_plot <- renderPlot({
+        cat('entering renderPlot()\n')
+
+        axes <- dataAxis(list(x=input$x.axis, y=input$y.axis, z=input$z.axis))
 
         fmt.opts <- list(
             logy=input$logy,

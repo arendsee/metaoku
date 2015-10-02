@@ -38,7 +38,7 @@ shinyUI(
             )),
             tabPanel('View Data', sidebarLayout(
                 sidebarPanel(
-                    plotOutput('plot'),
+                    plotOutput('view_data_plot'),
                     fluidRow(
                         column(2, checkboxInput('logx', 'log2 x-axis')),
                         column(2, checkboxInput('logy', 'log2 y-axis')),
@@ -52,6 +52,18 @@ shinyUI(
                     downloadButton('downloadData', 'Download')
                 ),
                 mainPanel(DT::dataTableOutput("main_table"))
+            )),
+            tabPanel('Plot Data', sidebarLayout(
+                sidebarPanel(
+                    fluidRow(
+                        column(4, selectInput('x.axis', 'x-axis', choices='None')),
+                        column(4, selectInput('y.axis', 'y-axis', choices='None')),
+                        column(4, selectInput('z.axis', 'z-axis', choices='None'))
+                    )
+                ),
+                mainPanel(
+                    plotOutput('plot_data_plot', height='800px')
+                )
             )),
             tabPanel('Help', shiny::includeMarkdown(help_tab)),
             tabPanel('About',

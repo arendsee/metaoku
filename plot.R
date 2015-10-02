@@ -7,6 +7,7 @@ require(plyr)
 source('format.R')
 
 build.dt <- function(x, y=NULL, z=NULL){
+    cat('\t\tentering build.dt: ', x$name, y$name, z$name, '\n')
     d <- data.frame(x=x$value)
     if(!is.null(y)){
         d$y <- y$value
@@ -77,6 +78,7 @@ cat.num.cat.plot <- function(x, y, z, fmt.opts){
 
 # z scatter plots OR colored scatter plot
 num.num.cat.plot <- function(x, y, z, fmt.opts){
+    cat('\t\tentering num.num.cat.plot\n')
     d <- build.dt(x, y, z)
     if(length(x$value) < 2000){
         g <- ggplot(d) +
