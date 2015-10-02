@@ -119,6 +119,21 @@ shinyServer(function(input, output, session){
 
 
     # =========================================================================
+    # Load instructions given the type of upload the user chooses
+    # =========================================================================
+    observe({
+        umode <- input$select.upload.type
+        if(umode == 'dataset'){
+            desc <- 'defaults/upload-dataset-instructions.md'
+        } else {
+            desc <- 'defaults/upload-single-instructions.md'
+        }
+        output$upload.instructions <- renderUI({shiny::includeMarkdown(desc)})
+    })
+
+
+
+    # =========================================================================
     # Update dataset description when new dataset is selected
     # =========================================================================
     observe({

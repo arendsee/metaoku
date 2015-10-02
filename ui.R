@@ -75,10 +75,13 @@ shinyUI(
             )),
             tabPanel('Upload', sidebarLayout(
                 sidebarPanel(
-                    h1('STUB')
+                    fileInput('uploaded.file', 'Filename'),
+                    radioButtons('select.upload.type', 'Select upload type',
+                                 choices=list('Dataset'='dataset', 'Single Table'='single')),
+                    textOutput('upload.status')
                 ),
                 mainPanel(
-                    h1('STUB')
+                    uiOutput('upload.instructions')
                 )
             )),
             tabPanel('Help', shiny::includeMarkdown(help_tab)),
