@@ -86,7 +86,7 @@ shinyUI(
             )),
             tabPanel('Help', shiny::includeMarkdown(help_tab)),
             tabPanel('About',
-                textOutput('version'),
+                shiny::includeMarkdown('VERSION'),
                 shiny::includeMarkdown(about_tab))
         )
     )
