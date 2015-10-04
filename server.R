@@ -282,8 +282,8 @@ shinyServer(function(input, output, session){
         axes <- dataAxis(axes, global=global(), selection=selection())
 
         fmt.opts <- list(
-            logy=input$logy,
-            logx=input$logx
+            logy=input$plot.logy,
+            logx=input$plot.logx
         )
 
         plotAnything(x=axes[['x']],

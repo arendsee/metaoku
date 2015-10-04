@@ -59,6 +59,10 @@ shinyUI(
                         column(4, selectInput('x.axis', 'x-axis', choices='None')),
                         column(4, selectInput('y.axis', 'y-axis', choices='None')),
                         column(4, selectInput('z.axis', 'z-axis', choices='None'))
+                    ),
+                    fluidRow(
+                        column(2, checkboxInput('plot.logx', 'log2 x-axis')),
+                        column(2, checkboxInput('plot.logy', 'log2 y-axis'))
                     )
                 ),
                 mainPanel(
