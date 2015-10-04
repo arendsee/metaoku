@@ -356,9 +356,6 @@ shinyServer(function(input, output, session){
     # Upload a file or dataset
     # =========================================================================
     upload.type <- 'single'
-    imported.files <- c()
-    imported.directories <- c()
-    imported.saved <- c()
     observe({
         upload.type <<- input$upload.type
     })
@@ -376,7 +373,6 @@ shinyServer(function(input, output, session){
                 newsave <- file.path(getwd(), 'saved', paste0(data.name, '.Rdat'))
                 if(!dir.exists(newdir)){
                     dir.create(newdir)
-                    imported.directories <<- c(imported.directories, newdir)
                 }
                 if(file.exists(newpath)){
                     cat(sprintf('WARNING: I refuse to overwrite file "%s"\n', newpath))
@@ -384,8 +380,6 @@ shinyServer(function(input, output, session){
                     if(file.size(datapath) > 0){
                         success <- TRUE
                         file.copy(datapath, newpath)
-                        imported.files <<- c(imported.files, newdir)
-                        imported.saved <<- c(imported.saved, newsave)
                     }
                 }
             }
@@ -411,17 +405,5 @@ shinyServer(function(input, output, session){
             write.table(dat()[input$main_table_rows_all], file, row.names=FALSE, sep="\t")
         }
     )
-
-
-
-    # =========================================================================
-    # Delete all imported data
-    # =========================================================================
-    on.exit({
-        cat('entering on.exit\n')
-        unlink(imported.files) 
-        unlink(imported.directories)
-        unlink(imported.saved)
-    })
 
 })
