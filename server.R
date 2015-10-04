@@ -400,10 +400,11 @@ shinyServer(function(input, output, session){
     # Download the data in main_table after filters are applied
     # =========================================================================
     output$downloadData <- downloadHandler(
-        filename = 'shinyapp-datadump.tsv',
+        filename = 'metaoku-data.tab',
         content = function(file) {
             write.table(dat()[input$main_table_rows_all], file, row.names=FALSE, sep="\t")
-        }
+        },
+        contentType='text/csv'
     )
 
 })
