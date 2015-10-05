@@ -5,6 +5,7 @@ require(reshape2)
 require(plyr)
 
 source('format.R')
+`%|%` <- function(x,y) { if(is.null(x)) y else x }
 
 build.dt <- function(x, y=NULL, z=NULL){
     cat('\t\tentering build.dt: ', x$name, y$name, z$name, '\n')
@@ -39,12 +40,9 @@ cat.cat.cat.plot <- function(x, y, z, fmt.opts){
     g <- ggplot(d) +
         geom_tile(aes(x=x, y=y, fill=lograt)) +
         facet_wrap(~z)
-    format.plot(
-        g,
-        xlab=x$name,
-        ylab=y$name,
-        x.values=x$value
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    format.plot(g, x$value, fmt.opts)
 }
 
 # z boxplots (coord flip)
@@ -53,13 +51,10 @@ num.cat.cat.plot <- function(x, y, z, fmt.opts){
         geom_boxplot(aes(x=y, y=x)) +
         coord_flip() +
         facet_wrap(~z)
-    format.plot(
-        g,
-        xlab=x$name,
-        ylab=y$name,
-        logy=fmt.opts$logx,
-        x.values=x$value
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    fmt.opts$logy <- fmt.opts$logx
+    format.plot(g, x$value, fmt.opts)
 }
 
 # z boxplots
@@ -67,13 +62,9 @@ cat.num.cat.plot <- function(x, y, z, fmt.opts){
     g <- ggplot(build.dt(x, y, z)) +
         geom_boxplot(aes(x=x, y=y)) +
         facet_wrap(~z)
-    format.plot(
-        g,
-        xlab=x$name,
-        ylab=y$name,
-        logy=fmt.opts$logy,
-        x.values=x$value
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    format.plot(g, x$value, fmt.opts)
 }
 
 # z scatter plots OR colored scatter plot
@@ -93,15 +84,10 @@ num.num.cat.plot <- function(x, y, z, fmt.opts){
             scale_fill_gradientn(colours = rainbow(7)) +
             facet_wrap(~z)
     }
-    format.plot(
-        g,
-        xlab=x$name,
-        ylab=y$name,
-        logx=fmt.opts$logx,
-        logy=fmt.opts$logy,
-        x.values=x$value,
-        legend.position='none'
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
+    format.plot(g, x$value, fmt.opts)
 }
 
 # z dodged barplots (comparing sequence composition)
@@ -131,15 +117,10 @@ seq.num.plot <- function(x, y, fmt.opts){
         ) +
         scale_fill_gradientn(colours = rainbow(7)) +
         facet_wrap(~char)
-    format.plot(
-        g,
-        xlab='Letter',
-        ylab=y$name,
-        logx=fmt.opts$logx,
-        logy=fmt.opts$logy,
-        x.values=x$value,
-        legend.position='none'
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% 'Letter'
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
+    format.plot(g, x$value, fmt.opts)
 }
 
 # as above with coord flip
@@ -154,15 +135,10 @@ num.seq.plot <- function(x, y, fmt.opts){
         ) +
         scale_fill_gradientn(colours = rainbow(7)) +
         facet_wrap(~char)
-    format.plot(
-        g,
-        xlab=x$name,
-        ylab='Letter',
-        logx=fmt.opts$logx,
-        logy=fmt.opts$logy,
-        x.values=x$value,
-        legend.position='none'
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% 'Letter'
+    fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
+    format.plot(g, x$value, fmt.opts)
 }
 
 # y barplots
@@ -190,12 +166,9 @@ cat.cat.plot <- function(x, y, fmt.opts){
     d$lograt <- log(d$obs / d$exp)
     g <- ggplot(d) +
         geom_tile(aes(x=x, y=y, fill=lograt))
-    format.plot(
-        g,
-        xlab=x$name,
-        ylab=y$name,
-        x.values=x$value
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    format.plot(g, x$value, fmt.opts)
 }
 
 # boxplot
@@ -210,13 +183,9 @@ cat.num.plot <- function(x, y, fmt.opts){
         }
         return(num.cat.plot(y, x, fmt.opts))
     }
-    format.plot(
-        g,
-        xlab=x$name,
-        ylab=y$name,
-        logy=fmt.opts$logy,
-        x.values=x$value
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    format.plot(g, x$value, fmt.opts)
 }
 
 # boxplot coord flip
@@ -227,13 +196,10 @@ num.cat.plot <- function(x, y, fmt.opts){
         g <- ggplot(d) +
             geom_boxplot(aes(x=y, y=x)) +
             coord_flip()
-        return(format.plot(
-            g,
-            xlab=y$name,
-            ylab=x$name,
-            logy=fmt.opts$logx,
-            x.values=y$value
-        ))
+    fmt.opts$xlab <- fmt.opts$ylab %|% y$name
+    fmt.opts$ylab <- fmt.opts$xlab %|% x$name
+    fmt.opts$logy <- fmt.opts$logx
+    format.plot(g, x$value, fmt.opts)
     } else {
         g <- ggplot(d) +
             geom_histogram(
@@ -247,13 +213,9 @@ num.cat.plot <- function(x, y, fmt.opts){
             ) + theme(axis.text.y=element_blank(),
                       axis.ticks.y=element_blank()) +
               labs(x=x$name)
-        return(format.plot(
-            g,
-            xlab=x$name,
-            ylab=y$name,
-            logx=fmt.opts$logx,
-            x.values=x$value
-        ))
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    format.plot(g, x$value, fmt.opts)
     }
 }
 
@@ -272,15 +234,10 @@ num.num.plot <- function(x, y, fmt.opts){
                 contour=FALSE) +
             scale_fill_gradientn(colours = rainbow(7))
     }
-    format.plot(
-        g,
-        xlab=x$name,
-        ylab=y$name,
-        logx=fmt.opts$logx,
-        logy=fmt.opts$logy,
-        x.values=x$value,
-        legend.position='none'
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
+    format.plot(g, x$value, fmt.opts)
 }
 
 # barplot
@@ -289,12 +246,9 @@ cat.plot <- function(x, fmt.opts){
     g <- ggplot(build.dt(x)) +
         geom_bar(aes(x=x)) +
         labs(x=x$name)
-    format.plot(
-        g,
-        xlab=x$name,
-        logy=fmt.opts$logy,
-        x.values=x$value
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% 'Counts'
+    format.plot(g, x$value, fmt.opts)
 }
 
 # histogram
@@ -302,12 +256,9 @@ num.plot <- function(x, fmt.opts){
     cat('\tentering num.plot()\n')
     g <- ggplot(build.dt(x)) +
         geom_histogram(aes(x=x))
-    format.plot(
-        g,
-        xlab=x$name,
-        logx=fmt.opts$logx,
-        x.values=x$value
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+    fmt.opts$ylab <- fmt.opts$ylab %|% NULL
+    format.plot(g, x$value, fmt.opts)
 }
 
 # wordcloud
@@ -334,11 +285,8 @@ seq.plot <- function(x, fmt.opts){
     setnames(d, c('V1', 'V2', 'V3'), c('prop', 'q25', 'q75'))
     g <- ggplot(d) +
         geom_pointrange(aes(x=char, y=prop, ymin=q25, ymax=q75))
-    format.plot(
-        g,
-        xlab='Letter',
-        ylab='Percent composition',
-        ggtitle='Sequence composition',
-        x.values=x$value
-    )
+    fmt.opts$xlab <- fmt.opts$xlab %|% 'Letter'
+    fmt.opts$ylab <- fmt.opts$ylab %|% 'Percent composition'
+    fmt.opts$title <- fmt.opts$title %|% 'Sequence composition'
+    format.plot(g, x$value, fmt.opts)
 }
