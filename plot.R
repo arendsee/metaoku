@@ -180,6 +180,7 @@ cat.num.plot <- function(x, y, fmt.opts){
     } else {
         if(fmt.opts$logy){
             fmt.opts$logx <- TRUE
+            fmt.opts$logy <- FALSE
         }
         return(num.cat.plot(y, x, fmt.opts))
     }

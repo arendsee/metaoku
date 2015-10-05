@@ -5,6 +5,8 @@ require(markdown)
 source('dispatch.R')
 source('axes.R')
 
+`%|%` <- function(x,y) { if(is.null(x)) y else x }
+
 # =========================================================================
 # Initialize a dataset as a list of data and metadata
 # includes:
@@ -136,6 +138,79 @@ shinyServer(function(input, output, session){
             desc <- 'defaults/upload-single-instructions.md'
         }
         output$upload.instructions <- renderUI({shiny::includeMarkdown(desc)})
+    })
+
+
+
+    # =========================================================================
+    # Update x- and y-axis ranges when axes change on plot
+    # =========================================================================
+#   observe({
+#       xname <- input$x.axis
+#       xtype <- global()$types[xname]
+#       if(xtype == 'num'){
+#           xmin  <- min(dat()[[xname]])
+#           xmax  <- max(dat()[[xname]])
+#           cat('xmin:', xmin, 'xmax', xmax, '\n')
+#       }
+#   })
+#   observe({
+#       yname <- input$y.axis
+#       ymin  <- min(dat()[[yname]])
+#       ymax  <- max(dat()[[yname]])
+#       updateSliderInput(session, 'plot.yrange', min=ymin, max=ymax, value=c(ymin, ymax))
+#   })
+
+    output$xformat <- renderUI({
+        axis.name <- input$x.axis
+        if(axis.name == 'None'){
+            el = h1('No axis selected')           
+        } else if(global()$type[axis.name] == 'num'){
+            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
+            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
+            cat('min/max', axis.min, axis.max, '\n')
+            el <- fluidRow(
+               column(2, checkboxInput('plot.logx', 'log2 x-axis')),
+               column(8, sliderInput('plot.xrange', 'x-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
+            )
+        } else {
+            el <- h1('No options')
+        }
+        return(el)
+    })
+    output$yformat <- renderUI({
+        axis.name <- input$y.axis
+        if(axis.name == 'None'){
+            el = h1('No axis selected')           
+        } else if(global()$type[axis.name] == 'num'){
+            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
+            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
+            cat('min/max', axis.min, axis.max, '\n')
+            el <- fluidRow(
+               column(2, checkboxInput('plot.logx', 'log2 y-axis')),
+               column(8, sliderInput('plot.yrange', 'y-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
+            )
+        } else {
+            el <- h1('No options')
+        }
+        return(el)
+    })
+    output$zformat <- renderUI({
+        axis.name <- input$z.axis
+        if(axis.name == 'None'){
+            el = h1('No axis selected')           
+        } else if(global()$type[axis.name] == 'num'){
+            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
+            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
+            cat('min/max', axis.min, axis.max, '\n')
+            el <- fluidRow(
+               column(2, checkboxInput('plot.logz', 'log2 z-axis')),
+               column(8, sliderInput('plot.zrange', 'z-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
+            )
+        } else {
+            el <- h1('No options')
+        }
+        return(el)
     })
 
 
@@ -281,9 +356,13 @@ shinyServer(function(input, output, session){
         axes <- list(x=input$x.axis, y=input$y.axis, z=input$z.axis)
         axes <- dataAxis(axes, global=global(), selection=selection())
 
+        cat('\txrange:', input$plot.xrange, '\n')
+
         fmt.opts <- list(
-            logy=input$plot.logy,
-            logx=input$plot.logx
+            logy=input$plot.logy %|% FALSE,
+            logx=input$plot.logx %|% FALSE,
+            xrange=input$plot.xrange,
+            yrange=input$plot.yrange
         )
 
         plotAnything(x=axes[['x']],
