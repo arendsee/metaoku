@@ -55,11 +55,8 @@ shinyUI(
             )),
             tabPanel('Plot', sidebarLayout(
                 sidebarPanel(
-                    fluidRow(
-                        column(4, selectInput('x.axis', 'x-axis', choices='None')),
-                        column(4, selectInput('y.axis', 'y-axis', choices='None')),
-                        column(4, selectInput('z.axis', 'z-axis', choices='None'))
-                    )
+                    uiOutput('plot.sidebar'),
+                    actionButton('build.plot', 'Plot')
                 ),
                 mainPanel(
                     plotOutput('plot_data_plot', height='800px')

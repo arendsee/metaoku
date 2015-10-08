@@ -1,9 +1,15 @@
 require(shiny)
 require(DT)
 require(markdown)
+require(magrittr)
 
 source('dispatch.R')
 source('axes.R')
+source('plotUI.R')
+
+`%ifnul%` <- function(a, b) if(is.null(a)) b else a
+`%ifnot%` <- function(a, b) if(is.null(a) || is.na(a) || length(a) == 0) b else a
+`%ifok%` <- function(a, b) if(!(is.null(a) || is.na(a) || length(a) == 0)) b
 
 # =========================================================================
 # Initialize a dataset as a list of data and metadata
@@ -137,6 +143,43 @@ shinyServer(function(input, output, session){
         }
         output$upload.instructions <- renderUI({shiny::includeMarkdown(desc)})
     })
+
+
+    plotui <- PlotUI$new()
+    build <- function(){
+        output$plot.sidebar <- renderUI({ plotui$buildUI() })
+    }
+    observeEvent(
+        input$plot.x,
+        { x <- input$plot.x
+          xtype <- global()$type[x]
+          cat(sprintf('EVENT plot.x: (%s,%s)\n', x, xtype))
+          plotui$setX(xtype, x)
+          build()
+        }
+    )
+    observeEvent(
+        input$plot.y,
+        { y <- input$plot.y
+          ytype <- global()$type[y]
+          cat(sprintf('EVENT y: (%s,%s)\n', y, ytype))
+          plotui$setY(ytype, y)
+          build()
+        }
+    )
+    observeEvent(
+        input$plot.geom,
+        { geom <- input$plot.geom
+          cat(sprintf('EVENT geom: (%s)\n', geom))
+          plotui$setGeom(geom)
+          build()
+        }
+    )
+    observe({
+        cat('entering plotui: INITIALIZE PLOTUI\n')
+        plotui$init(global()$type)
+        build()
+    }, priority = 5)
 
 
 
@@ -277,19 +320,12 @@ shinyServer(function(input, output, session){
     # =========================================================================
     output$plot_data_plot <- renderPlot({
         cat('entering renderPlot()\n')
-
-        axes <- list(x=input$x.axis, y=input$y.axis, z=input$z.axis)
-        axes <- dataAxis(axes, global=global(), selection=selection())
-
-        fmt.opts <- list(
-            logy=input$logy,
-            logx=input$logx
-        )
-
-        plotAnything(x=axes[['x']],
-                     y=axes[['y']],
-                     z=axes[['z']],
-                     fmt.opts=fmt.opts)
+        if(!is.null(input$plot.x)){
+            xlab=input$plot.x
+        } else {
+            xlab='None'
+        }
+        hist(runif(100), xlab=xlab)
     })
 
 
