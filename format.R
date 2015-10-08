@@ -1,17 +1,10 @@
-format.plot <- function(g,
-                       logx=FALSE,
-                       logy=FALSE,
-                       x.values=NULL,
-                       ggtitle=NULL,
-                       xlab=NULL,
-                       ylab=NULL,
-                       legend.position='bottom'){
+format.plot <- function(g, x.values=NULL, fmt.opts){
     cat('\tentering formatPlot()\n')
-    if(logx){
+    if(fmt.opts$logx){
         g <- g + scale_x_continuous(trans='log2')
     }
 
-    if(logy){
+    if(fmt.opts$logy){
         g <- g + scale_y_continuous(trans='log2')
     }
 
@@ -23,8 +16,12 @@ format.plot <- function(g,
         }
     }
 
+    if(is.null(fmt.opts$legend.position)){
+        fmt.opts$legend.position = 'bottom'
+    }
+
     g <- g +
-           labs(x=xlab, y=ylab, title=ggtitle) +
+           labs(x=fmt.opts$xlab, y=fmt.opts$ylab, title=fmt.opts$title) +
          theme(
             axis.text.x       = element_text(size=14), 
             axis.text.y       = element_text(size=14),
@@ -32,24 +29,32 @@ format.plot <- function(g,
             legend.text       = element_text(size=14),
             legend.title      = element_blank(),
             legend.background = element_blank(),
-            legend.position   = legend.position
+            legend.position   = fmt.opts$legend.position
         )
-    if(is.null(title)){
+    if(is.null(fmt.opts$title)){
         g <- g + theme(plot.title = element_blank())
     } else {
         g <- g + theme(plot.title = element_text(size=24, face='bold'))
     }
 
-    if(is.null(xlab)){
+    if(is.null(fmt.opts$xlab)){
         g <- g + theme(axis.title.x = element_blank())
     } else {
         g <- g + theme(axis.title.x = element_text(size=18))
     }
 
-    if(is.null(ylab)){
+    if(is.null(fmt.opts$ylab)){
         g <- g + theme(axis.title.y = element_blank())
     } else {
         g <- g + theme(axis.title.y = element_text(size=18))
+    }
+
+    if(!is.null(fmt.opts$xrange)){
+        g <- g + xlim(fmt.opts$xrange)
+    }
+
+    if(!is.null(fmt.opts$yrange)){
+        g <- g + ylim(fmt.opts$yrange)
     }
 
     return(g)

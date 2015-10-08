@@ -11,6 +11,8 @@ source('plotUI.R')
 `%ifnot%` <- function(a, b) if(is.null(a) || is.na(a) || length(a) == 0) b else a
 `%ifok%` <- function(a, b) if(!(is.null(a) || is.na(a) || length(a) == 0)) b
 
+`%|%` <- function(x,y) { if(is.null(x)) y else x }
+
 # =========================================================================
 # Initialize a dataset as a list of data and metadata
 # includes:
@@ -180,6 +182,64 @@ shinyServer(function(input, output, session){
         plotui$init(global()$type)
         build()
     }, priority = 5)
+
+
+
+    # =========================================================================
+    # Update x- and y-axis ranges when axes change on plot
+    # =========================================================================
+
+    output$xformat <- renderUI({
+        axis.name <- input$x.axis
+        if(axis.name == 'None'){
+            el = h1('No axis selected')           
+        } else if(global()$type[axis.name] == 'num'){
+            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
+            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
+            cat('min/max', axis.min, axis.max, '\n')
+            el <- fluidRow(
+               column(2, checkboxInput('plot.logx', 'log2 x-axis')),
+               column(8, sliderInput('plot.xrange', 'x-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
+            )
+        } else {
+            el <- h1('No options')
+        }
+        return(el)
+    })
+    output$yformat <- renderUI({
+        axis.name <- input$y.axis
+        if(axis.name == 'None'){
+            el = h1('No axis selected')           
+        } else if(global()$type[axis.name] == 'num'){
+            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
+            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
+            cat('min/max', axis.min, axis.max, '\n')
+            el <- fluidRow(
+               column(2, checkboxInput('plot.logx', 'log2 y-axis')),
+               column(8, sliderInput('plot.yrange', 'y-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
+            )
+        } else {
+            el <- h1('No options')
+        }
+        return(el)
+    })
+    output$zformat <- renderUI({
+        axis.name <- input$z.axis
+        if(axis.name == 'None'){
+            el = h1('No axis selected')           
+        } else if(global()$type[axis.name] == 'num'){
+            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
+            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
+            cat('min/max', axis.min, axis.max, '\n')
+            el <- fluidRow(
+               column(2, checkboxInput('plot.logz', 'log2 z-axis')),
+               column(8, sliderInput('plot.zrange', 'z-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
+            )
+        } else {
+            el <- h1('No options')
+        }
+        return(el)
+    })
 
 
 
@@ -373,7 +433,8 @@ shinyServer(function(input, output, session){
         rownames=FALSE,
         selection=list(
             mode='multiple',
-            target='row'
+            target='row',
+            selected=1:(nrow(global()$metadata))
         ),
         options=list(
             paging=FALSE,
@@ -391,9 +452,6 @@ shinyServer(function(input, output, session){
     # Upload a file or dataset
     # =========================================================================
     upload.type <- 'single'
-    imported.files <- c()
-    imported.directories <- c()
-    imported.saved <- c()
     observe({
         upload.type <<- input$upload.type
     })
@@ -411,7 +469,6 @@ shinyServer(function(input, output, session){
                 newsave <- file.path(getwd(), 'saved', paste0(data.name, '.Rdat'))
                 if(!dir.exists(newdir)){
                     dir.create(newdir)
-                    imported.directories <<- c(imported.directories, newdir)
                 }
                 if(file.exists(newpath)){
                     cat(sprintf('WARNING: I refuse to overwrite file "%s"\n', newpath))
@@ -419,8 +476,6 @@ shinyServer(function(input, output, session){
                     if(file.size(datapath) > 0){
                         success <- TRUE
                         file.copy(datapath, newpath)
-                        imported.files <<- c(imported.files, newdir)
-                        imported.saved <<- c(imported.saved, newsave)
                     }
                 }
             }
@@ -441,22 +496,11 @@ shinyServer(function(input, output, session){
     # Download the data in main_table after filters are applied
     # =========================================================================
     output$downloadData <- downloadHandler(
-        filename = 'shinyapp-datadump.tsv',
+        filename = 'metaoku-data.tab',
         content = function(file) {
             write.table(dat()[input$main_table_rows_all], file, row.names=FALSE, sep="\t")
-        }
+        },
+        contentType='text/csv'
     )
-
-
-
-    # =========================================================================
-    # Delete all imported data
-    # =========================================================================
-    on.exit({
-        cat('entering on.exit\n')
-        unlink(imported.files) 
-        unlink(imported.directories)
-        unlink(imported.saved)
-    })
 
 })
