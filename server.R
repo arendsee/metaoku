@@ -85,8 +85,13 @@ shinyServer(function(input, output, session){
     #      content, so rows must be accessed by KEY when linking out.
     # =========================================================================
     dat <- reactive({
-        cat('entering dat()\n')
-        columns <- global()$metadata$column_name[input$column_table_rows_selected]
+        csel <- input$column_table_rows_selected
+        cat(sprintf('dat() ncol=%s\n', length(csel)))
+        if(length(csel) > 0){
+            columns <- global()$metadata$column_name[csel]
+        } else {
+            columns <- global()$metadata$column_name
+        }
         # the key column should always be the first column in the data table
         columns <- unique(c('KEY', columns))
         # assert all fields in the metadata are in the actual data
@@ -407,7 +412,8 @@ shinyServer(function(input, output, session){
         style='bootstrap',
         selection=list(
             mode='single',
-            target='column'
+            target='column',
+            selected=0
         ),
         options = list(
             autoWidth=TRUE,
@@ -434,8 +440,7 @@ shinyServer(function(input, output, session){
         rownames=FALSE,
         selection=list(
             mode='multiple',
-            target='row',
-            selected=1:(nrow(global()$metadata))
+            target='row'
         ),
         options=list(
             paging=FALSE,
