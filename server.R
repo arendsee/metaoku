@@ -321,7 +321,7 @@ shinyServer(function(input, output, session){
     # application of the filters
     # =========================================================================
     selection <- reactive({
-        cat('entering selected.row.indices()\n')
+        cat('entering selection()\n')
         selection <- rep(FALSE, nrow(dat()))
         selection[input$main_table_rows_all] <- TRUE
         return(selection)

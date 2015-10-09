@@ -1,5 +1,5 @@
 format.plot <- function(g, x.values=NULL, fmt.opts){
-    cat('\tentering formatPlot()\n')
+    cat('\tformat.R::formatPlot()\n')
     if(fmt.opts$logx){
         g <- g + scale_x_continuous(trans='log2')
     }

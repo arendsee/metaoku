@@ -9,6 +9,7 @@
 #   6) (if type is 'cor') mat
 # =========================================================================
 prepare.axis <- function(aname, global){
+    cat(sprintf('\t - axis.R::prepare.axis [aname=(%s)]\n', aname))
     a <- list()
     a$name    <- aname
     a$values  <- global$table[[a$name]]
@@ -33,7 +34,7 @@ prepare.axis <- function(aname, global){
 # Subset the axis based on the logical selection vector
 # =========================================================================
 get.column.selection <- function(a, global, selection){
-    cat('entering get.column.selection\n')
+    cat('\t - axes.R::get.column.selection\n')
     if(a$type == 'cor'){
         a$mat <- a$mat[selection, ]
     }
@@ -52,6 +53,7 @@ get.column.selection <- function(a, global, selection){
 # If nothing is selected, set the axis type to empty ('-')
 # =========================================================================
 factor.selection <- function(a, global, selection){
+    cat('\t - axes.R::factor.selection\n')
     if(a$name == 'Selection'){
         cat('factoring selection\n')
         k <- sum(selection)
@@ -76,6 +78,7 @@ factor.selection <- function(a, global, selection){
 #   2) at least one column is selected
 # =========================================================================
 selection.as.factor <- function(axes, selection){
+    cat('\t - axes.R::selection.as.factor\n')
     k <- sum(selection)
     selection.is.axis <- any(sapply(axes, function(x) x$name == 'Selection'))
     rows.are.selected <- k > 0 && k < length(selection)
@@ -96,6 +99,7 @@ selection.as.factor <- function(axes, selection){
 #   selection: a logical vector specifying whether a given row is selected
 # =========================================================================
 dataAxis <- function(axes, global, selection){
+    cat('\taxes.R::dataAxis() [', unlist(axes), ']\n')
     axes <- lapply(axes, prepare.axis, global)
     axes <- lapply(axes, factor.selection, global, selection)
     if(!selection.as.factor(axes, selection)){

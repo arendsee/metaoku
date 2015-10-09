@@ -7,7 +7,7 @@ require(magrittr)
 # first column. Die on failure.
 # ==============================================================================
 merge.files <- function(data.dir, data.pat){
-    cat('entering merge.files\n')
+    cat('\t  * merge.files\n')
     global.key <- NULL
     global.d   <- NULL
     for (f in list.files(path=data.dir, pattern=data.pat, full.names=TRUE)){
@@ -40,7 +40,7 @@ merge.files <- function(data.dir, data.pat){
 #   - If the METADATA file is missing, build it based on column names.
 # ====================================================================================
 process.metadata <- function(columns, metadata){
-    cat('entering process.metadata\n')
+    cat('\t  * process.metadata\n')
     if(file.exists(metadata)){
         md <- read.delim(metadata, stringsAsFactors=FALSE)
         stopifnot(names(md)[1] == 'column_name') 
@@ -70,7 +70,7 @@ process.metadata <- function(columns, metadata){
 #    seq     - sequence data, e.g. protein or nucleotide sequence
 # ==============================================================================
 determine.type <- function(d, max.levels, max.prop, max.length){
-    cat('entering determine.type\n')
+    cat('\t  * determine.type\n')
     types <- rep(NA, ncol(d))
     names(types) <- names(d)
     for (cname in names(types)){
@@ -115,7 +115,7 @@ determine.type <- function(d, max.levels, max.prop, max.length){
 # Build a word usage matrix for a textual column
 # ====================================================================================
 build.corpa <- function(global){
-    cat('entering build.corpa\n')
+    cat('\t  * build.corpa\n')
     corpa <- list()
     for(cname in names(global$type[global$type == 'cor'])){
         # only load these if necessary (Matrix, especially, is big)
@@ -146,7 +146,7 @@ build.corpa <- function(global){
 # Return: A list containing one data.table for each sequence column
 # ====================================================================================
 build.seqs <- function(global){
-    cat('entering build.seqs\n')
+    cat('\t  * build.seqs\n')
     seqs <- list()
     for(cname in names(global$type[global$type == 'seq'])){
         s1     <- global$table[[cname]]
@@ -175,7 +175,7 @@ build.seqs <- function(global){
 # Adds line breaks to sequences
 # ====================================================================================
 pretty.seqs <- function(global){
-    cat('entering build.pretty.seqs()\n')
+    cat('\t  * build.pretty.seqs()\n')
     for(cname in names(global$type[global$type == 'seq'])){
         global$table[[cname]] <- gsub('\\s', '', global$table[[cname]], perl=TRUE) %>%
             strsplit('') %>%
@@ -199,7 +199,7 @@ pretty.seqs <- function(global){
 #  * num               -> numeric vector
 # ==============================================================================
 set.types <- function(d, types){
-    cat('entering set.types\n')
+    cat('\t  * set.types\n')
     for(cname in names(d)){
         if(types[cname] == 'cat'){
             d[[cname]] <- factor(d[[cname]])
@@ -227,6 +227,7 @@ set.types <- function(d, types){
 # see config for details
 # ==============================================================================
 build.one.dataset <- function(dataname){
+    cat('\t - build.one.dataset() ', dataname, '\n')
     source('config')
     data.dir <- paste0(DATA_DIR, '/', dataname)
     rdat <- paste0(SAVE_DIR, '/', dataname, '.Rdat')
@@ -273,6 +274,7 @@ build.one.dataset <- function(dataname){
 #   directory
 # ==============================================================================
 build.all.datasets <- function(){
+    cat('load.R::build.all.datasets\n')
     source('config') 
     datadirs <- basename(list.dirs(path=DATA_DIR, recursive=FALSE))
     sapply(datadirs, build.one.dataset)
