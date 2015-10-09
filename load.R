@@ -1,5 +1,6 @@
 require(data.table)
 require(reshape2)
+require(magrittr)
 
 # ==============================================================================
 # If there are multiple datafiles in one data folder, try to merge them by the
@@ -137,11 +138,11 @@ build.corpa <- function(global){
 
 # ====================================================================================
 # For each column of sequences, build a data.table with the following columns:
-#   1. key   - the unique key associated with the row
-#   2. char  - a letter from the sequence (e.g. for DNA {'A', 'C', 'G', 'T'})
-#   3. count - the number of times *char* appears in the sequence *key*
-#   4. total - the total number of *char* in *key*, i.e. the sequence length
-#   5. prop  - the proportion of *char* in *key*
+#   1. key    - the unique key associated with the row
+#   2. char   - a letter from the sequence (e.g. for DNA {'A', 'C', 'G', 'T'})
+#   3. count  - the number of times *char* appears in the sequence *key*
+#   4. total  - the total number of *char* in *key*, i.e. the sequence length
+#   5. prop   - the proportion of *char* in *key*
 # Return: A list containing one data.table for each sequence column
 # ====================================================================================
 build.seqs <- function(global){
@@ -168,6 +169,24 @@ build.seqs <- function(global){
         seqs[[cname]] <- d
     }
     return(seqs)
+}
+
+# ====================================================================================
+# Adds line breaks to sequences
+# ====================================================================================
+pretty.seqs <- function(global){
+    cat('entering build.pretty.seqs()\n')
+    for(cname in names(global$type[global$type == 'seq'])){
+        global$table[[cname]] <- gsub('\\s', '', global$table[[cname]], perl=TRUE) %>%
+            strsplit('') %>%
+            lapply(function(s) {
+                sapply(seq(10, by=10, length.out=(length(s) %/% 10)),
+                       function(i) paste0(s[i:min((i+10), length(s))], collapse=''))
+            }) %>%
+            lapply(paste, collapse=' ') %>%
+            unlist
+    }
+    return(global)
 }
 
 
@@ -237,6 +256,8 @@ build.one.dataset <- function(dataname){
     global$corpa    <- build.corpa(global)
     global$table    <- set.types(global$table, global$type)
     global$seqs     <- build.seqs(global)
+    global          <- pretty.seqs(global)
+
     if(!dir.exists(SAVE_DIR)){
         dir.create(SAVE_DIR)
     }
