@@ -142,14 +142,14 @@ dispatch.table <- build.dispatch.table()
 dispatch <- function(x, y, z, fmt.opts){
     cat('\t - dispatch.R::dispatch()\n')
     action <- dispatch.table[x$type, y$type, z$type]
-    cat(sprintf('\t  * (x=(%s, %s), y=(%s, %s), z=(%s, %s)\n',
+    cat(sprintf('\t  * x=[%s, %s], y=[%s, %s], z=[%s, %s]\n',
                 x$name, x$type, y$name, y$type,  z$name, z$type))
-    cat(sprintf('\t  * action: %s', action))
+    cat(sprintf('\t  * action: %s\n', action))
     return(eval(parse(text=action)))
 }
 
 plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts){
-    cat('\t dispatch.R::plotAnything()\n')
+    cat('\tdispatch.R::plotAnything()\n')
     g <- dispatch(x, y, z, fmt.opts)
     return(g)
 }

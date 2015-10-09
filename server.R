@@ -2,6 +2,7 @@ require(shiny)
 require(DT)
 require(markdown)
 require(magrittr)
+require(Matrix)
 
 source('dispatch.R')
 source('axes.R')
