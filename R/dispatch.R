@@ -1,5 +1,3 @@
-source('plot.R')
-
 NUM2CAT_LEVELS <- 7
 MAX_LEVELS <- 20
 
@@ -146,10 +144,4 @@ dispatch <- function(x, y, z, fmt.opts){
                 x$name, x$type, y$name, y$type,  z$name, z$type))
     cat(sprintf('\t  * action: %s\n', action))
     return(eval(parse(text=action)))
-}
-
-plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts){
-    cat('\tdispatch.R::plotAnything()\n')
-    g <- dispatch(x, y, z, fmt.opts)
-    return(g)
 }

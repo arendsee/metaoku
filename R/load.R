@@ -226,11 +226,10 @@ set.types <- function(d, types){
 #  * MAX_LENGTH
 # see config for details
 # ==============================================================================
-build.one.dataset <- function(dataname){
+build.one.dataset <- function(dataname, config){
     cat('\t - build.one.dataset() ', dataname, '\n')
-    source('config')
-    data.dir <- paste0(DATA_DIR, '/', dataname)
-    rdat <- paste0(SAVE_DIR, '/', dataname, '.Rdat')
+    data.dir <- file.path(config$data_dir, dataname)
+    rdat <- file.path(config$save_dir, paste0(dataname, '.Rdat'))
     # If a data file already exists, return it
     if(file.exists(rdat)) {
         return(rdat)
@@ -243,24 +242,24 @@ build.one.dataset <- function(dataname){
         type     = NULL    # the type of data contained in each column
     )
     global$table <- merge.files(
-                         data.pat=DATA_PAT,
+                         data.pat=config$data_pat,
                          data.dir=data.dir)
     global$table$KEY <- 1:nrow(global$table)
     global$metadata <- process.metadata(
                             columns=names(global$table),
-                            metadata=paste0(data.dir, '/', METADATA))
+                            metadata=file.path(data.dir, config$metadata))
     global$type     <- determine.type(
                             global$table,
-                            max.prop=MAX_PROP,
-                            max.levels=MAX_LEVELS,
-                            max.length=MAX_LENGTH)
+                            max.prop=config$max_prop,
+                            max.levels=config$max_levels,
+                            max.length=config$max_length)
     global$corpa    <- build.corpa(global)
     global$table    <- set.types(global$table, global$type)
     global$seqs     <- build.seqs(global)
     global          <- pretty.seqs(global)
 
-    if(!dir.exists(SAVE_DIR)){
-        dir.create(SAVE_DIR)
+    if(!dir.exists(config$save_dir)){
+        dir.create(config$save_dir)
     }
     save(global, file=rdat)
     return(rdat)
@@ -273,9 +272,8 @@ build.one.dataset <- function(dataname){
 # * The names of the datasets are from the names of folders in the data
 #   directory
 # ==============================================================================
-build.all.datasets <- function(){
+build.all.datasets <- function(config){
     cat('load.R::build.all.datasets\n')
-    source('config') 
-    datadirs <- basename(list.dirs(path=DATA_DIR, recursive=FALSE))
-    sapply(datadirs, build.one.dataset)
+    datadirs <- basename(list.dirs(path=config$data_dir, recursive=FALSE))
+    sapply(datadirs, build.one.dataset, config)
 }

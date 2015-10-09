@@ -2,7 +2,7 @@
 # File names and extensions
 # =========================================================================
 
-DATA_DIR = 'data'        # folder holding all data
+DATA_DIR = 'projects'    # folder holding all data
 SAVE_DIR = 'saved'       # folder holding all saved data
 DATA_PAT = '.(tab|tsv)$' # regular expression identifying data files
 METADATA = 'METADATA'    # metadata filename

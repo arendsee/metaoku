@@ -4,14 +4,25 @@ require(markdown)
 require(magrittr)
 require(Matrix)
 
-source('dispatch.R')
-source('axes.R')
-source('plotUI.R')
+# ====================================================================
+# Here is a really hacky way to avoid polluting the global environment
+# ====================================================================
+getGlobal_R   <- function(){source('global.R',     local=TRUE); config}
+getLoad_R     <- function(){source('R/load.R',     local=TRUE); build.all.datasets}
+getDispatch_R <- function(){source('R/dispatch.R', local=TRUE); dispatch}
+getAxis_R     <- function(){source('R/axes.R',     local=TRUE); dataAxis}
+config             <- getGlobal_R()
+build.all.datasets <- getLoad_R()
+dispatch           <- getDispatch_R()
+dataAxis           <- getAxis_R()
+
+# this approach doesn't work here
+source('R/plotUI.R')
+source('R/plot.R')
 
 `%ifnul%` <- function(a, b) if(is.null(a)) b else a
 `%ifnot%` <- function(a, b) if(is.null(a) || is.na(a) || length(a) == 0) b else a
 `%ifok%` <- function(a, b) if(!(is.null(a) || is.na(a) || length(a) == 0)) b
-
 `%|%` <- function(x,y) { if(is.null(x)) y else x }
 
 # =========================================================================
@@ -24,8 +35,7 @@ source('plotUI.R')
 #  * corpa    - matrices for building wordclouds from text
 #  * seqs     - character counts for each sequence column
 # =========================================================================
-source('load.R')
-datasets <- build.all.datasets()
+datasets <- build.all.datasets(config)
 
 
 
@@ -145,9 +155,9 @@ shinyServer(function(input, output, session){
     observe({
         umode <- input$upload.type
         if(umode == 'dataset'){
-            desc <- 'defaults/upload-dataset-instructions.md'
+            desc <- file.path('doc', 'upload-dataset-instructions.md')
         } else {
-            desc <- 'defaults/upload-single-instructions.md'
+            desc <- file.path('doc', 'upload-single-instructions.md')
         }
         output$upload.instructions <- renderUI({shiny::includeMarkdown(desc)})
     })
@@ -256,9 +266,9 @@ shinyServer(function(input, output, session){
         dataset <- input$selected.dataset
 
         # set the dataset description
-        desc <- paste0('data/', dataset, '/README.md')
+        desc <- file.path(config$data_dir, dataset, 'README.md')
         if(!file.exists(desc)){
-            desc <- 'defaults/dataset-description.md'
+            desc <- file.path('doc', 'dataset-description.md')
         }
         output$dataset_description <- renderUI({shiny::includeMarkdown(desc)})
     })
@@ -369,10 +379,10 @@ shinyServer(function(input, output, session){
             logx=input$logx
         )
 
-        plotAnything(x=axes[['x']],
-                     y=axes[['y']],
-                     z=axes[['z']],
-                     fmt.opts=fmt.opts)
+        dispatch(x=axes[['x']],
+                 y=axes[['y']],
+                 z=axes[['z']],
+                 fmt.opts=fmt.opts)
     })
 
 
@@ -465,14 +475,15 @@ shinyServer(function(input, output, session){
         cat('entering file upload\n')
         files <- input$upload.file
         success <- FALSE
+        source('../config')
         if(upload.type == 'single'){
             for(i in nrow(files)){
                 datapath <- files[i, 'datapath']
                 data.basename <- basename(files[i, 'name'])
                 data.name <- gsub('\\..*', '', data.basename)
-                newdir <- file.path(getwd(), 'data', data.name)
+                newdir <- file.path(DATA_DIR, data.name)
                 newpath <- file.path(newdir, data.basename)
-                newsave <- file.path(getwd(), 'saved', paste0(data.name, '.Rdat'))
+                newsave <- file.path(SAVE_DIR, paste0(data.name, '.Rdat'))
                 if(!dir.exists(newdir)){
                     dir.create(newdir)
                 }
@@ -490,7 +501,7 @@ shinyServer(function(input, output, session){
         }
         if(success){
             cat('Updating database\n')
-            datasets <<- build.all.datasets()
+            datasets <<- build.all.datasets(config)
             cat('Datasets: ', datasets, '\n')
             update.datasets(datasets)
         }
