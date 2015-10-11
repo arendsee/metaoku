@@ -5,6 +5,7 @@ require(magrittr)
 require(Matrix)
 
 # ====================================================================
+# TODO: build an organized OO system for my datatypes
 # Here is a really hacky way to avoid polluting the global environment
 # ====================================================================
 getGlobal_R   <- function(){source('global.R',     local=TRUE); config}
@@ -23,7 +24,7 @@ source('R/plot.R')
 `%ifnul%` <- function(a, b) if(is.null(a)) b else a
 `%ifnot%` <- function(a, b) if(is.null(a) || is.na(a) || length(a) == 0) b else a
 `%ifok%` <- function(a, b) if(!(is.null(a) || is.na(a) || length(a) == 0)) b
-`%|%` <- function(x,y) { if(is.null(x)) y else x }
+`%|%` <- function(x,y) if(is.null(x)) y else x
 
 # =========================================================================
 # Initialize a dataset as a list of data and metadata
@@ -172,7 +173,7 @@ shinyServer(function(input, output, session){
         { x <- input$plot.x
           xtype <- global()$type[x]
           cat(sprintf('EVENT plot.x: (%s,%s)\n', x, xtype))
-          plotui$setX(xtype, x)
+          plotui$setX(x)
           build()
         }
     )
@@ -181,7 +182,7 @@ shinyServer(function(input, output, session){
         { y <- input$plot.y
           ytype <- global()$type[y]
           cat(sprintf('EVENT y: (%s,%s)\n', y, ytype))
-          plotui$setY(ytype, y)
+          plotui$setY(y)
           build()
         }
     )
