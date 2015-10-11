@@ -92,51 +92,46 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
     taglist <- switch(geom,
         'barplot' = {
             append(taglist, list(
-                dorow(c('color.by', 'fill.by'), c(4,4,4)),
-                elements$facet_wrap,
-                elements$facet_grid
+                dorow(c('color.by', 'fill.by', 'biny'), c(3,3,3)),
+                elements$facet
             ))
         },
         'boxplot' = {
             append(taglist, list(
-                dorow(c('alpha', 'width', 'notch'), c(5,5,2)),
-                elements$facet_wrap,
-                elements$facet_grid
+                dorow(c('size.by', 'alpha.by'), c(6, 6)),
+                dorow(c('alpha', 'width', 'size', 'notch'), c(3,3,3,3)),
+                elements$facet
             ))
         },
         'histogram' = {
             append(taglist, list(
-                dorow(c('color.by', 'fill.by', 'density'), c(5,5,2)),
-                elements$facet_wrap,
-                elements$facet_grid))
+                dorow(c('color.by', 'fill.by', 'biny'), c(5,5,2)),
+                elements$facet
+            ))
         },
         'point' = {
             append(taglist, list(
-                dorow(c('color.by', 'shape.by', 'size.by'), c(4,4,4)),
+                dorow(c('color.by', 'shape.by', 'size.by'), c(3,3,3)),
                 dorow(c('alpha', 'size'), c(6,6)),
-                elements$facet_wrap,
-                elements$facet_grid
+                elements$facet
             ))
         },
         'path' = {
             append(taglist, list(
                 dorow(c('group.by', 'color.by', 'size.by', 'linetype.by'), c(3,3,3,3)),
                 dorow(c('alpha', 'size'), c(6,6)),
-                elements$facet_wrap,
-                elements$facet_grid
+                elements$facet
             ))
         },
         'heatmap' = {
             append(taglist, list(
                 dorow(c('fill'), c(12)),
-                elements$facet_wrap,
-                elements$facet_grid
+                elements$facet_1d
             ))
         },
         'density2d' = {
             append(taglist, list(
-                elements$facet_wrap,
-                elements$facet_grid
+                elements$facet_1d
             ))
         },
         'wordcloud' = {
@@ -173,34 +168,38 @@ plot.build.elements <- function(types){
     p <- list()
     cat.or.num <- getChoices(types, c('cat', 'num'))
     # aes
-    p$color.by    <- selectInput('plot.color.by', 'Color by', choices=cat.or.num)
-    p$fill.by     <- selectInput('plot.fill.by', 'Fill by', choices=cat.or.num)
-    p$size.by     <- selectInput('plot.size.by', 'Size by', choices=cat.or.num)
-    p$shape.by    <- selectInput('plot.shape.by', 'Shape by', choices=cat.or.num)
-    p$group.by    <- selectInput('plot.group.by', 'Group by', choices=cat.or.num)
-    p$linetype.by <- selectInput('plot.group.by', 'Linetype by', choices=cat.or.num)
+    p$color.by    <- selectInput('plot.aes.color', 'Color by', choices=cat.or.num)
+    p$fill.by     <- selectInput('plot.aes.fill', 'Fill by', choices=cat.or.num)
+    p$size.by     <- selectInput('plot.aes.size', 'Size by', choices=cat.or.num)
+    p$shape.by    <- selectInput('plot.aes.shape', 'Shape by', choices=cat.or.num)
+    p$group.by    <- selectInput('plot.aes.group', 'Group by', choices=cat.or.num)
+    p$linetype.by <- selectInput('plot.aes.linetype', 'Linetype by', choices=cat.or.num)
+    p$alpha.by    <- selectInput('plot.aes.alpha', 'Alpha by', choices=cat.or.num)
+    p$biny        <- radioButtons('plot.biny', label=NULL,
+                                  choices=list(count='..count..',
+                                               density='..density..',
+                                               proportion='..count../sum(..count..)'))
     # constant visuals
     p$alpha     <- sliderInput('plot.alpha', 'Set alpha', min=0, max=1, value=1, step=0.05) 
     p$size      <- sliderInput('plot.size', 'Set size', min=0, max=5, value=1, step=0.01)
     p$notch     <- checkboxInput('plot.notch', 'Notch')
     p$width     <- sliderInput('plot.width', 'Set width', min=0, max=2, value=1, step=0.05)
-    p$density   <- checkboxInput('plot.density', 'Density')
     # faceting
-    p$facet_wrap <- fluidRow(
-        column(4, selectInput('plot.facet_wrap', 'Facet wrap by', choices=cat.or.num)),
-        column(4, sliderInput('plot.facet_wrap_ncol', 'Number of columns', min=0, max=10, value=0, step=1)),
-        column(4, radioButtons('plot.facet_wrap_scale', 'Scale',
-                               choices=c('fixed', 'free_x', 'free_y', 'free')))
-    )
-    p$facet_grid <- fluidRow(
-        column(4, selectInput('plot.facet_grid_x', 'Facet X-axis', choices=cat.or.num)),
-        column(4, selectInput('plot.facet_grid_y', 'Facet Y-axis', choices=cat.or.num)),
-        column(2, radioButtons('plot.facet_grid_scale', 'Scale',
+    p$facet <- fluidRow(
+        column(4, selectInput('plot.facet_x', 'Facet X-axis', choices=cat.or.num)),
+        column(4, selectInput('plot.facet_y', 'Facet Y-axis', choices=cat.or.num)),
+        column(2, radioButtons('plot.facet_scale', 'Scale',
                                choices=c('fixed', 'free_x', 'free_y', 'free'))),
-        column(2, checkboxInput('plot.facet_grid_margins', 'Margins'))
+        column(2, checkboxInput('plot.facet_margins', 'Margins'))
+    )
+    p$facet_1d <- fluidRow(
+        column(4, selectInput('plot.facet_x', 'Facet X-axis', choices=cat.or.num)),
+        column(8, radioButtons('plot.facet_scale', 'Scale',
+                               choices=c('fixed', 'free_x', 'free_y', 'free')))
     )
     return(p)
 }
+
 PlotUI <- setRefClass('PlotUI',
     fields=c("types", "xel", "yel", "geomel", "x", "y", "geom"),
     methods=list(
@@ -208,8 +207,8 @@ PlotUI <- setRefClass('PlotUI',
             if(! 'None' %in% names(types)) { types['None'] <- '-' }
             types    <<- types
             xel      <<- plot.select.x(types, selected='None')
-            yel      <<- plot.select.y('-', '-')
-            geomel   <<- plot.select.geom('-', '-')
+            yel      <<- selectInput('plot.y', 'Dependent variable', choices='None')
+            geomel   <<- selectInput('plot.geom', 'Plot type', choices='None')
             x        <<- 'None'
             y        <<- 'None'
             geom     <<- NA

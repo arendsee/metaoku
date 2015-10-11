@@ -200,6 +200,15 @@ shinyServer(function(input, output, session){
         build()
     }, priority = 5)
 
+    output$plot_data_plot <- renderPlot({
+        source('R/plotBuild.R', local=TRUE)
+        input$build.plot
+        if(input$plot.x != 'None') {
+            isolate(buildPlot(dat(), input))
+        } else {
+            NULL
+        }
+    })
 
 
     # =========================================================================
@@ -384,25 +393,6 @@ shinyServer(function(input, output, session){
                  y=axes[['y']],
                  z=axes[['z']],
                  fmt.opts=fmt.opts)
-    })
-
-
-
-    # =========================================================================
-    # Render plot on 'Plot Data' tab
-    # Axes:
-    #   x-axis: From 'x-axis' menu
-    #   y-axis: From 'y-axis' menu
-    #   z-axis: From 'z-axis' menu
-    # =========================================================================
-    output$plot_data_plot <- renderPlot({
-        cat('entering renderPlot()\n')
-        if(!is.null(input$plot.x)){
-            xlab=input$plot.x
-        } else {
-            xlab='None'
-        }
-        hist(runif(100), xlab=xlab)
     })
 
 
