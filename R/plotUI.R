@@ -92,7 +92,7 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
     taglist <- switch(geom,
         'barplot' = {
             append(taglist, list(
-                dorow(c('color.by', 'fill.by', 'biny'), c(3,3,3)),
+                dorow(c('color.by', 'fill.by', 'biny'), c(4,4,2)),
                 elements$facet
             ))
         },
@@ -161,6 +161,7 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
         },
         taglist
     )
+    cat('\t - leaving plot.build.ggplot.ui()\n') 
     return(taglist)
 }
 
@@ -168,17 +169,22 @@ plot.build.elements <- function(types){
     p <- list()
     cat.or.num <- getChoices(types, c('cat', 'num'))
     # aes
-    p$color.by    <- selectInput('plot.aes.color', 'Color by', choices=cat.or.num)
-    p$fill.by     <- selectInput('plot.aes.fill', 'Fill by', choices=cat.or.num)
-    p$size.by     <- selectInput('plot.aes.size', 'Size by', choices=cat.or.num)
-    p$shape.by    <- selectInput('plot.aes.shape', 'Shape by', choices=cat.or.num)
-    p$group.by    <- selectInput('plot.aes.group', 'Group by', choices=cat.or.num)
-    p$linetype.by <- selectInput('plot.aes.linetype', 'Linetype by', choices=cat.or.num)
-    p$alpha.by    <- selectInput('plot.aes.alpha', 'Alpha by', choices=cat.or.num)
-    p$biny        <- radioButtons('plot.biny', label=NULL,
+    p$color.by     <- selectInput('plot.aes.color', 'Color by', choices=cat.or.num)
+    p$fill.by      <- selectInput('plot.aes.fill', 'Fill by', choices=cat.or.num)
+    p$size.by      <- selectInput('plot.aes.size', 'Size by', choices=cat.or.num)
+    p$shape.by     <- selectInput('plot.aes.shape', 'Shape by', choices=cat.or.num)
+    p$group.by     <- selectInput('plot.aes.group', 'Group by', choices=cat.or.num)
+    p$linetype.by  <- selectInput('plot.aes.linetype', 'Linetype by', choices=cat.or.num)
+    p$alpha.by     <- selectInput('plot.aes.alpha', 'Alpha by', choices=cat.or.num)
+    p$biny         <- radioButtons('plot.biny', label=NULL,
                                   choices=list(count='..count..',
                                                density='..density..',
                                                proportion='..count../sum(..count..)'))
+    p$binz        <- radioButtons('plot.binz', 'Z',
+                                  choices=list(count='count',
+                                               lograt='lograt',
+                                               density='density'
+                                 ))
     # constant visuals
     p$alpha     <- sliderInput('plot.alpha', 'Set alpha', min=0, max=1, value=1, step=0.05) 
     p$size      <- sliderInput('plot.size', 'Set size', min=0, max=5, value=1, step=0.01)
