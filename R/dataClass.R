@@ -1,17 +1,19 @@
-Dataset <- setRefClass(
-    fields = list(
-        'children'   = list,
-        'row_filter' = logical,
-        'row_order'  = integer,
-        'key'        = character,
-        'max_levels' = integer,
-        'max_prop'   = numeric,
-        'max_length' = integer
+DataSet <- setRefClass(
+    Class = 'DataSet',
+    fields = c(
+        'children',
+        'row_filter',
+        'row_order',
+        'key',
+        'max_levels',
+        'max_prop',
+        'max_length'
     ),
     methods = list(
         build = function(dataset, metadata=NULL, max_levels=20, max_prop=0.1, max_length=50, key=NULL){
             require(plyr)
             require(data.table)
+            require(magrittr)
             max_levels <<- max_levels
             max_prop   <<- max_prop
             max_length <<- max_length
@@ -19,9 +21,9 @@ Dataset <- setRefClass(
             row_order  <<- 1:nrow(dataset)
             row_filter <<- rep(TRUE, nrow(dataset))
 
-            children <- list()
+            children <<- list()
             for (cname in names(dataset)){
-                x = d[[cname]]
+                x = dataset[[cname]]
                 u <- length(unique(x))
                 N <- length(x)
                 if(is.numeric(x)){
@@ -31,7 +33,8 @@ Dataset <- setRefClass(
                     } else {
                         child <- DataNum$new()
                     }
-                } else if(is.character(x)) {
+                } else {
+                    x <- as.character(x)
                     # determine whether a character vector is cat, longcat, cor, or seq
                     if(max(nchar(x)) > max_length){
                         # if there are any spaces, treat the string as textual
@@ -50,46 +53,65 @@ Dataset <- setRefClass(
                         }
                     }
                 }
-                children[[cname]] <- child
+                child$init(data=x, name=cname, key=key, metadata=NULL)
+                children[[cname]] <<- child
+            }
+
+            # Initialize metadata if none is given
+            if(is.null(metadata)){
+                metadata <- data.frame(
+                    column_names = names(dataset),
+                    type = sapply(children, function(x) x$type)
+                )
+            }
+            # initialize each child
+            for(child in children){
+                if(!child$name %in% metadata[[1]]){
+                    metadata[nrow(metadata)+1, 1] <- c(child$name)
+                }
+                met <- metadata[metadata[[1]] == child$name, ]
+                if(nrow(met) > 1) {
+                    cat('WARNING: multiple rows describing one column METADATA, choosing first\n')
+                }
+                child$metadata <- met
             }
         },
         getNameByType = function(type){
-
+            names(getDataByType(type))
         },
         getDataByType = function(type){
-
+            children[sapply(children, function(x) x$type %in% type)]
         },
         get = function(name){
-
+            children[[name]]
         },
         addFilter = function(filt){
-
+            for (child in children) { child$filter <- filt }
         },
         clearFilter = function(){
-
+            for (child in children) { child$filter <- NULL }
         },
         getDF = function(cols=NULL, filt='as.col'){
-
-        },
-        mutate = function(func, name){
-
+            do.call(cbind.data.frame, lapply(children, function(child) child$data))
         },
         getMetadataDF = function(){
-
+            do.call(rbind.data.frame, lapply(children, function(child) child$metadata))
         }
     )
 )
 
 Data <- setRefClass(
-    fields = c('parent', 'data', 'type', 'key', 'metadata'),
-    methods = list(
-        init = function(parent, data, type, key, metadata){
+    Class    = 'Data',
+    fields   = c('data', 'name', 'type', 'key', 'metadata', 'filter'),
+    methods  = list(
+        init = function(data, name, key, metadata){
             require(plyr)
-            parent   <<- parent
+            require(magrittr)
             data     <<- data
-            type     <<- type
+            name     <<- name
             key      <<- key
-            metadata <<- metadat
+            metadata <<- metadata
+            filter   <<- filter
             type_specific_init()
         },
         type_specific_init = function(){ },
@@ -100,60 +122,135 @@ Data <- setRefClass(
 )
 
 DataNum <- setRefClass(
-    fields = c('max', 'min'),
+    Class    = 'DataNum',
+    fields   = c('max', 'min'),
     contains = 'Data',
-    methods = list(
+    methods  = list(
         type_specific_init = function(){
-            max <<- max(data) 
-            min <<- min(data)
+            type <<- 'num'
+            max  <<- max(data, na.rm=TRUE) 
+            min  <<- min(data, na.rm=TRUE)
         },
         asCat = function(){ }
     )
 )
 
 DataCat <- setRefClass(
-    fields = c('nchar', 'max.length', 'min.length', 'counts', 'max.count', 'min.count'),
+    Class    = 'DataCat',
+    fields   = c('nchar', 'max.length', 'min.length', 'counts', 'max.count', 'min.count'),
     contains = 'Data',
-    methods = list(
+    methods  = list(
         type_specific_init = function(){
-            nchar <<- nchar(data) 
-            max.length <<- max(nchar)
-            min.length <<- min(nchar)
-            data <<- factor(data)
-            counts <<- count(data)
-            max.count <<- max(counts$freq)
-            min.count <<- min(counts$freq)
+            type       <<- 'cat'
+            nchar      <<- nchar(data) 
+            max.length <<- max(nchar, na.rm=TRUE)
+            min.length <<- min(nchar, na.rm=TRUE)
+            counts     <<- count(data) %>% arrange(-freq)
+            max.count  <<- counts$freq[1]
+            min.count  <<- counts$freq[nrow(counts)]
+            data       <<- factor(data)
         },
         asNum = function(){ }
     )
 )
 
 DataLongcat <- setRefClass(
+    Class = 'DataLongcat',
     contains = 'DataCat',
-    fields = c('truncated.counts')
     methods = list(
         type_specific_init = function(){
-
+            type <<- 'longcat'
+            data <<- as.character(data)
         },
-        asCat = function(){ }
+        asCat = function(max_levels=length_max){
+            if(nrow(data) <= max_levels){
+                factor(data)
+            } else {
+                trunc.names <- head(counts, max_levels)$x
+                trunc.filter <- as.character(data) %in% trunc.names
+                truncated.levels <- as.character(data)
+                truncated.levels[trunc.filter] <- 'other'
+                factor(truncated.levels)
+            }
+        }
     )
 )
 
+# =====================================================================
+# For each column of sequences, build a data.table the columns:
+#   1. key    - the unique key associated with the row
+#   2. char   - a letter from the sequence (e.g. {'A', 'C', 'G', 'T'})
+#   3. count  - the number of times *char* appears in the sequence *key*
+#   4. total  - the total number of *char* in *key*, i.e. sequence length
+#   5. prop   - the proportion of *char* in *key*
+# Return: A list containing one data.table for each sequence column
+# =====================================================================
 DataSeq <- setRefClass(
-    fields = c('char.frequency', 'seq.lengths', '2d.markov'),
+    Class = 'DataSeq',
+    fields = c('char.frequency', 'seq.lengths', 'alphabet', 'char.table', 'pretty'),
     contains = 'Data',
     methods = list(
-        type_specific_init = function(){ }
+        type_specific_init = function(){
+            type   <<- 'seq'
+            pretty <<- getPretty(w=10)
+            parseSeq() # set alphabet, char.table, and char.frequency
+        },
+        parseSeq = function(){
+            require(reshape2)
+            require(data.table)
+            hasseq   <- !is.na(data)
+            carray   <- data[hasseq] %>% toupper %>% strsplit('')
+            alphabet <<- unique(unlist(carray))
+            counts   <- lapply(carray, table)
+            d <- matrix(rep(0, sum(hasseq) * length(alphabet)),
+                        ncol=length(alphabet),
+                        dim=list(key[hasseq], alphabet))
+            for(i in 1:nrow(d)){
+                d[i, names(counts[[i]])] <- counts[[i]]
+            }
+            d <- reshape2::melt(d)
+            colnames(d) <- c('key', 'char', 'count')
+            d <- data.table(d)
+            setkey(d, key)
+            d[, total := sum(count), by=key]
+            d[, prop  := count / total]
+            char.table     <<- d
+            char.frequency <<- count(d$char)
+        },
+        getPretty = function(w=10){
+            stopifnot(is.numeric(w) && w %% 1 == 0)
+            gsub('\\s', '', data, perl=TRUE) %>%
+                strsplit('') %>%
+                lapply(function(s) {
+                    sapply(seq(w, by=w, length.out=(length(s) %/% w)),
+                           function(i) paste0(s[i:min((i+w), length(s))], collapse=''))
+                }) %>%
+                lapply(paste, collapse=' ') %>%
+                unlist
+        }
     )
 )
 
 DataCor <- setRefClass(
+    Class = 'DataCor',
     fields = c('mat'),
     contains = 'Data',
     methods = list(
-        type_specific_init = function(){ },
+        type_specific_init = function(){
+            type <<- 'cor' 
+            mat  <<- calculateMatrix()
+        },
         calculateMatrix = function(){
-
+            require(Matrix)
+            require(tm)
+            dtm <- tm::Corpus(tm::VectorSource(data)) %>%
+                tm::tm_map(tm::content_transformer(function(x) iconv(x, to='ASCII', sub='byte'))) %>%
+                tm::tm_map(tm::content_transformer(tolower)) %>%
+                tm::tm_map(tm::removePunctuation, preserve_intra_word_dashes=TRUE) %>%
+                tm::tm_map(function(x) tm::removeWords(x, stopwords("english"))) %>%
+                tm::DocumentTermMatrix
+            Matrix::sparseMatrix(i=dtm$i, j=dtm$j, x=dtm$v,
+                                 dims=c(dtm$nrow, dtm$ncol), dimnames=dtm$dimnames)
         }
     )
 )
