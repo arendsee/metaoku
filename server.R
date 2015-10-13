@@ -15,7 +15,6 @@ getAxis_R     <- function(){source('R/axes.R',     local=TRUE); dataAxis}
 config             <- getGlobal_R()
 build.all.datasets <- getLoad_R()
 dispatch           <- getDispatch_R()
-dataAxis           <- getAxis_R()
 
 # this approach doesn't work here
 source('R/dataClass.R')
