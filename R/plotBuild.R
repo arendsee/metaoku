@@ -72,7 +72,7 @@ buildPlot <- function(d, input){
 get.aes.terms <- function(input){
     cat('\t - plotBuild.R::get.aes.terms ', class(input), '\n')
     a <- list()
-    a$y <- input$plot.y
+    a$y        <- input$plot.y
     a$x        <- input$plot.x
     a$color    <- input$plot.aes.color
     a$fill     <- input$plot.aes.fill
@@ -80,7 +80,7 @@ get.aes.terms <- function(input){
     a$shape    <- input$plot.aes.shape
     a$group    <- input$plot.aes.group
     a$linetype <- input$plot.aes.linetype
-    a <- a[a != 'None']
+    a <- a[names(a) != 'None']
     a
 }
 

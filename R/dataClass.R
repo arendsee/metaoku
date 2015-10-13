@@ -60,7 +60,7 @@ DataSet <- setRefClass(
                         }
                     }
                 }
-                child$init(values=x, name=cname, key=key, metadata=NULL)
+                child$init(value=x, name=cname, key=key, metadata=NULL)
                 children[[cname]] <<- child
             }
 
@@ -102,23 +102,27 @@ DataSet <- setRefClass(
         },
         getDF = function(){
             if(length(children) == 0) { return(NULL) }
-            do.call(cbind.data.frame, lapply(children, function(child) child$data))
+            do.call(cbind.data.frame,
+                    append(lapply(children, function(child) child$value),
+                           list(stringsAsFactors = FALSE)))
         },
         getMetadataDF = function(){
             if(length(children) == 0) { return(NULL) }
-            do.call(rbind.data.frame, lapply(children, function(child) child$metadata))
+            do.call(rbind.data.frame,
+                    append(lapply(children, function(child) child$metadata),
+                           list(stringsAsFactors = FALSE)))
         }
     )
 )
 
 Data <- setRefClass(
     Class    = 'Data',
-    fields   = c('values', 'name', 'type', 'key', 'metadata', 'filter'),
+    fields   = c('value', 'name', 'type', 'key', 'metadata', 'filter'),
     methods  = list(
-        init = function(values=NULL, name='None', key=NULL, metadata=NULL){
+        init = function(value=NULL, name='None', key=NULL, metadata=NULL){
             require(plyr)
             require(magrittr)
-            values   <<- values
+            value   <<- value
             name     <<- name
             type     <<- '-'
             key      <<- key
@@ -129,13 +133,13 @@ Data <- setRefClass(
         type_specific_init = function(){ },
         getData = function(filt=FALSE){
             if(filt){
-                values[filt]
+                value[filt]
             } else {
-                values 
+                value 
             }
         },
-        asCat = function(){ as.factor(values)  },
-        asNum = function(){ as.numeric(values) }
+        asCat = function(){ as.factor(value)  },
+        asNum = function(){ as.numeric(value) }
     )
 )
 Empty <- function(){
@@ -151,11 +155,11 @@ DataNum <- setRefClass(
     methods  = list(
         type_specific_init = function(){
             type <<- 'num'
-            max  <<- max(values, na.rm=TRUE) 
-            min  <<- min(values, na.rm=TRUE)
+            max  <<- max(value, na.rm=TRUE) 
+            min  <<- min(value, na.rm=TRUE)
         },
         asCat = function(breaks=5, dig.lab=1, ordered_result=TRUE){ 
-            cut(values, breaks, dig.lab, ordered_result)
+            cut(value, breaks, dig.lab, ordered_result)
         }
     )
 )
@@ -167,13 +171,13 @@ DataCat <- setRefClass(
     methods  = list(
         type_specific_init = function(){
             type       <<- 'cat'
-            nchar      <<- nchar(values) 
+            nchar      <<- nchar(value) 
             max.length <<- max(nchar, na.rm=TRUE)
             min.length <<- min(nchar, na.rm=TRUE)
-            counts     <<- count(values) %>% arrange(-freq)
+            counts     <<- count(value) %>% arrange(-freq)
             max.count  <<- counts$freq[1]
             min.count  <<- counts$freq[nrow(counts)]
-            values     <<- factor(values)
+            value     <<- factor(value)
         },
         asNum = function(){ }
     )
@@ -185,15 +189,15 @@ DataLongcat <- setRefClass(
     methods = list(
         type_specific_init = function(){
             type <<- 'longcat'
-            values <<- as.character(values)
+            value <<- as.character(value)
         },
         asCat = function(max_levels=length_max){
-            if(nrow(values) <= max_levels){
-                factor(values)
+            if(nrow(value) <= max_levels){
+                factor(value)
             } else {
                 trunc.names <- head(counts, max_levels)$x
-                trunc.filter <- as.character(values) %in% trunc.names
-                truncated.levels <- as.character(values)
+                trunc.filter <- as.character(value) %in% trunc.names
+                truncated.levels <- as.character(value)
                 truncated.levels[trunc.filter] <- 'other'
                 factor(truncated.levels)
             }
@@ -223,8 +227,8 @@ DataSeq <- setRefClass(
         parseSeq = function(){
             require(reshape2)
             require(data.table)
-            hasseq   <- !is.na(values)
-            carray   <- values[hasseq] %>% toupper %>% strsplit('')
+            hasseq   <- !is.na(value)
+            carray   <- value[hasseq] %>% toupper %>% strsplit('')
             alphabet <<- unique(unlist(carray))
             counts   <- lapply(carray, table)
             d <- matrix(rep(0, sum(hasseq) * length(alphabet)),
@@ -244,7 +248,7 @@ DataSeq <- setRefClass(
         },
         getPretty = function(w=10){
             stopifnot(is.numeric(w) && w %% 1 == 0)
-            gsub('\\s', '', values, perl=TRUE) %>%
+            gsub('\\s', '', value, perl=TRUE) %>%
                 strsplit('') %>%
                 lapply(function(s) {
                     sapply(seq(w, by=w, length.out=(length(s) %/% w)),
@@ -268,7 +272,7 @@ DataCor <- setRefClass(
         calculateMatrix = function(){
             require(Matrix)
             require(tm)
-            corpus <- values                                                                      %>%
+            corpus <- value                                                                       %>%
                 tm::VectorSource()                                                                %>%
                 tm::Corpus()                                                                      %>%
                 tm::tm_map(tm::content_transformer(function(x) iconv(x, to='ASCII', sub='byte'))) %>%

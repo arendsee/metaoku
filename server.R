@@ -21,7 +21,6 @@ source('R/dataClass.R')
 source('R/plotUI.R')
 source('R/plot.R')
 
-`%ifunset%` <- function(a, b) if(is.null(a) || is.na(a) || length(a) == 0 || a == 'None') b else a
 `%|%` <- function(x,y) if(is.null(x)) y else x
 
 # =========================================================================
@@ -243,11 +242,18 @@ shinyServer(function(input, output, session){
         txt <- gsub('\n', ' ', input$user_ids)
         txt <- sub('^\\s+', '', txt, perl=TRUE)
         keys <- c()
-        if(length(txt) > 0 && input$user_key %in% names(dat())){
+
+        # All three of these conditions are necessary, change them and you will weep blood
+        parse_keys <- length(txt) > 0 &&
+                      nchar(txt) > 0 &&
+                      any(input$user_key %in% names(dat()))
+        if(parse_keys){
+            cat(paste(input$user_key), '\n')
+            cat(paste(txt), '\n')
             ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
             ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
             keys <- dat()[[input$user_key]] %in% ids
-            cat(sprintf('<- user.keys keys: %s\n', length(keys)))
+            cat(sprintf(' <- user.keys keys: %s\n', length(keys)))
             return(keys)
         }
         keys
@@ -267,8 +273,10 @@ shinyServer(function(input, output, session){
         cols <- names(dat())
         i <- input$main_table_columns_selected + 1
         if(length(i) > 0){
-            return(cols[i + 1])
+            cat(sprintf('  <- returning %s\n', cols[i]))
+            return(cols[i])
         } else {
+            cat('  <- returning NULL\n')
             return(NULL)
         }
     })
@@ -301,18 +309,26 @@ shinyServer(function(input, output, session){
         cat('-> renderPlot()\n')
 
         cname <- selected.column.name()
+        cat(str(cname))
+        cat(sprintf(' - selected column: (class=%s)\n', paste(class(cname))))
         if(is.null(cname)){
             return(NULL)
         }
+        cat('asdf\n')
+
+        `%ifnot%` <- function(a, b) if(is.null(a) || a$name == 'None') b else a
 
         # x-axis comes from the selected column
-        x <- dataset()$get(cname) %ifunset% Empty()
+        x <- dataset()$get(cname) %ifnot% Empty()
+        cat(sprintf(' - x set to "%s"', x$name))
 
         # y-axis currently comes from 'Compare to' dropdown, may be NULL
-        y <- dataset()$get(input$compare.to) %ifunset% Empty()
+        y <- dataset()$get(input$compare.to) %ifnot% Empty()
+        cat(sprintf(' - y set to "%s"', y$name))
 
         # z-axis from 'Group by' dropdown
-        z <- dataset()$get(input$group.by) %ifunset% Empty()
+        z <- dataset()$get(input$group.by) %ifnot% Empty()
+        cat(sprintf(' - z set to "%s"', z$name))
 
         fmt.opts <- list(
            logy=input$logy,
@@ -331,10 +347,10 @@ shinyServer(function(input, output, session){
     output$main_table <- DT::renderDataTable(
         {
             cat('-> main_table\n')
-            if(user.keys() > 0){
-                dat()[user.keys, ]
-            } else {
+            if(is.null(user.keys())){
                 dat()
+            } else {
+                dat()[user.keys, ]
             }
         },
         rownames=FALSE,
