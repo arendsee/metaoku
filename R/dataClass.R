@@ -11,7 +11,12 @@ DataSet <- setRefClass(
         'nrow'
     ),
     methods = list(
-        build = function(dataset, metadata=NULL, max_levels=20, max_prop=0.1, max_length=50, key=NULL){
+        build = function(dataset=NULL,
+                         metadata=NULL,
+                         max_levels=20,
+                         max_prop=0.1,
+                         max_length=50,
+                         key=NULL){
             require(plyr)
             require(data.table)
             require(magrittr)
@@ -82,7 +87,7 @@ DataSet <- setRefClass(
             names(getDataByType(type))
         },
         getDataByType = function(type){
-            children[sapply(children, function(x) x$type %in% type)]
+            children[unlist(sapply(children, function(x) x$type %in% type))]
         },
         get = function(name){
             children[[name]]
@@ -96,9 +101,11 @@ DataSet <- setRefClass(
             for (child in children) { child$filter <- NULL }
         },
         getDF = function(){
+            if(length(children) == 0) { return(NULL) }
             do.call(cbind.data.frame, lapply(children, function(child) child$data))
         },
         getMetadataDF = function(){
+            if(length(children) == 0) { return(NULL) }
             do.call(rbind.data.frame, lapply(children, function(child) child$metadata))
         }
     )
