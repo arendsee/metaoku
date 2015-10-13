@@ -314,7 +314,6 @@ shinyServer(function(input, output, session){
         if(is.null(cname)){
             return(NULL)
         }
-        cat('asdf\n')
 
         `%ifnot%` <- function(a, b) if(is.null(a) || a$name == 'None') b else a
 

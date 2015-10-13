@@ -1,35 +1,9 @@
-NUM2CAT_LEVELS <- 7
-MAX_LEVELS <- 20
-
-num2cat <- function(x){
-    cat('\t   - num2cat()\n')
-    cut(x, breaks=NUM2CAT_LEVELS)
-}
-
-longcat2cat <- function(x){
-    cat('\t   - longcat2cat()\n')
-    x <- as.factor(x)
-    top.n <- names(summary(x, maxsum=MAX_LEVELS))[-MAX_LEVELS]
-    x <- as.character(x)
-    x <- ifelse(x %in% top.n, x, 'other')
-    x <- factor(x, levels=c(top.n, 'other'))
-    x
-}
-
 as.cat <- function(x){
     cat(sprintf('\t  - as.cat() [name=(%s), type=(%s)]\n', x$name, x$type))
-    if(x$type == 'num'){
-        x$type <- 'cat'
-        x$value <- num2cat(x$value)  
-    } else if(x$type == 'longcat'){
-        x$type = 'cat'
-        x$value <- longcat2cat(x$value)
-    } else if(x$type == 'seq'){
-        # not currently supported
-        x$type = '-'
-    } else if(x$type == 'cor'){
-        # not currently supported
-        x$type = '-'
+    if(x$type %in% c('num', 'longcat')){
+        x$asCat()
+    } else {
+        x$type <- '-'
     }
     return(x)
 }

@@ -8,7 +8,7 @@ require(plyr)
 `%|%` <- function(x,y) { if(is.null(x)) y else x }
 
 build.dt <- function(x, y=NULL, z=NULL){
-    cat('\t\tentering build.dt: ', x$name, y$name, z$name, '\n')
+    cat('\t - build.dt: ', x$name, y$name, z$name, '\n')
     d <- data.frame(x=x$value)
     if(!is.null(y)){
         d$y <- y$value
@@ -31,6 +31,7 @@ cor.cat.cat.plot <- function(x, y, z, fmt.opts){
 
 # z heatmaps OR z dodged barplots
 cat.cat.cat.plot <- function(x, y, z, fmt.opts){
+    cat('\t - cat.cat.cat plot\n')
     d <- build.dt(x, y, z)
     d <- ddply(d, colnames(d), summarize, obs=length(x))
     d <- ddply(d, 'x', mutate, X=sum(obs))
@@ -47,6 +48,7 @@ cat.cat.cat.plot <- function(x, y, z, fmt.opts){
 
 # z boxplots (coord flip)
 num.cat.cat.plot <- function(x, y, z, fmt.opts){
+    cat('\t - num.cat.cat plot\n')
     g <- ggplot(build.dt(x, y, z)) +
         geom_boxplot(aes(x=y, y=x)) +
         coord_flip() +
@@ -59,6 +61,7 @@ num.cat.cat.plot <- function(x, y, z, fmt.opts){
 
 # z boxplots
 cat.num.cat.plot <- function(x, y, z, fmt.opts){
+    cat('\t - cat.num.cat plot\n')
     g <- ggplot(build.dt(x, y, z)) +
         geom_boxplot(aes(x=x, y=y)) +
         facet_wrap(~z)
@@ -69,7 +72,7 @@ cat.num.cat.plot <- function(x, y, z, fmt.opts){
 
 # z scatter plots OR colored scatter plot
 num.num.cat.plot <- function(x, y, z, fmt.opts){
-    cat('\t\tentering num.num.cat.plot\n')
+    cat('\t - num.num.cat plot\n')
     d <- build.dt(x, y, z)
     if(length(x$value) < 2000){
         g <- ggplot(d) +
@@ -107,6 +110,7 @@ seq.seq.plot <- function(x, y, fmt.opts){
 
 # scatter/density map for character in seq versus num
 seq.num.plot <- function(x, y, fmt.opts){
+    cat('\t - seq.num plot\n')
     d <- x$seq
     d$y <- y$value
     g <- ggplot(d) +
@@ -125,6 +129,7 @@ seq.num.plot <- function(x, y, fmt.opts){
 
 # as above with coord flip
 num.seq.plot <- function(x, y, fmt.opts){
+    cat('\t - num.seq plot\n')
     d <- y$seq
     d$x <- x$value
     g <- ggplot(d) +
@@ -158,6 +163,7 @@ cor.cat.plot <- function(x, y, fmt.opts){
 
 # heatmap OR dodged barplot OR network
 cat.cat.plot <- function(x, y, fmt.opts){
+    cat('\t - cat.cat plot\n')
     d <- build.dt(x, y)
     d <- ddply(d, colnames(d), summarize, obs=length(x))
     d <- ddply(d, 'x', mutate, X=sum(obs))
@@ -173,7 +179,7 @@ cat.cat.plot <- function(x, y, fmt.opts){
 
 # boxplot
 cat.num.plot <- function(x, y, fmt.opts){
-    cat('\tentering cat.num.plot()\n')
+    cat('\t - cat.num plot\n')
     if(nlevels(x$value) > 3){
         g <- ggplot(build.dt(x, y)) +
             geom_boxplot(aes(x=x, y=y))
@@ -191,7 +197,7 @@ cat.num.plot <- function(x, y, fmt.opts){
 
 # boxplot coord flip
 num.cat.plot <- function(x, y, fmt.opts){
-    cat('\tentering num.cat.plot()\n')
+    cat('\t - num.cat plot\n')
     d <- build.dt(x, y)
     if(nlevels(y$value) > 3){
         g <- ggplot(d) +
@@ -222,7 +228,7 @@ num.cat.plot <- function(x, y, fmt.opts){
 
 # scatter OR density map
 num.num.plot <- function(x, y, fmt.opts){
-    cat('\tentering num.num.plot()\n')
+    cat('\t - num.num plot\n')
     d <- build.dt(x, y)
     if(length(x$value) < 2000){
         g <- ggplot(d) +
@@ -243,7 +249,7 @@ num.num.plot <- function(x, y, fmt.opts){
 
 # barplot
 cat.plot <- function(x, fmt.opts){
-    cat('\tentering cat.plot()\n')
+    cat('\t - cat plot\n')
     g <- ggplot(build.dt(x)) +
         geom_bar(aes(x=x)) +
         labs(x=x$name)
@@ -254,7 +260,7 @@ cat.plot <- function(x, fmt.opts){
 
 # histogram
 num.plot <- function(x, fmt.opts){
-    cat('\tentering num.plot()\n')
+    cat('\t - num plot\n')
     g <- ggplot(build.dt(x)) +
         geom_histogram(aes(x=x))
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
@@ -264,7 +270,7 @@ num.plot <- function(x, fmt.opts){
 
 # wordcloud
 cor.plot <- function(x, fmt.opts){
-    cat('\tentering cor.plot()\n')
+    cat('\t - cor plot\n')
     obs.sel <- sort(colSums(x$mat), decreasing=TRUE)
     d <- data.frame(word = names(obs.sel), freq=obs.sel)
     pal2 <- brewer.pal(8, "Dark2")
@@ -277,6 +283,7 @@ cor.plot <- function(x, fmt.opts){
 
 # composition barplot
 seq.plot <- function(x, fmt.opts){
+    cat('\t - seq plot\n')
     # check my assumptions about column names
     stopifnot(c('key', 'char', 'count', 'prop') %in% names(x$seq))
     d <- x$seq

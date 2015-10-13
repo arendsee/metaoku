@@ -60,7 +60,8 @@ DataSet <- setRefClass(
                         }
                     }
                 }
-                child$init(value=x, name=cname, key=key, metadata=NULL)
+                child$init(value=x, name=cname, key=key, metadata=NULL,
+                           max_levels=max_levels, max_length=max_length)
                 children[[cname]] <<- child
             }
 
@@ -111,26 +112,37 @@ DataSet <- setRefClass(
             do.call(rbind.data.frame,
                     append(lapply(children, function(child) child$metadata),
                            list(stringsAsFactors = FALSE)))
+        },
+        refresh = function(){
+            for (child in children) { child$refresh() }
         }
     )
 )
 
+# Fields
+# value   - data
+# name    - column name
+# type    - data type [cat, num, cor, seq, longcat], determines how the data is
+#           treated, the user may change it to change the behaior of the data.
+# .type   - the permanent type
 Data <- setRefClass(
     Class    = 'Data',
-    fields   = c('value', 'name', 'type', 'key', 'metadata', 'filter'),
+    fields   = c('value', '.value', 'name', 'type', '.type', 'key', 'metadata', 'filter'),
     methods  = list(
-        init = function(value=NULL, name='None', key=NULL, metadata=NULL){
+        init = function(value=NULL, name='None', key=NULL, metadata=NULL, ...){
             require(plyr)
             require(magrittr)
-            value   <<- value
             name     <<- name
+            value    <<- value
             type     <<- '-'
+            .value   <<- value
+            .type    <<- type
             key      <<- key
             metadata <<- metadata
             filter   <<- filter
-            type_specific_init()
+            type_specific_init(...)
         },
-        type_specific_init = function(){ },
+        type_specific_init = function(...){ },
         getData = function(filt=FALSE){
             if(filt){
                 value[filt]
@@ -139,9 +151,14 @@ Data <- setRefClass(
             }
         },
         asCat = function(){ as.factor(value)  },
-        asNum = function(){ as.numeric(value) }
+        asNum = function(){ as.numeric(value) },
+        refresh = function(){
+            value <<- .value
+            type  <<- .type
+        }
     )
 )
+
 Empty <- function(){
     d <- Data$new()
     d$init()  
@@ -153,13 +170,19 @@ DataNum <- setRefClass(
     fields   = c('max', 'min'),
     contains = 'Data',
     methods  = list(
-        type_specific_init = function(){
+        type_specific_init = function(...){
             type <<- 'num'
             max  <<- max(value, na.rm=TRUE) 
             min  <<- min(value, na.rm=TRUE)
         },
         asCat = function(breaks=5, dig.lab=1, ordered_result=TRUE){ 
-            cut(value, breaks, dig.lab, ordered_result)
+            if(type == 'num'){
+                type  <<- 'cat'
+                value <<- cut(value,
+                              breaks=breaks,
+                              dig.lab=dig.lab,
+                              ordered_result=ordered_result)
+            }
         }
     )
 )
@@ -169,7 +192,7 @@ DataCat <- setRefClass(
     fields   = c('nchar', 'max.length', 'min.length', 'counts', 'max.count', 'min.count'),
     contains = 'Data',
     methods  = list(
-        type_specific_init = function(){
+        type_specific_init = function(...){
             type       <<- 'cat'
             nchar      <<- nchar(value) 
             max.length <<- max(nchar, na.rm=TRUE)
@@ -186,20 +209,26 @@ DataCat <- setRefClass(
 DataLongcat <- setRefClass(
     Class = 'DataLongcat',
     contains = 'DataCat',
+    fields = c('max_length', 'max_levels'),
     methods = list(
-        type_specific_init = function(){
+        type_specific_init = function(max_length, max_levels, ...){
             type <<- 'longcat'
             value <<- as.character(value)
+            max_length <<- max_length
+            max_levels <<- max_levels
         },
-        asCat = function(max_levels=length_max){
-            if(nrow(value) <= max_levels){
-                factor(value)
-            } else {
-                trunc.names <- head(counts, max_levels)$x
-                trunc.filter <- as.character(value) %in% trunc.names
-                truncated.levels <- as.character(value)
-                truncated.levels[trunc.filter] <- 'other'
-                factor(truncated.levels)
+        asCat = function(max_levels=max_length){
+            if(type == 'longcat'){
+                type <<- 'cat'
+                if(length(value) <= max_levels){
+                    value <<- factor(value)
+                } else {
+                    trunc.names <- head(counts, max_levels)$x
+                    trunc.filter <- as.character(value) %in% trunc.names
+                    truncated.levels <- as.character(value)
+                    truncated.levels[trunc.filter] <- 'other'
+                    value <<- factor(truncated.levels)
+                }
             }
         }
     )
@@ -219,7 +248,7 @@ DataSeq <- setRefClass(
     fields = c('char.frequency', 'seq.lengths', 'alphabet', 'char.table', 'pretty'),
     contains = 'Data',
     methods = list(
-        type_specific_init = function(){
+        type_specific_init = function(...){
             type   <<- 'seq'
             pretty <<- getPretty(w=10)
             parseSeq() # set alphabet, char.table, and char.frequency
@@ -265,7 +294,7 @@ DataCor <- setRefClass(
     fields = c('mat'),
     contains = 'Data',
     methods = list(
-        type_specific_init = function(){
+        type_specific_init = function(...){
             type <<- 'cor' 
             calculateMatrix()
         },
