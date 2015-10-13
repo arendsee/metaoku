@@ -131,6 +131,11 @@ Data <- setRefClass(
         asNum = function(){ as.numeric(data) }
     )
 )
+Empty <- function(){
+    d <- Data$new()
+    d$init()  
+    return(d)
+}
 
 DataNum <- setRefClass(
     Class    = 'DataNum',

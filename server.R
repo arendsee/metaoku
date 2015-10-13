@@ -18,12 +18,11 @@ dispatch           <- getDispatch_R()
 dataAxis           <- getAxis_R()
 
 # this approach doesn't work here
+source('R/dataClass.R')
 source('R/plotUI.R')
 source('R/plot.R')
 
-`%ifnul%` <- function(a, b) if(is.null(a)) b else a
-`%ifnot%` <- function(a, b) if(is.null(a) || is.na(a) || length(a) == 0) b else a
-`%ifok%` <- function(a, b) if(!(is.null(a) || is.na(a) || length(a) == 0)) b
+`%ifunset%` <- function(a, b) if(is.null(a) || is.na(a) || length(a) == 0 || a == 'None') b else a
 `%|%` <- function(x,y) if(is.null(x)) y else x
 
 # =========================================================================
@@ -37,11 +36,16 @@ source('R/plot.R')
 #  * seqs     - character counts for each sequence column
 # =========================================================================
 datasets <- build.all.datasets(config)
+if(length(datasets) > 0){
+    load(datasets[1])
+}
 
 
 
 shinyServer(function(input, output, session){
 
+    plotui <- PlotUI$new()
+    cache  <- list()
     
     # =========================================================================
     # Retrieve selected dataset
@@ -49,7 +53,6 @@ shinyServer(function(input, output, session){
     #     memory issues if there are too many large datasets. But for now,
     #     it makes everything way snappier.
     # =========================================================================
-    cache <- list()
     update.datasets <- function(datasets){
         cat('entering update.datasets\n')
         updateRadioButtons(session,
@@ -60,21 +63,23 @@ shinyServer(function(input, output, session){
         cache <<- list()
     }
     update.datasets(datasets)
-    global <- reactive({
-        cat('entering global() ... loading', input$selected.dataset, '\n')
-        if(input$selected.dataset == 'none'){
-            datafile <- datasets[1]
-        } else {
-            datafile <- datasets[input$selected.dataset]
-        }
-        if(is.null(cache[[datafile]])){
-            load(datafile)
-            cache[[datafile]] <<- global
-        } else {
-            global <- cache[[datafile]]
-        }
-        return(global)
-    })
+    observeEvent(
+        input$selected.dataset, 
+        {
+            cat('entering observe:selected.dataset ... loading', input$selected.dataset, '\n')
+            if(input$selected.dataset == 'None'){
+                datafile <- datasets[1]
+            } else {
+                datafile <- datasets[input$selected.dataset]
+            }
+            if(is.null(cache[[datafile]]) && !is.na(datafile)) {
+                load(datafile)
+                cache[[datafile]] <- dataset
+            } else {
+                dataset <- cache[[datafile]]
+            }
+        }, priority=10
+    )
 
 
 
@@ -89,25 +94,15 @@ shinyServer(function(input, output, session){
 
     # =========================================================================
     # Update working dataset when columns are selected from the Column Table
-    # 1. get the column names from the rows of the Column Table (which is built
-    #    based on the METADATA file)
-    # 2. return the UNIQUE rows
-    #    * NOTE: this breaks the 1-to-1 correlation between row number and row
-    #      content, so rows must be accessed by KEY when linking out.
     # =========================================================================
     dat <- reactive({
+        cat('dat()\n')
+        input$selected.dataset # run if chanage datasets
+        out <- dataset$getDF()
         csel <- input$column_table_rows_selected
-        cat(sprintf('dat() ncol=%s\n', length(csel)))
         if(length(csel) > 0){
-            columns <- global()$metadata$column_name[csel]
-        } else {
-            columns <- global()$metadata$column_name
+            out <- out[, csel]
         }
-        # the key column should always be the first column in the data table
-        columns <- unique(c('KEY', columns))
-        # assert all fields in the metadata are in the actual data
-        stopifnot(columns %in% names(global()$table))
-        out <- global()$table[, columns, with=FALSE]
         return(out)
     })
 
@@ -121,24 +116,13 @@ shinyServer(function(input, output, session){
     # =========================================================================
     observe({
         # set compare.to (y) choices
-        columns <- global()$metadata$column_name[input$column_table_rows_selected]
+        cat(sprintf('LENGTH:dat()=(%s), \n', length(dat())))
+        columns <- names(dat())
         updateSelectInput(session,
                           'compare.to',
                           choices=c('None', as.character(columns)))
-        # set x.axis on 'Plot Data' tab
-        updateSelectInput(session,
-                          'x.axis',
-                          choices=c('None', as.character(columns)))
-        # set y.axis on 'Plot Data' tab
-        updateSelectInput(session,
-                          'y.axis',
-                          choices=c('None', as.character(columns)))
-        # set z.axis on 'Plot Data' tab
-        updateSelectInput(session,
-                          'z.axis',
-                          choices=c('None', as.character(columns)))
         # set group.by (z) choices (this may not be cor or seq)
-        neat_columns <- columns[global()$type[columns] %in% c('cat', 'num', 'longcat')]
+        neat_columns <- dataset$getNameByType(c('cat', 'num', 'longcat'))
         updateSelectInput(session,
                           'group.by',
                           choices=c('None', 'Selection', as.character(neat_columns)))
@@ -164,41 +148,44 @@ shinyServer(function(input, output, session){
     })
 
 
-    plotui <- PlotUI$new()
     build <- function(){
         output$plot.sidebar <- renderUI({ plotui$buildUI() })
     }
     observeEvent(
         input$plot.x,
-        { x <- input$plot.x
-          xtype <- global()$type[x]
-          cat(sprintf('EVENT plot.x: (%s,%s)\n', x, xtype))
-          plotui$setX(x)
-          build()
-        }
+        {
+            x <- dataset$get(input$plot.x)
+            cat(sprintf('EVENT plot.x: (%s,%s)\n', x$name, x$type))
+            plotui$setX(x)
+            build()
+        }, priority=-1
     )
     observeEvent(
         input$plot.y,
-        { y <- input$plot.y
-          ytype <- global()$type[y]
-          cat(sprintf('EVENT y: (%s,%s)\n', y, ytype))
-          plotui$setY(y)
-          build()
-        }
+        {
+            y <- dataset$get(input$plot.y)
+            cat(sprintf('EVENT y: (%s,%s)\n', y$name, y$type))
+            plotui$setY(y)
+            build()
+        }, priority=-1
     )
     observeEvent(
         input$plot.geom,
-        { geom <- input$plot.geom
-          cat(sprintf('EVENT geom: (%s)\n', geom))
-          plotui$setGeom(geom)
-          build()
+        {
+            geom <- input$plot.geom
+            cat(sprintf('EVENT geom: (%s)\n', geom))
+            plotui$setGeom(geom)
+            build()
+        }, priority=-1
+    )
+    observeEvent(
+        input$selected.dataset,
+        {
+            cat('entering plotui: INITIALIZE PLOTUI\n')
+            plotui$init(dataset, empty=Empty())
+            build()
         }
     )
-    observe({
-        cat('entering plotui: INITIALIZE PLOTUI\n')
-        plotui$init(global()$type)
-        build()
-    }, priority = 5)
 
     output$plot_data_plot <- renderPlot({
         source('R/plotBuild.R', local=TRUE)
@@ -208,63 +195,6 @@ shinyServer(function(input, output, session){
         } else {
             NULL
         }
-    })
-
-
-    # =========================================================================
-    # Update x- and y-axis ranges when axes change on plot
-    # =========================================================================
-
-    output$xformat <- renderUI({
-        axis.name <- input$x.axis
-        if(axis.name == 'None'){
-            el = h1('No axis selected')           
-        } else if(global()$type[axis.name] == 'num'){
-            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
-            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
-            cat('min/max', axis.min, axis.max, '\n')
-            el <- fluidRow(
-               column(2, checkboxInput('plot.logx', 'log2 x-axis')),
-               column(8, sliderInput('plot.xrange', 'x-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
-            )
-        } else {
-            el <- h1('No options')
-        }
-        return(el)
-    })
-    output$yformat <- renderUI({
-        axis.name <- input$y.axis
-        if(axis.name == 'None'){
-            el = h1('No axis selected')           
-        } else if(global()$type[axis.name] == 'num'){
-            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
-            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
-            cat('min/max', axis.min, axis.max, '\n')
-            el <- fluidRow(
-               column(2, checkboxInput('plot.logx', 'log2 y-axis')),
-               column(8, sliderInput('plot.yrange', 'y-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
-            )
-        } else {
-            el <- h1('No options')
-        }
-        return(el)
-    })
-    output$zformat <- renderUI({
-        axis.name <- input$z.axis
-        if(axis.name == 'None'){
-            el = h1('No axis selected')           
-        } else if(global()$type[axis.name] == 'num'){
-            axis.min <- min(dat()[[axis.name]], na.rm=TRUE)
-            axis.max <- max(dat()[[axis.name]], na.rm=TRUE)
-            cat('min/max', axis.min, axis.max, '\n')
-            el <- fluidRow(
-               column(2, checkboxInput('plot.logz', 'log2 z-axis')),
-               column(8, sliderInput('plot.zrange', 'z-axis range', min=axis.min, max=axis.max, value=c(axis.min, axis.max)))
-            )
-        } else {
-            el <- h1('No options')
-        }
-        return(el)
     })
 
 
@@ -292,8 +222,8 @@ shinyServer(function(input, output, session){
         dataset <- input$selected.dataset
         key <- input$user_key
         # set the label for the user selected id textInput box
-        if(key %in% colnames(global()$table)){
-            sample_ids <- sample(unique(global()$table[[key]]), size=3)
+        if(key %in% colnames(dat())){
+            sample_ids <- sample(unique(dat()[[key]]), size=3)
             label <- sprintf('Enter ids (e.g. "%s")', paste(sample_ids, collapse=", "))
             updateTextInput(session, 'user_ids', label=label)
         }
@@ -373,26 +303,20 @@ shinyServer(function(input, output, session){
         }
 
         # x-axis comes from the selected column
-        x <- cname
+        x <- dataset$get(cname) %ifunset% Empty()
 
         # y-axis currently comes from 'Compare to' dropdown, may be NULL
-        y <- input$compare.to
+        y <- dataset$get(input$compare.to) %ifunset% Empty()
 
         # z-axis from 'Group by' dropdown
-        z <- input$group.by
-
-        axes <- list(x=x, y=y, z=z)
-        axes <- dataAxis(axes, global=global(), selection=selection())
+        z <- dataset$get(input$group.by) %ifunset% Empty()
 
         fmt.opts <- list(
-            logy=input$logy,
-            logx=input$logx
+           logy=input$logy,
+           logx=input$logx
         )
 
-        dispatch(x=axes[['x']],
-                 y=axes[['y']],
-                 z=axes[['z']],
-                 fmt.opts=fmt.opts)
+        dispatch(x, y, z, fmt.opts)
     })
 
 
@@ -435,7 +359,7 @@ shinyServer(function(input, output, session){
     output$column_table <- DT::renderDataTable(
         {
             cat('entering column_table()\n')
-            global()$metadata
+            dataset$getMetadataDF()
         },
         filter="none",
         rownames=FALSE,

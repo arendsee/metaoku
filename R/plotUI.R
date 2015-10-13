@@ -48,26 +48,25 @@ getGeoMap <- function(){
     return(geomap)
 }
 
-getChoices <- function(types, accepted=types){
-    c('None', names(types[types %in% accepted]))
+getChoices <- function(dataset, accepted=types){
+    c('None', dataset$getNameByType(accepted))
 }
 
-getYChoices <- function(types, x){
+getYChoices <- function(dataset, x){
     geomap <- getGeoMap()
     choices <- apply(!is.na(geomap), 1, function(val) colnames(geomap)[val]) %>%
                lapply(function(val) if(length(val) == 0) '-' else val)
-    xtype <- types[x]
-    choices <- names(types[types %in% choices[[xtype]]])
+    choices <- dataset$getNameByType(choices[[x$type]])
     return(choices)
 }
 
-getGeomChoices <- function(xtype, ytype='-'){
-    cat(sprintf('\tplotUI::getGeomChoices xtype:(%s), ytype:(%s)\n', xtype, ytype))
-    return(unlist(strsplit(getGeoMap()[xtype, ytype], ',')))
+getGeomChoices <- function(x, y=NULL){
+    cat(sprintf('\tplotUI::getGeomChoices x:(%s), y:(%s)\n', class(x), class(y)))
+    return(unlist(strsplit(getGeoMap()[x$type, y$type], ',')))
 }
 
-plot.select.x <- function(types, selected='None') {
-    selectInput('plot.x', 'Independent variable', choices=names(types), selected=selected)
+plot.select.x <- function(datasets, selected=NULL) {
+    selectInput('plot.x', 'Independent variable', choices=names(datasets$getDF()), selected=selected$name)
 }
 
 plot.build.ggplot.ui <- function(taglist, geom, elements){
@@ -165,9 +164,9 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
     return(taglist)
 }
 
-plot.build.elements <- function(types){
+plot.build.elements <- function(dataset){
     p <- list()
-    cat.or.num <- getChoices(types, c('cat', 'num'))
+    cat.or.num <- getChoices(dataset, c('cat', 'num'))
     # aes
     p$color.by     <- selectInput('plot.aes.color', 'Color by', choices=cat.or.num)
     p$fill.by      <- selectInput('plot.aes.fill', 'Fill by', choices=cat.or.num)
@@ -207,41 +206,39 @@ plot.build.elements <- function(types){
 }
 
 PlotUI <- setRefClass('PlotUI',
-    fields=c("types", "xel", "yel", "geomel", "x", "y", "geom"),
+    fields=c("dataset", "xel", "yel", "geomel", "x", "y", "geom", "empty"),
     methods=list(
-        init = function(types){
-            if(! 'None' %in% names(types)) { types['None'] <- '-' }
-            types    <<- types
-            xel      <<- plot.select.x(types, selected='None')
+        init = function(dataset, empty){
+            cat(sprintf('PlotUI::init dim(dataset):(%s)\n', class(dataset)))
+            dataset  <<- dataset 
+            xel      <<- plot.select.x(dataset, selected=empty)
             yel      <<- selectInput('plot.y', 'Dependent variable', choices='None')
             geomel   <<- selectInput('plot.geom', 'Plot type', choices='None')
-            x        <<- 'None'
-            y        <<- 'None'
-            geom     <<- NA
-            elements <<- plot.build.elements(types)
+            x        <<- empty
+            y        <<- empty
+            geom     <<- empty
+            elements <<- plot.build.elements(dataset)
         },
-        setX = function(xname){
+        setX = function(x){
             cat('\tentering PlotUI::setX\n')
-            types[xname] %ifnot% return()
-            x <<- xname
-            xel <<- plot.select.x(types, selected=xname)
+            x <<- x
+            xel <<- plot.select.x(dataset, selected=x)
             setY()
             setGeom()
         },
-        setY = function(yname=y){
+        setY = function(y=y){
             cat('\tentering PlotUI::setY\n')
-            types[yname] %ifnot% return()
-            choices <- getYChoices(types, x)
-            if(!yname %in% choices){
-                yname <<- 'None'
+            choices <- getYChoices(dataset, x)
+            if(!y %in% choices){
+                y <<- NA
             }
-            yel <<- selectInput('plot.y', 'Dependent variable', choices=choices, selected=yname)
-            y   <<- yname
+            yel <<- selectInput('plot.y', 'Dependent variable', choices=choices, selected=y)
+            y   <<- y
             setGeom()
         },
         setGeom = function(g=geom){
             cat('\tentering PlotUI::setGeom\n')
-            choices <- getGeomChoices(types[x], types[y])
+            choices <- getGeomChoices(x, y)
             if(is.null(g) || is.na(g) || !g %in% choices){
                 g <- choices[1]
             }
