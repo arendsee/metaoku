@@ -413,7 +413,9 @@ shinyServer(function(input, output, session){
             target='column',
             selected=0
         ),
+        extensions = c('ColReorder'),
         options = list(
+            dom = 'Rlfrtip',
             autoWidth=TRUE,
             orderMulti=TRUE,
             searching=TRUE,
