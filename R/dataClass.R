@@ -35,15 +35,17 @@ DataSet <- setRefClass(
                 N <- length(x)
                 if(is.numeric(x)){
                     # determine whether to treat a numeric vector as num or cat
-                    if(all(x %% 1 == 0, na.rm=TRUE) && u <= max_levels && u / N < max_prop){
+                    is_integer <- all(x %% 1 == 0, na.rm=TRUE)
+                    if(is_integer && u <= max_levels && u / N < max_prop){
                         child <- DataCat$new()
                     } else {
                         child <- DataNum$new()
                     }
                 } else {
                     x <- as.character(x)
-                    # determine whether a character vector is cat, longcat, cor, or seq
-                    if(max(nchar(x)) > max_length){
+                    # determine whether a character vector is cat, longcat,
+                    # cor, or seq
+                    if(max(nchar(x), rm.na=TRUE) > max_length){
                         # if there are any spaces, treat the string as textual
                         # otherwise, consider it a sequence
                         if(any(grepl(' ', x))){
@@ -200,7 +202,7 @@ DataCat <- setRefClass(
             counts     <<- count(value) %>% arrange(-freq)
             max.count  <<- counts$freq[1]
             min.count  <<- counts$freq[nrow(counts)]
-            value     <<- factor(value)
+            value      <<- factor(value)
         },
         asNum = function(){ }
     )
@@ -217,17 +219,15 @@ DataLongcat <- setRefClass(
             max_length <<- max_length
             max_levels <<- max_levels
         },
-        asCat = function(max_levels=max_length){
+        asCat = function(ml=max_levels){
             if(type == 'longcat'){
                 type <<- 'cat'
-                if(length(value) <= max_levels){
+                if(length(unique(value)) <= ml){
                     value <<- factor(value)
                 } else {
-                    trunc.names <- head(counts, max_levels)$x
-                    trunc.filter <- as.character(value) %in% trunc.names
-                    truncated.levels <- as.character(value)
-                    truncated.levels[trunc.filter] <- 'other'
-                    value <<- factor(truncated.levels)
+                    trunc.names <- head(counts, ml)$x
+                    value[! value %in% trunc.names] <<- 'other'
+                    value <<- factor(value)
                 }
             }
         }
@@ -251,6 +251,7 @@ DataSeq <- setRefClass(
         type_specific_init = function(...){
             type   <<- 'seq'
             pretty <<- getPretty(w=10)
+            value  <<- pretty
             parseSeq() # set alphabet, char.table, and char.frequency
         },
         parseSeq = function(){

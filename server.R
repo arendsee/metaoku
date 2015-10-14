@@ -5,7 +5,6 @@ require(magrittr)
 require(Matrix)
 
 # ====================================================================
-# TODO: build an organized OO system for my datatypes
 # Here is a really hacky way to avoid polluting the global environment
 # ====================================================================
 getGlobal_R   <- function(){source('global.R',     local=TRUE); config}
@@ -245,7 +244,7 @@ shinyServer(function(input, output, session){
 
         # All three of these conditions are necessary, change them and you will weep blood
         parse_keys <- length(txt) > 0 &&
-                      nchar(txt) > 0 &&
+                      nchar(txt) > 0  &&
                       any(input$user_key %in% names(dat()))
         if(parse_keys){
             cat(paste(input$user_key), '\n')
@@ -319,15 +318,15 @@ shinyServer(function(input, output, session){
 
         # x-axis comes from the selected column
         x <- dataset()$get(cname) %ifnot% Empty()
-        cat(sprintf(' - x set to "%s"', x$name))
+        cat(sprintf(' - x set to "%s"\n', x$name))
 
         # y-axis currently comes from 'Compare to' dropdown, may be NULL
         y <- dataset()$get(input$compare.to) %ifnot% Empty()
-        cat(sprintf(' - y set to "%s"', y$name))
+        cat(sprintf(' - y set to "%s"\n', y$name))
 
         # z-axis from 'Group by' dropdown
         z <- dataset()$get(input$group.by) %ifnot% Empty()
-        cat(sprintf(' - z set to "%s"', z$name))
+        cat(sprintf(' - z set to "%s"\n', z$name))
 
         fmt.opts <- list(
            logy=input$logy,

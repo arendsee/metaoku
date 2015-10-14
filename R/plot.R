@@ -43,7 +43,7 @@ cat.cat.cat.plot <- function(x, y, z, fmt.opts){
         facet_wrap(~z)
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # z boxplots (coord flip)
@@ -56,7 +56,7 @@ num.cat.cat.plot <- function(x, y, z, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
     fmt.opts$logy <- fmt.opts$logx
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # z boxplots
@@ -67,7 +67,7 @@ cat.num.cat.plot <- function(x, y, z, fmt.opts){
         facet_wrap(~z)
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # z scatter plots OR colored scatter plot
@@ -90,7 +90,7 @@ num.num.cat.plot <- function(x, y, z, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
     fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # z dodged barplots (comparing sequence composition)
@@ -124,7 +124,7 @@ seq.num.plot <- function(x, y, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% 'Letter'
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
     fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # as above with coord flip
@@ -143,7 +143,7 @@ num.seq.plot <- function(x, y, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% 'Letter'
     fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # y barplots
@@ -174,7 +174,7 @@ cat.cat.plot <- function(x, y, fmt.opts){
         geom_tile(aes(x=x, y=y, fill=lograt))
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # boxplot
@@ -192,7 +192,7 @@ cat.num.plot <- function(x, y, fmt.opts){
     }
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # boxplot coord flip
@@ -206,7 +206,7 @@ num.cat.plot <- function(x, y, fmt.opts){
     fmt.opts$xlab <- fmt.opts$ylab %|% y$name
     fmt.opts$ylab <- fmt.opts$xlab %|% x$name
     fmt.opts$logy <- fmt.opts$logx
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
     } else {
         g <- ggplot(d) +
             geom_histogram(
@@ -222,7 +222,7 @@ num.cat.plot <- function(x, y, fmt.opts){
               labs(x=x$name)
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
     }
 }
 
@@ -244,7 +244,7 @@ num.num.plot <- function(x, y, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
     fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # barplot
@@ -255,7 +255,7 @@ cat.plot <- function(x, fmt.opts){
         labs(x=x$name)
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% 'Counts'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # histogram
@@ -265,7 +265,7 @@ num.plot <- function(x, fmt.opts){
         geom_histogram(aes(x=x))
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% NULL
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # wordcloud
@@ -296,10 +296,10 @@ seq.plot <- function(x, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% 'Letter'
     fmt.opts$ylab <- fmt.opts$ylab %|% 'Percent composition'
     fmt.opts$title <- fmt.opts$title %|% 'Sequence composition'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
-format.plot <- function(g, x.values=NULL, fmt.opts){
+format.plot <- function(g, x=NULL, fmt.opts){
     cat('\tformat.R::formatPlot()\n')
     if(fmt.opts$logx){
         g <- g + scale_x_continuous(trans='log2')
@@ -309,10 +309,10 @@ format.plot <- function(g, x.values=NULL, fmt.opts){
         g <- g + scale_y_continuous(trans='log2')
     }
 
-    if(!is.null(x.values) && is.factor(x.values)){
+    if(x$type %in% c('cat', 'longcat')){
         # make x-lables vertical is they are longer than 2 characters
-        longest.line <- max(nchar(as.character(x.values)))
-        if(longest.line > 2 && is.factor(x.values)) {
+        longest.line <- max(nchar(levels(x$value)), rm.na=TRUE)
+        if(longest.line > 2) {
             g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
         }
     }
