@@ -57,8 +57,11 @@ shinyServer(function(input, output, session){
         cache <<- list()
     }
     update.datasets(datasets)
-    dataset <- reactive({
-            cat('-> reactive:dataset\n')
+
+    dataset <- eventReactive(
+        {input$selected.dataset},
+        {
+            cat('-> reactive:dataset - attempting to load dataset\n')
             if(input$selected.dataset == 'none'){
                 cat(' - dataset=none\n')
                 dataset <- DataSet$new()
@@ -77,7 +80,9 @@ shinyServer(function(input, output, session){
                 dataset <- cache[[datafile]]
             }
             return(dataset)
-    })
+        },
+        ignoreNULL=TRUE
+    )
 
 
 
@@ -113,7 +118,7 @@ shinyServer(function(input, output, session){
     # =========================================================================
     observe({
         # set compare.to (y) choices
-        cat(sprintf('-> observe:View Tab xyz\n'))
+        cat(sprintf('-> observe - Building View tab menu\n'))
         columns <- names(dat())
         updateSelectInput(session,
                           'compare.to',
@@ -135,7 +140,7 @@ shinyServer(function(input, output, session){
     # Load instructions given the type of upload the user chooses
     # =========================================================================
     observe({
-        cat('-> observe:Upload\n')
+        cat('-> observe - Building Upload tab\n')
         umode <- input$upload.type
         if(umode == 'dataset'){
             desc <- file.path('doc', 'upload-dataset-instructions.md')
@@ -182,8 +187,8 @@ shinyServer(function(input, output, session){
     observeEvent(
         input$selected.dataset,
         {
-            cat('-> event:selected.dataset - initialize plotui\n')
-            plotui$init(isolate(dataset()), empty=Empty())
+            cat('-> Initialize plotUI object\n')
+            plotui$init(dataset(), empty=Empty())
             build()
         }
     )
@@ -203,15 +208,19 @@ shinyServer(function(input, output, session){
     # =========================================================================
     # Update dataset description when new dataset is selected
     # =========================================================================
-    observe({
-        cat('-> observe:selected.dataset - update dataset description\n')
-        # set the dataset description
-        desc <- file.path(config$data_dir, input$selected.dataset, 'README.md')
-        if(!file.exists(desc)){
-            desc <- file.path('doc', 'dataset-description.md')
-        }
-        output$dataset_description <- renderUI({shiny::includeMarkdown(desc)})
-    })
+    observeEvent(
+        input$selected.dataset,     
+        {
+            cat('-> observe:selected.dataset - update dataset description\n')
+            # set the dataset description
+            desc <- file.path(config$data_dir, input$selected.dataset, 'README.md')
+            if(!file.exists(desc)){
+                desc <- file.path('doc', 'dataset-description.md')
+            }
+            output$dataset_description <- renderUI({shiny::includeMarkdown(desc)})
+        },
+        ignoreNULL=TRUE
+    )
 
 
 
@@ -235,28 +244,31 @@ shinyServer(function(input, output, session){
     # Read input from textInput box, extract ids, and return if they are
     # present in the key column of the main dataset
     # =========================================================================
-    user.keys <- reactive({
-        cat('-> user.keys()\n')
-        # this prevents whitespace in the box from stopping plotting
-        txt <- gsub('\n', ' ', input$user_ids)
-        txt <- sub('^\\s+', '', txt, perl=TRUE)
-        keys <- c()
+    user.keys <- eventReactive(
+        {input$user_ids},
+        {
+            cat('-> user.keys()\n')
+            # this prevents whitespace in the box from stopping plotting
+            txt <- gsub('\n', ' ', input$user_ids)
+            txt <- sub('^\\s+', '', txt, perl=TRUE)
+            keys <- NULL
 
-        # All three of these conditions are necessary, change them and you will weep blood
-        parse_keys <- length(txt) > 0 &&
-                      nchar(txt) > 0  &&
-                      any(input$user_key %in% names(dat()))
-        if(parse_keys){
-            cat(paste(input$user_key), '\n')
-            cat(paste(txt), '\n')
-            ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
-            ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
-            keys <- dat()[[input$user_key]] %in% ids
-            cat(sprintf(' <- user.keys keys: %s\n', length(keys)))
+            # All three conditions are necessary, change them and weep blood
+            parse_keys <- length(txt) > 0 &&
+                          nchar(txt) > 0  &&
+                          any(input$user_key %in% names(dat()))
+            if(parse_keys){
+                cat(paste(input$user_key), '\n')
+                cat(paste(txt), '\n')
+                ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
+                ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
+                keys <- dat()[[input$user_key]] %in% ids
+                cat(sprintf(' <- user.keys keys: %s\n', length(keys)))
+            }
             return(keys)
-        }
-        keys
-    })
+        },
+        ignoreNULL=TRUE
+    )
 
 
 
@@ -348,7 +360,7 @@ shinyServer(function(input, output, session){
             if(is.null(user.keys())){
                 dat()
             } else {
-                dat()[user.keys, ]
+                dat()[user.keys(), ]
             }
         },
         rownames=FALSE,
@@ -364,7 +376,8 @@ shinyServer(function(input, output, session){
             orderMulti=TRUE,
             searching=TRUE,
             search.regex=TRUE
-    ))
+        )
+    )
 
 
 
