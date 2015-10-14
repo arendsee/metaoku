@@ -71,7 +71,8 @@ DataSet <- setRefClass(
             if(is.null(metadata)){
                 metadata <- data.frame(
                     column_names = names(dataset),
-                    type = sapply(children, function(x) x$type)
+                    type = sapply(children, function(x) x$type),
+                    stringsAsFactors=FALSE
                 )
             }
             # initialize each child
