@@ -180,7 +180,6 @@ Data <- setRefClass(
         asNum = function(){ as.numeric(value) },
         setStat = function() {},
         filter = function(row_filter){
-            cat(sprintf(' * filtering %s from %s rows to %s\n', name, length(value), length(row_filter)))
             value <<- .value[row_filter]
             setStat()
         },
@@ -266,6 +265,14 @@ DataLongcat <- setRefClass(
                     value[! value %in% trunc.names] <<- 'other'
                     value <<- factor(value)
                 }
+            }
+        },
+        filter = function(row_filter){
+            value <<- .value[row_filter]
+            setStat()
+            if(type == 'cat'){
+                type <<- 'longcat'
+                asCat()
             }
         }
     )
