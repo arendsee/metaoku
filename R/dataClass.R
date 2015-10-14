@@ -8,7 +8,8 @@ DataSet <- setRefClass(
         'max_length',
         'row_filter',
         'ncol',
-        'nrow'
+        'nrow',
+        'names'
     ),
     methods = list(
         build = function(dataset=NULL,
@@ -27,6 +28,7 @@ DataSet <- setRefClass(
             ncol       <<- ncol(dataset)
             nrow       <<- nrow(dataset)
             row_filter <<- NULL
+            names      <<- names(dataset)
 
             children <<- list()
             for (cname in names(dataset)){
@@ -87,29 +89,51 @@ DataSet <- setRefClass(
                 child$metadata <- met
             }
         },
+
         getNameByType = function(type){
             names(getDataByType(type))
         },
+
         getDataByType = function(type){
             children[unlist(sapply(children, function(x) x$type %in% type))]
         },
+
         get = function(name){
-            children[[name]]
+            if(name %in% names){
+                cat(' DF: get() - returning ', name, '\n')
+                children[[name]]
+            } else {
+                cat(' DF: get() - returning Empty()\n')
+                Empty()
+            }
         },
-        addFilter = function(filt){
+
+        setFilter = function(filt){
             row_filter <<- filt
-            for (child in children) { child$filter <- filt }
+            if(is.null(row_filter)){
+                clearFilter()
+            } else {
+                for (child in children) { child$filter(row_filter) }
+            }
         },
+
         clearFilter = function(){
+            cat(' dataClass::clearFilter()\n')
             row_filter <<- NULL
-            for (child in children) { child$filter <- NULL }
+            for (child in children) { child$refresh() }
         },
-        getDF = function(){
+
+        getDF = function(filterRows=FALSE){
             if(length(children) == 0) { return(NULL) }
-            do.call(cbind.data.frame,
+            d <- do.call(cbind.data.frame,
                     append(lapply(children, function(child) child$value),
                            list(stringsAsFactors = FALSE)))
+            if(filterRows && !is.null(row_filter)){
+                d <- d[row_filter, ]
+            }
+            return(d)
         },
+
         getMetadataDF = function(){
             if(length(children) == 0) { return(NULL) }
             do.call(rbind.data.frame,
@@ -130,7 +154,7 @@ DataSet <- setRefClass(
 # .type   - the permanent type
 Data <- setRefClass(
     Class    = 'Data',
-    fields   = c('value', '.value', 'name', 'type', '.type', 'key', 'metadata', 'filter'),
+    fields   = c('value', '.value', 'name', 'type', '.type', 'key', 'metadata'),
     methods  = list(
         init = function(value=NULL, name='None', key=NULL, metadata=NULL, ...){
             require(plyr)
@@ -142,7 +166,6 @@ Data <- setRefClass(
             .type    <<- type
             key      <<- key
             metadata <<- metadata
-            filter   <<- filter
             type_specific_init(...)
         },
         type_specific_init = function(...){ },
@@ -155,9 +178,16 @@ Data <- setRefClass(
         },
         asCat = function(){ as.factor(value)  },
         asNum = function(){ as.numeric(value) },
+        setStat = function() {},
+        filter = function(row_filter){
+            cat(sprintf(' * filtering %s from %s rows to %s\n', name, length(value), length(row_filter)))
+            value <<- .value[row_filter]
+            setStat()
+        },
         refresh = function(){
             value <<- .value
-            type  <<- .type
+            type <<- .type
+            setStat()
         }
     )
 )
@@ -174,7 +204,10 @@ DataNum <- setRefClass(
     contains = 'Data',
     methods  = list(
         type_specific_init = function(...){
-            type <<- 'num'
+            type <<- .type <<- 'num'
+            setStat()
+        },
+        setStat = function(){
             max  <<- max(value, na.rm=TRUE) 
             min  <<- min(value, na.rm=TRUE)
         },
@@ -196,14 +229,17 @@ DataCat <- setRefClass(
     contains = 'Data',
     methods  = list(
         type_specific_init = function(...){
-            type       <<- 'cat'
-            nchar      <<- nchar(value) 
+            type  <<- .type <<- 'cat'
+            value <<- .value <<- factor(.value)
+            setStat()
+        },
+        setStat = function(){
+            nchar      <<- nchar(as.character(value)) 
             max.length <<- max(nchar, na.rm=TRUE)
             min.length <<- min(nchar, na.rm=TRUE)
-            counts     <<- count(value) %>% arrange(-freq)
+            counts     <<- count(as.character(value)) %>% arrange(-freq)
             max.count  <<- counts$freq[1]
             min.count  <<- counts$freq[nrow(counts)]
-            value      <<- factor(value)
         },
         asNum = function(){ }
     )
@@ -215,8 +251,8 @@ DataLongcat <- setRefClass(
     fields = c('max_length', 'max_levels'),
     methods = list(
         type_specific_init = function(max_length, max_levels, ...){
-            type <<- 'longcat'
-            value <<- as.character(value)
+            type <<- .type <<- 'longcat'
+            value <<- .value <<- as.character(value)
             max_length <<- max_length
             max_levels <<- max_levels
         },
@@ -246,14 +282,16 @@ DataLongcat <- setRefClass(
 # =====================================================================
 DataSeq <- setRefClass(
     Class = 'DataSeq',
-    fields = c('char.frequency', 'seq.lengths', 'alphabet', 'char.table', 'pretty'),
+    fields = c('char.frequency', 'seq.lengths', 'alphabet', 'char.table', '.char.table'),
     contains = 'Data',
     methods = list(
         type_specific_init = function(...){
-            type   <<- 'seq'
-            pretty <<- getPretty(w=10)
-            value  <<- pretty
+            type   <<- .type <<- 'seq'
+            .value <<- getPretty(w=60)
+            value  <<- .value
             parseSeq() # set alphabet, char.table, and char.frequency
+            .char.table <<- char.table
+            setStat()
         },
         parseSeq = function(){
             require(reshape2)
@@ -274,10 +312,23 @@ DataSeq <- setRefClass(
             setkey(d, key)
             d[, total := sum(count), by=key]
             d[, prop  := count / total]
-            char.table     <<- d
-            char.frequency <<- count(d$char)
+            char.table <<- d
         },
-        getPretty = function(w=10){
+        setStat = function(){
+            char.frequency <<- count(char.table$char)
+            seq.lengths    <<- unique(char.table[, c('key', 'total'), with=FALSE])
+        },
+        filter = function(row_filter){
+            # NOTE: on filtering do NOT copy sequence info, only the stats
+            char.table <<- .char.table[row_filter, ]
+            setStat()
+        },
+        refresh = function(){
+            char.table <<- .char.table
+            type <<- .type
+            setStat()
+        },
+        getPretty = function(w=60){
             stopifnot(is.numeric(w) && w %% 1 == 0)
             gsub('\\s', '', value, perl=TRUE) %>%
                 strsplit('') %>%
@@ -287,18 +338,25 @@ DataSeq <- setRefClass(
                 }) %>%
                 lapply(paste, collapse=' ') %>%
                 unlist
+        },
+        asCat = function(){
+            warning("Cannot convert 'seq' type to 'cat'")
+        },
+        asNum = function(){
+            warning("Cannot convert 'seq' type to 'num'")
         }
     )
 )
 
 DataCor <- setRefClass(
     Class = 'DataCor',
-    fields = c('mat'),
+    fields = c('mat', '.mat'),
     contains = 'Data',
     methods = list(
         type_specific_init = function(...){
-            type <<- 'cor' 
+            type <<- .type <<- 'cor' 
             calculateMatrix()
+            .mat <<- mat
         },
         calculateMatrix = function(){
             require(Matrix)
@@ -313,6 +371,19 @@ DataCor <- setRefClass(
             dtm <- tm::DocumentTermMatrix(corpus)
             mat <<- Matrix::sparseMatrix(i=dtm$i, j=dtm$j, x=dtm$v,
                                          dims=c(dtm$nrow, dtm$ncol), dimnames=dtm$dimnames)
+        },
+        filter = function(row_filter){
+            # NOTE: on filtering do NOT copy text
+            mat <<- .mat[row_filter, ]
+        },
+        refresh = function(){
+            mat <<- .mat
+        },
+        asCat = function(){
+            warning("Cannot convert 'cor' type to 'cat'")
+        },
+        asNum = function(){
+            warning("Cannot convert 'cor' type to 'num'")
         }
     )
 )

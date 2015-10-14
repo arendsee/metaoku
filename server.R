@@ -87,15 +87,6 @@ shinyServer(function(input, output, session){
 
 
     # =========================================================================
-    # Read the version from VERSION
-    # =========================================================================
-    output$version <- renderText({
-        paste0('v', readLines('VERSION'))
-    })
-
-
-
-    # =========================================================================
     # Update working dataset when columns are selected from the Column Table
     # =========================================================================
     dat <- reactive({
@@ -105,8 +96,69 @@ shinyServer(function(input, output, session){
         if(length(csel) > 0){
             out <- out[, csel]
         }
+        if(!is.null(user.keys())){
+            out <- out[user.keys(), ]
+        }
         return(out)
     })
+
+    setFilter <- reactive({
+        cat('-> updating dataset filters\n')
+        rsel <- input$main_table_rows_all
+        if(is.null(user.keys())){
+            if(length(rsel) > 0){
+                cat(' - applying DT row filter\n')
+                filt <- rsel
+            } else {
+                cat(' - applying no filter\n')
+                filt <- NULL
+            }
+        } else {
+            cat(' - applying DT and user.key filter\n')
+            filt <- user.keys()[rsel]
+        }
+
+        if(is.null(filt)){
+            cat(' - clearFilter\n')
+            dataset()$clearFilter()
+        } else {
+            cat(' - setFilter\n')
+            dataset()$setFilter(filt)
+        }
+        invisible()
+    })
+
+    user.keys <- eventReactive(
+        {input$user_ids},
+        {
+            cat('-> user.keys()\n')
+            # this prevents whitespace in the box from stopping plotting
+            txt <- gsub('\n', ' ', input$user_ids)
+            txt <- sub('^\\s+', '', txt, perl=TRUE)
+            keys <- NULL
+
+            # All three conditions are necessary, change them and weep blood
+            parse_keys <- length(txt) > 0 &&
+                          nchar(txt) > 0  &&
+                          any(input$user_key %in% dataset()$names)
+            if(parse_keys){
+                cat(paste(input$user_key), '\n')
+                cat(paste(txt), '\n')
+                ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
+                ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
+                keys <- dataset()$get(input$user_key)$value %in% ids
+                cat(sprintf(' <- user.keys keys: %s\n', length(keys)))
+                return(keys)
+            } else {
+                cat(' <- user.keys returning no keys\n')
+                return(keys)
+            }
+        },
+        ignoreNULL=TRUE
+    )
+
+
+
 
 
 
@@ -119,7 +171,7 @@ shinyServer(function(input, output, session){
     observe({
         # set compare.to (y) choices
         cat(sprintf('-> observe - Building View tab menu\n'))
-        columns <- names(dat())
+        columns <- dataset()$names
         updateSelectInput(session,
                           'compare.to',
                           choices=c('None', as.character(columns)))
@@ -197,7 +249,7 @@ shinyServer(function(input, output, session){
         source('R/plotBuild.R', local=TRUE)
         input$build.plot
         if(input$plot.x != 'None') {
-            isolate(buildPlot(dat(), input))
+            isolate(buildPlot(isolate(dataset()), input))
         } else {
             NULL
         }
@@ -241,38 +293,6 @@ shinyServer(function(input, output, session){
 
 
     # =========================================================================
-    # Read input from textInput box, extract ids, and return if they are
-    # present in the key column of the main dataset
-    # =========================================================================
-    user.keys <- eventReactive(
-        {input$user_ids},
-        {
-            cat('-> user.keys()\n')
-            # this prevents whitespace in the box from stopping plotting
-            txt <- gsub('\n', ' ', input$user_ids)
-            txt <- sub('^\\s+', '', txt, perl=TRUE)
-            keys <- NULL
-
-            # All three conditions are necessary, change them and weep blood
-            parse_keys <- length(txt) > 0 &&
-                          nchar(txt) > 0  &&
-                          any(input$user_key %in% names(dat()))
-            if(parse_keys){
-                cat(paste(input$user_key), '\n')
-                cat(paste(txt), '\n')
-                ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
-                ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
-                keys <- dat()[[input$user_key]] %in% ids
-                cat(sprintf(' <- user.keys keys: %s\n', length(keys)))
-            }
-            return(keys)
-        },
-        ignoreNULL=TRUE
-    )
-
-
-
-    # =========================================================================
     # Get the name of the column selected in the main_table
     # Return NULL if no columns are selected
     # NOTE: dat() contains the internal KEY column, but main_table does not. So
@@ -281,7 +301,7 @@ shinyServer(function(input, output, session){
     # =========================================================================
     selected.column.name <- reactive({
         cat('-> selected.column.name()\n')
-        cols <- names(dat())
+        cols <- dataset()$names
         i <- input$main_table_columns_selected + 1
         if(length(i) > 0){
             cat(sprintf('  <- returning %s\n', cols[i]))
@@ -300,9 +320,22 @@ shinyServer(function(input, output, session){
     # =========================================================================
     selection <- reactive({
         cat('-> selection()\n')
-        selection <- rep(FALSE, nrow(dat()))
-        selection[input$main_table_rows_all] <- TRUE
-        return(selection)
+        setFilter()
+        selection <- Empty()
+        filt <- dataset()$row_filter
+        if(is.null(filt)){
+            cat(' no filter in dataset\n')
+            return(NULL)
+        }
+        else {
+            cat(' making DataCat for selection object\n')
+            value <- 1:dataset()$nrow %in% filt %>%
+                         ifelse('Selected', 'Not Selected')
+            sel <- DataCat$new()
+            sel$init(value=value)
+            cat(str(sel))
+            return(sel)
+        }
     })
 
 
@@ -319,33 +352,42 @@ shinyServer(function(input, output, session){
     output$view_data_plot <- renderPlot({
         cat('-> renderPlot()\n')
 
+        setFilter()
+
         cname <- selected.column.name()
-        cat(str(cname))
-        cat(sprintf(' - selected column: (class=%s)\n', paste(class(cname))))
         if(is.null(cname)){
             return(NULL)
         }
 
-        `%ifnot%` <- function(a, b) if(is.null(a) || a$name == 'None') b else a
-
         # x-axis comes from the selected column
-        x <- dataset()$get(cname) %ifnot% Empty()
-        cat(sprintf(' - x set to "%s"\n', x$name))
-
-        # y-axis currently comes from 'Compare to' dropdown, may be NULL
-        y <- dataset()$get(input$compare.to) %ifnot% Empty()
-        cat(sprintf(' - y set to "%s"\n', y$name))
-
+        # y-axis comes from 'Compare to' dropdown, may be NULL
         # z-axis from 'Group by' dropdown
-        z <- dataset()$get(input$group.by) %ifnot% Empty()
-        cat(sprintf(' - z set to "%s"\n', z$name))
+        axes <- lapply(list(x=cname, y=input$compare.to, z=input$group.by),
+            function(x) {
+                if(x == 'Selection') {
+                    temp.filt <- dataset()$row_filter
+                    sel <- selection()
+                    dataset()$clearFilter()
+                    sel
+                } else {
+                    dataset()$get(x)
+                }
+             }
+        )
+        cat(sprintf(' - x set to "%s"\n', axes$x$name))
+        cat(sprintf(' - y set to "%s"\n', axes$y$name))
+        cat(sprintf(' - z set to "%s"\n', axes$z$name))
 
         fmt.opts <- list(
            logy=input$logy,
            logx=input$logx
         )
 
-        dispatch(x, y, z, fmt.opts)
+        g <- dispatch(axes$x, axes$y, axes$z, fmt.opts)
+
+        if(exists('temp.filt')) dataset()$setFilter(temp.filt)
+
+        return(g)
     })
 
 
@@ -462,9 +504,15 @@ shinyServer(function(input, output, session){
     output$downloadData <- downloadHandler(
         filename = 'metaoku-data.tab',
         content = function(file) {
-            write.table(dat()[input$main_table_rows_all], file, row.names=FALSE, sep="\t")
+            write.table(dat()[rowFilter()], file, row.names=FALSE, sep="\t")
         },
         contentType='text/csv'
     )
 
+    # =========================================================================
+    # Read the version from VERSION
+    # =========================================================================
+    output$version <- renderText({
+        paste0('v', readLines('VERSION'))
+    })
 })
