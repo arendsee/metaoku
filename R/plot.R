@@ -111,7 +111,7 @@ seq.seq.plot <- function(x, y, fmt.opts){
 # scatter/density map for character in seq versus num
 seq.num.plot <- function(x, y, fmt.opts){
     cat('\t - seq.num plot\n')
-    d <- x$seq
+    d <- x$char.table
     d$y <- y$value
     g <- ggplot(d) +
         stat_density2d(
@@ -130,7 +130,7 @@ seq.num.plot <- function(x, y, fmt.opts){
 # as above with coord flip
 num.seq.plot <- function(x, y, fmt.opts){
     cat('\t - num.seq plot\n')
-    d <- y$seq
+    d <- y$char.table
     d$x <- x$value
     g <- ggplot(d) +
         stat_density2d(
@@ -148,7 +148,20 @@ num.seq.plot <- function(x, y, fmt.opts){
 
 # y barplots
 seq.cat.plot <- function(x, y, fmt.opts){
-
+    stopifnot(c('key', 'char', 'count', 'prop') %in% names(x$char.table))
+    d <- x$char.table
+    d$y <- y$value
+    d <- d[, list(median(prop),
+                  quantile(prop, probs=0.25, na.rm=TRUE),
+                  quantile(prop, probs=0.75, na.rm=TRUE)), by=.(char, y)]
+    setnames(d, c('V1', 'V2', 'V3'), c('prop', 'q25', 'q75'))
+    g <- ggplot(d) +
+        geom_pointrange(aes(x=char, y=prop, ymin=q25, ymax=q75)) +
+        facet_wrap(~y)
+    fmt.opts$xlab <- fmt.opts$xlab %|% 'Letter'
+    fmt.opts$ylab <- fmt.opts$ylab %|% 'Percent composition'
+    fmt.opts$title <- fmt.opts$title %|% 'Sequence composition'
+    format.plot(g, x, fmt.opts)
 }
 
 # 3 word clouds (x/y, x+y, y/x)
@@ -285,8 +298,8 @@ cor.plot <- function(x, fmt.opts){
 seq.plot <- function(x, fmt.opts){
     cat('\t - seq plot\n')
     # check my assumptions about column names
-    stopifnot(c('key', 'char', 'count', 'prop') %in% names(x$seq))
-    d <- x$seq
+    stopifnot(c('key', 'char', 'count', 'prop') %in% names(x$char.table))
+    d <- x$char.table
     d <- d[, list(median(prop),
                   quantile(prop, probs=0.25, na.rm=TRUE),
                   quantile(prop, probs=0.75, na.rm=TRUE)), by=char]
