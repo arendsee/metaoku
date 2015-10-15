@@ -3,7 +3,7 @@ source('config')
 config <- list()
 config$data_dir <- file.path(getwd(), DATA_DIR)
 config$save_dir <- file.path(getwd(), SAVE_DIR)
-config$metadata <- file.path(getwd(), METADATA)
+config$metadata <- METADATA
 config$data_pat   <- DATA_PAT
 config$max_levels <- MAX_LEVELS
 config$max_prop   <- MAX_PROP
