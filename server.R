@@ -253,7 +253,7 @@ shinyServer(function(input, output, session){
         cat('-> plot_data_plot\n')
         input$build.plot
         source('R/plotBuild.R', local=TRUE)
-        isolate(buildPlot(dataset(), input))
+        isolate(buildPlot(dataset(), reactiveValuesToList(input)))
     })
 
 
