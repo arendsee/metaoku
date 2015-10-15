@@ -9,8 +9,8 @@ config$max_levels <- MAX_LEVELS
 config$max_prop   <- MAX_PROP
 config$max_length <- MAX_LENGTH
 
-if(file.exists(file.path(config$data_dir, 'HOME.md'))){
-    config$home_tab <- file.path(config$data_dir, 'HOME.md')
+if(file.exists(file.path(config$data_dir, 'README.md'))){
+    config$home_tab <- file.path(config$data_dir, 'README.md')
 } else {
     config$home_tab <- file.path(getwd(), 'doc', 'home.md')
 }
