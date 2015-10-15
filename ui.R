@@ -14,7 +14,8 @@ shinyUI(
             tabPanel('Select', sidebarLayout(
                 sidebarPanel(
                     radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none')),
-                    uiOutput('dataset_description')
+                    uiOutput('dataset_description'),
+                    downloadButton('downloadProject', 'Download')
                 ),
                 mainPanel(
                     DT::dataTableOutput("column_table")

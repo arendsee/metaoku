@@ -513,6 +513,17 @@ shinyServer(function(input, output, session){
         contentType='text/csv'
     )
 
+    # BUG - for some reason this creates an archive with directory structure
+    # all the way to root
+    output$downloadProject <- downloadHandler(
+        filename = 'metaoku-project.tar.gz',
+        content = function(file){
+            tar(tarfile=file,
+                files='project',
+                compression='gzip')
+        }
+    )
+
     # =========================================================================
     # Read the version from VERSION
     # =========================================================================
