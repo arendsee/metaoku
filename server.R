@@ -506,7 +506,8 @@ shinyServer(function(input, output, session){
     output$downloadData <- downloadHandler(
         filename = 'metaoku-data.tab',
         content = function(file) {
-            write.table(dat()[rowFilter()], file, row.names=FALSE, sep="\t")
+            out <- dataset()$getDF(filterRows=TRUE)[, names(dat())]
+            write.table(out, file, row.names=FALSE, sep="\t")
         },
         contentType='text/csv'
     )

@@ -123,10 +123,10 @@ DataSet <- setRefClass(
             for (child in children) { child$refresh() }
         },
 
-        getDF = function(filterRows=FALSE){
+        getDF = function(filterRows=FALSE, cols=names){
             if(length(children) == 0) { return(NULL) }
             d <- do.call(cbind.data.frame,
-                    append(lapply(children, function(child) child$value),
+                    append(lapply(children[cols], function(child) child$.value),
                            list(stringsAsFactors = FALSE)))
             if(filterRows && !is.null(row_filter)){
                 d <- d[row_filter, ]
