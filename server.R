@@ -249,16 +249,12 @@ shinyServer(function(input, output, session){
         ignoreNULL=TRUE
     )
 
-    output$plot_data_plot <- eventReactive(
-        input$build.plot, 
-        {
-            renderPlot({
-                source('R/plotBuild.R', local=TRUE)
-                buildPlot(dataset(), input)
-            })
-        },
-        ignoreNULL=TRUE
-    )
+    output$plot_data_plot <- renderPlot({
+        cat('-> plot_data_plot\n')
+        input$build.plot
+        source('R/plotBuild.R', local=TRUE)
+        isolate(buildPlot(dataset(), input))
+    })
 
 
 
