@@ -3,34 +3,19 @@ require(shinythemes)
 require(DT)
 require(markdown)
 
-if(file.exists('data/HOME.md')){
-    home_tab <- 'data/HOME.md'
-} else {
-    home_tab <- 'defaults/home.md'
-}
-
-if(file.exists('data/help.md')){
-    help_tab <- 'data/help.md'
-} else {
-    help_tab <- 'defaults/help.md'
-}
-
-if(file.exists('data/about.md')){
-    about_tab <- 'data/about.md'
-} else {
-    about_tab <- 'defaults/about.md'
-}
+source('config')
 
 # Define UI for dataset viewer application
 shinyUI(
     fluidPage(
         theme = shinytheme('spacelab'),
         tabsetPanel(
-            tabPanel('Home', shiny::includeMarkdown(home_tab)),
+            tabPanel('Home', shiny::includeMarkdown(config$home_tab)),
             tabPanel('Select', sidebarLayout(
                 sidebarPanel(
                     radioButtons('selected.dataset', 'Select a dataset', c('None' = 'none')),
-                    uiOutput('dataset_description')
+                    uiOutput('dataset_description'),
+                    downloadButton('downloadProject', 'Download')
                 ),
                 mainPanel(
                     DT::dataTableOutput("column_table")
@@ -81,10 +66,10 @@ shinyUI(
                     uiOutput('upload.instructions')
                 )
             )),
-            tabPanel('Help', shiny::includeMarkdown(help_tab)),
+            tabPanel('Help', shiny::includeMarkdown(config$help_tab)),
             tabPanel('About',
                 shiny::includeMarkdown('VERSION'),
-                shiny::includeMarkdown(about_tab))
+                shiny::includeMarkdown(config$about_tab))
         )
     )
 )

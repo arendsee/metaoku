@@ -1,41 +1,15 @@
-source('plot.R')
-
-NUM2CAT_LEVELS <- 7
-MAX_LEVELS <- 20
-
-num2cat <- function(x){
-    cat('\tentering num2cat\n')
-    cut(x, breaks=NUM2CAT_LEVELS)
-}
-
-longcat2cat <- function(x){
-    cat('\tentering longcat2cat\n')
-    x <- as.factor(x)
-    top.n <- names(summary(x, maxsum=MAX_LEVELS))[-MAX_LEVELS]
-    x <- as.character(x)
-    x <- ifelse(x %in% top.n, x, 'other')
-    x <- factor(x, levels=c(top.n, 'other'))
-    x
-}
-
 as.cat <- function(x){
-  if(x$type == 'num'){
-      x$type <- 'cat'
-      x$value <- num2cat(x$value)  
-  } else if(x$type == 'longcat'){
-      x$type = 'cat'
-      x$value <- longcat2cat(x$value)
-  } else if(x$type == 'seq'){
-      # not currently supported
-      x$type = '-'
-  } else if(x$type == 'cor'){
-      # not currently supported
-      x$type = '-'
-  }
-  return(x)
+    cat(sprintf('\t  - as.cat() [name=(%s), type=(%s)]\n', x$name, x$type))
+    if(x$type %in% c('num', 'longcat')){
+        x$asCat()
+    } else {
+        x$type <- '-'
+    }
+    return(x)
 }
 
 build.dispatch.table <- function(){ 
+    cat('\t - build.dispatch.table()\n')
     require(reshape2)
     types <- c('-', 'num', 'cat', 'longcat', 'cor', 'seq')
     d <- expand.grid(types, types, types)
@@ -138,16 +112,10 @@ build.dispatch.table <- function(){
 
 dispatch.table <- build.dispatch.table()
 dispatch <- function(x, y, z, fmt.opts){
-    cat('\tentering dispatch\n')
+    cat('\t - dispatch.R::dispatch()\n')
     action <- dispatch.table[x$type, y$type, z$type]
-    cat('\t * types: ', x$type, y$type, z$type, '\n')
-    cat('\t * names: ', x$name, y$name, z$name, '\n')
-    cat('\t * action: ', action, '\n')
+    cat(sprintf('\t  * x=[%s, %s], y=[%s, %s], z=[%s, %s]\n',
+                x$name, x$type, y$name, y$type,  z$name, z$type))
+    cat(sprintf('\t  * action: %s\n', action))
     return(eval(parse(text=action)))
-}
-
-plotAnything <- function(x=x, y=y, z=z, fmt.opts=fmt.opts){
-    cat('\tentering plotAnything()\n')
-    g <- dispatch(x, y, z, fmt.opts)
-    return(g)
 }

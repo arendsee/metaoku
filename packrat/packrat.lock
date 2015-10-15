@@ -1,7 +1,7 @@
 PackratFormat: 1.4
 PackratVersion: 0.4.4
 RVersion: 3.2.1
-Repos: CRAN=http://cran.rstudio.com/
+Repos: CRAN=http://mirror.las.iastate.edu/CRAN
 
 Package: DT
 Source: github
@@ -107,6 +107,12 @@ Package: magrittr
 Source: CRAN
 Version: 1.5
 Hash: bdc4d48c3135e8f3b399536ddf160df4
+
+Package: markdown
+Source: CRAN
+Version: 0.7.7
+Hash: fea2343a1119d61b0cc5c0a950d103a3
+Requires: mime
 
 Package: mime
 Source: CRAN

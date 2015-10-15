@@ -4,11 +4,11 @@ require(tm)
 require(reshape2)
 require(plyr)
 
-source('format.R')
+
 `%|%` <- function(x,y) { if(is.null(x)) y else x }
 
 build.dt <- function(x, y=NULL, z=NULL){
-    cat('\t\tentering build.dt: ', x$name, y$name, z$name, '\n')
+    cat('\t - build.dt: ', x$name, y$name, z$name, '\n')
     d <- data.frame(x=x$value)
     if(!is.null(y)){
         d$y <- y$value
@@ -31,6 +31,7 @@ cor.cat.cat.plot <- function(x, y, z, fmt.opts){
 
 # z heatmaps OR z dodged barplots
 cat.cat.cat.plot <- function(x, y, z, fmt.opts){
+    cat('\t - cat.cat.cat plot\n')
     d <- build.dt(x, y, z)
     d <- ddply(d, colnames(d), summarize, obs=length(x))
     d <- ddply(d, 'x', mutate, X=sum(obs))
@@ -42,11 +43,12 @@ cat.cat.cat.plot <- function(x, y, z, fmt.opts){
         facet_wrap(~z)
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # z boxplots (coord flip)
 num.cat.cat.plot <- function(x, y, z, fmt.opts){
+    cat('\t - num.cat.cat plot\n')
     g <- ggplot(build.dt(x, y, z)) +
         geom_boxplot(aes(x=y, y=x)) +
         coord_flip() +
@@ -54,22 +56,23 @@ num.cat.cat.plot <- function(x, y, z, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
     fmt.opts$logy <- fmt.opts$logx
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # z boxplots
 cat.num.cat.plot <- function(x, y, z, fmt.opts){
+    cat('\t - cat.num.cat plot\n')
     g <- ggplot(build.dt(x, y, z)) +
         geom_boxplot(aes(x=x, y=y)) +
         facet_wrap(~z)
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # z scatter plots OR colored scatter plot
 num.num.cat.plot <- function(x, y, z, fmt.opts){
-    cat('\t\tentering num.num.cat.plot\n')
+    cat('\t - num.num.cat plot\n')
     d <- build.dt(x, y, z)
     if(length(x$value) < 2000){
         g <- ggplot(d) +
@@ -87,7 +90,7 @@ num.num.cat.plot <- function(x, y, z, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
     fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # z dodged barplots (comparing sequence composition)
@@ -107,7 +110,8 @@ seq.seq.plot <- function(x, y, fmt.opts){
 
 # scatter/density map for character in seq versus num
 seq.num.plot <- function(x, y, fmt.opts){
-    d <- x$seq
+    cat('\t - seq.num plot\n')
+    d <- x$char.table
     d$y <- y$value
     g <- ggplot(d) +
         stat_density2d(
@@ -120,12 +124,13 @@ seq.num.plot <- function(x, y, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% 'Letter'
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
     fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # as above with coord flip
 num.seq.plot <- function(x, y, fmt.opts){
-    d <- y$seq
+    cat('\t - num.seq plot\n')
+    d <- y$char.table
     d$x <- x$value
     g <- ggplot(d) +
         stat_density2d(
@@ -138,12 +143,25 @@ num.seq.plot <- function(x, y, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% 'Letter'
     fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # y barplots
 seq.cat.plot <- function(x, y, fmt.opts){
-
+    stopifnot(c('key', 'char', 'count', 'prop') %in% names(x$char.table))
+    d <- x$char.table
+    d$y <- y$value
+    d <- d[, list(median(prop),
+                  quantile(prop, probs=0.25, na.rm=TRUE),
+                  quantile(prop, probs=0.75, na.rm=TRUE)), by=.(char, y)]
+    setnames(d, c('V1', 'V2', 'V3'), c('prop', 'q25', 'q75'))
+    g <- ggplot(d) +
+        geom_pointrange(aes(x=char, y=prop, ymin=q25, ymax=q75)) +
+        facet_wrap(~y)
+    fmt.opts$xlab <- fmt.opts$xlab %|% 'Letter'
+    fmt.opts$ylab <- fmt.opts$ylab %|% 'Percent composition'
+    fmt.opts$title <- fmt.opts$title %|% 'Sequence composition'
+    format.plot(g, x, fmt.opts)
 }
 
 # 3 word clouds (x/y, x+y, y/x)
@@ -158,6 +176,7 @@ cor.cat.plot <- function(x, y, fmt.opts){
 
 # heatmap OR dodged barplot OR network
 cat.cat.plot <- function(x, y, fmt.opts){
+    cat('\t - cat.cat plot\n')
     d <- build.dt(x, y)
     d <- ddply(d, colnames(d), summarize, obs=length(x))
     d <- ddply(d, 'x', mutate, X=sum(obs))
@@ -168,12 +187,12 @@ cat.cat.plot <- function(x, y, fmt.opts){
         geom_tile(aes(x=x, y=y, fill=lograt))
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # boxplot
 cat.num.plot <- function(x, y, fmt.opts){
-    cat('\tentering cat.num.plot()\n')
+    cat('\t - cat.num plot\n')
     if(nlevels(x$value) > 3){
         g <- ggplot(build.dt(x, y)) +
             geom_boxplot(aes(x=x, y=y))
@@ -186,12 +205,12 @@ cat.num.plot <- function(x, y, fmt.opts){
     }
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # boxplot coord flip
 num.cat.plot <- function(x, y, fmt.opts){
-    cat('\tentering num.cat.plot()\n')
+    cat('\t - num.cat plot\n')
     d <- build.dt(x, y)
     if(nlevels(y$value) > 3){
         g <- ggplot(d) +
@@ -200,7 +219,7 @@ num.cat.plot <- function(x, y, fmt.opts){
     fmt.opts$xlab <- fmt.opts$ylab %|% y$name
     fmt.opts$ylab <- fmt.opts$xlab %|% x$name
     fmt.opts$logy <- fmt.opts$logx
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
     } else {
         g <- ggplot(d) +
             geom_histogram(
@@ -216,13 +235,13 @@ num.cat.plot <- function(x, y, fmt.opts){
               labs(x=x$name)
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
     }
 }
 
 # scatter OR density map
 num.num.plot <- function(x, y, fmt.opts){
-    cat('\tentering num.num.plot()\n')
+    cat('\t - num.num plot\n')
     d <- build.dt(x, y)
     if(length(x$value) < 2000){
         g <- ggplot(d) +
@@ -238,33 +257,33 @@ num.num.plot <- function(x, y, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% y$name
     fmt.opts$legend.position <- fmt.opts$legend.position %|% 'none'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # barplot
 cat.plot <- function(x, fmt.opts){
-    cat('\tentering cat.plot()\n')
+    cat('\t - cat plot\n')
     g <- ggplot(build.dt(x)) +
         geom_bar(aes(x=x)) +
         labs(x=x$name)
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% 'Counts'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # histogram
 num.plot <- function(x, fmt.opts){
-    cat('\tentering num.plot()\n')
+    cat('\t - num plot\n')
     g <- ggplot(build.dt(x)) +
         geom_histogram(aes(x=x))
     fmt.opts$xlab <- fmt.opts$xlab %|% x$name
     fmt.opts$ylab <- fmt.opts$ylab %|% NULL
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
 }
 
 # wordcloud
 cor.plot <- function(x, fmt.opts){
-    cat('\tentering cor.plot()\n')
+    cat('\t - cor plot\n')
     obs.sel <- sort(colSums(x$mat), decreasing=TRUE)
     d <- data.frame(word = names(obs.sel), freq=obs.sel)
     pal2 <- brewer.pal(8, "Dark2")
@@ -277,9 +296,10 @@ cor.plot <- function(x, fmt.opts){
 
 # composition barplot
 seq.plot <- function(x, fmt.opts){
+    cat('\t - seq plot\n')
     # check my assumptions about column names
-    stopifnot(c('key', 'char', 'count', 'prop') %in% names(x$seq))
-    d <- x$seq
+    stopifnot(c('key', 'char', 'count', 'prop') %in% names(x$char.table))
+    d <- x$char.table
     d <- d[, list(median(prop),
                   quantile(prop, probs=0.25, na.rm=TRUE),
                   quantile(prop, probs=0.75, na.rm=TRUE)), by=char]
@@ -289,5 +309,67 @@ seq.plot <- function(x, fmt.opts){
     fmt.opts$xlab <- fmt.opts$xlab %|% 'Letter'
     fmt.opts$ylab <- fmt.opts$ylab %|% 'Percent composition'
     fmt.opts$title <- fmt.opts$title %|% 'Sequence composition'
-    format.plot(g, x$value, fmt.opts)
+    format.plot(g, x, fmt.opts)
+}
+
+format.plot <- function(g, x=NULL, fmt.opts){
+    cat('\tformat.R::formatPlot()\n')
+    if(fmt.opts$logx){
+        g <- g + scale_x_continuous(trans='log2')
+    }
+
+    if(fmt.opts$logy){
+        g <- g + scale_y_continuous(trans='log2')
+    }
+
+    if(x$type %in% c('cat', 'longcat')){
+        # make x-lables vertical is they are longer than 2 characters
+        longest.line <- max(nchar(levels(x$value)), rm.na=TRUE)
+        if(longest.line > 2) {
+            g <- g + theme(axis.text.x = element_text(angle=270, hjust=0, vjust=1))
+        }
+    }
+
+    if(is.null(fmt.opts$legend.position)){
+        fmt.opts$legend.position = 'bottom'
+    }
+
+    g <- g +
+           labs(x=fmt.opts$xlab, y=fmt.opts$ylab, title=fmt.opts$title) +
+         theme(
+            axis.text.x       = element_text(size=14), 
+            axis.text.y       = element_text(size=14),
+            strip.text        = element_text(size=14),
+            legend.text       = element_text(size=14),
+            legend.title      = element_blank(),
+            legend.background = element_blank(),
+            legend.position   = fmt.opts$legend.position
+        )
+    if(is.null(fmt.opts$title)){
+        g <- g + theme(plot.title = element_blank())
+    } else {
+        g <- g + theme(plot.title = element_text(size=24, face='bold'))
+    }
+
+    if(is.null(fmt.opts$xlab)){
+        g <- g + theme(axis.title.x = element_blank())
+    } else {
+        g <- g + theme(axis.title.x = element_text(size=18))
+    }
+
+    if(is.null(fmt.opts$ylab)){
+        g <- g + theme(axis.title.y = element_blank())
+    } else {
+        g <- g + theme(axis.title.y = element_text(size=18))
+    }
+
+    if(!is.null(fmt.opts$xrange)){
+        g <- g + xlim(fmt.opts$xrange)
+    }
+
+    if(!is.null(fmt.opts$yrange)){
+        g <- g + ylim(fmt.opts$yrange)
+    }
+
+    return(g)
 }
