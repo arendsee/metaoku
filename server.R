@@ -214,7 +214,8 @@ shinyServer(function(input, output, session){
             cat(sprintf(' - (name=%s, type=%s)\n', x$name, x$type))
             plotui$setX(x)
             build()
-        }, priority=-1
+        },
+        ignoreNULL=TRUE
     )
     observeEvent(
         input$plot.y,
@@ -224,7 +225,8 @@ shinyServer(function(input, output, session){
             cat(sprintf(' - (name=%s, type=%s)\n', y$name, y$type))
             plotui$setY(y)
             build()
-        }, priority=-1
+        },
+        ignoreNULL=TRUE
     )
     observeEvent(
         input$plot.geom,
@@ -234,7 +236,8 @@ shinyServer(function(input, output, session){
             cat(sprintf(' - geom=(%s)\n', geom))
             plotui$setGeom(geom)
             build()
-        }, priority=-1
+        },
+        ignoreNULL=TRUE
     )
     observeEvent(
         input$selected.dataset,
@@ -242,18 +245,20 @@ shinyServer(function(input, output, session){
             cat('-> Initialize plotUI object\n')
             plotui$init(dataset(), empty=Empty())
             build()
-        }
+        },
+        ignoreNULL=TRUE
     )
 
-    output$plot_data_plot <- renderPlot({
-        source('R/plotBuild.R', local=TRUE)
-        input$build.plot
-        if(input$plot.x != 'None') {
-            isolate(buildPlot(isolate(dataset()), input))
-        } else {
-            NULL
-        }
-    })
+    output$plot_data_plot <- eventReactive(
+        input$build.plot, 
+        {
+            renderPlot({
+                source('R/plotBuild.R', local=TRUE)
+                buildPlot(dataset(), input)
+            })
+        },
+        ignoreNULL=TRUE
+    )
 
 
 
