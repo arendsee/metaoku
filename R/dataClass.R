@@ -339,10 +339,10 @@ DataSeq <- setRefClass(
             gsub('\\s', '', value, perl=TRUE) %>%
                 strsplit('') %>%
                 lapply(function(s) {
-                    sapply(seq(w, by=w, length.out=(length(s) %/% w)),
+                    sapply(seq(1, by=w, length.out=(length(s) %/% w + 1)),
                            function(i) paste0(s[i:min((i+w), length(s))], collapse=''))
                 }) %>%
-                lapply(paste, collapse=' ') %>%
+                lapply(paste, collapse='\n') %>%
                 unlist
         },
         asCat = function(){
