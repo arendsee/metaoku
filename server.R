@@ -285,7 +285,9 @@ shinyServer(function(input, output, session){
         key <- input$user_key
         # set the label for the user selected id textInput box
         if(key %in% colnames(dat())){
-            sample_ids <- sample(unique(dat()[[key]]), size=3)
+            unique_keys <- unique(dat()[[key]])
+            nuniq <- min(3, length(unique_keys))
+            sample_ids <- sample(unique_keys, size=nuniq)
             label <- sprintf('Enter ids (e.g. "%s")', paste(sample_ids, collapse=", "))
             updateTextInput(session, 'user_ids', label=label)
         }
@@ -475,7 +477,6 @@ shinyServer(function(input, output, session){
                 data.name <- gsub('\\..*', '', data.basename)
                 newdir <- file.path(config$data_dir, data.name)
                 newpath <- file.path(newdir, data.basename)
-                newsave <- file.path(config$save_dir, paste0(data.name, '.Rdat'))
                 if(!dir.exists(newdir)){
                     dir.create(newdir)
                 }
