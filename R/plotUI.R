@@ -98,20 +98,21 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
         'boxplot' = {
             append(taglist, list(
                 dorow(c('size.by', 'alpha.by'), c(6, 6)),
-                dorow(c('alpha', 'width', 'size', 'notch'), c(3,3,3,3)),
+                dorow(c('alpha', 'width', 'notch', 'transy'), c(3,3,3,3)),
                 elements$facet
             ))
         },
         'histogram' = {
             append(taglist, list(
                 dorow(c('color.by', 'fill.by', 'biny'), c(5,5,2)),
+                dorow(c('transx'), c(12)),
                 elements$facet
             ))
         },
         'point' = {
             append(taglist, list(
                 dorow(c('color.by', 'shape.by', 'size.by'), c(3,3,3)),
-                dorow(c('alpha', 'size'), c(6,6)),
+                dorow(c('alpha', 'transx', 'transy'), c(6, 3, 3)),
                 elements$facet
             ))
         },
@@ -184,22 +185,28 @@ plot.build.elements <- function(dataset){
                                                lograt='lograt',
                                                density='density'
                                  ))
+    p$transx <- radioButtons('plot.trans.x',
+                             'Transform X',
+                             choices=c('none', 'log', 'log2', 'log10', 'sqrt'))
+    p$transy <- radioButtons('plot.trans.y',
+                             'Transform Y',
+                             choices=c('none', 'log', 'log2', 'log10', 'sqrt'))
     # constant visuals
-    p$alpha     <- sliderInput('plot.alpha', 'Set alpha', min=0, max=1, value=1, step=0.05) 
+    p$alpha     <- sliderInput('plot.alpha', 'Set alpha', min=0, max=1, value=1, step=0.01) 
     p$size      <- sliderInput('plot.size', 'Set size', min=0, max=5, value=1, step=0.01)
     p$notch     <- checkboxInput('plot.notch', 'Notch')
     p$width     <- sliderInput('plot.width', 'Set width', min=0, max=2, value=1, step=0.05)
     # faceting
     p$facet <- fluidRow(
-        column(4, selectInput('plot.facet_x', 'Facet X-axis', choices=cat.or.num)),
-        column(4, selectInput('plot.facet_y', 'Facet Y-axis', choices=cat.or.num)),
-        column(2, radioButtons('plot.facet_scale', 'Scale',
+        column(4, selectInput('plot.facet.x', 'Facet X-axis', choices=cat.or.num)),
+        column(4, selectInput('plot.facet.y', 'Facet Y-axis', choices=cat.or.num)),
+        column(2, radioButtons('plot.facet.scale', 'Scale',
                                choices=c('fixed', 'free_x', 'free_y', 'free'))),
-        column(2, checkboxInput('plot.facet_margins', 'Margins'))
+        column(2, checkboxInput('plot.facet.margins', 'Margins'))
     )
     p$facet_1d <- fluidRow(
-        column(4, selectInput('plot.facet_x', 'Facet X-axis', choices=cat.or.num)),
-        column(8, radioButtons('plot.facet_scale', 'Scale',
+        column(4, selectInput('plot.facet.x', 'Facet X-axis', choices=cat.or.num)),
+        column(8, radioButtons('plot.facet.scale', 'Scale',
                                choices=c('fixed', 'free_x', 'free_y', 'free')))
     )
     return(p)

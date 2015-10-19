@@ -10,6 +10,34 @@ buildPlot <- function(dataset, input){
     cat('\t GEOM: ', input$plot.geom, '\n')
     cat(str(g.aes))
 
+    `%!=%` <- function(x, y) if(!is.null(x) && x != y) TRUE else FALSE
+    `%==%` <- function(x, y) if(!is.null(x) && x == y) TRUE else FALSE
+    transx <- NULL
+    transy <- NULL
+    if(input$plot.trans.x %!=% 'none'){
+        transx <- scale_x_continuous(trans=input$plot.trans.x)
+    }
+    if(input$plot.trans.y %!=% 'none'){
+        transy <- scale_y_continuous(trans=input$plot.trans.y)
+    }
+
+    if(input$plot.facet.x %!=% 'None' && input$plot.facet.y %==% 'None'){
+        cat(sprintf('\t - faceting on "%s"\n', input$plot.facet.x))
+        cmd <- sprintf('facet_wrap(~ %s, scale = "%s")',
+                       input$plot.facet.x, input$plot.facet.scale)
+    } else if(input$plot.facet.y %!=% 'None' && input$plot.facet.x %==% 'None'){
+        cat(sprintf('\t - faceting on "%s"\n', input$plot.facet.y))
+        cmd <- sprintf('facet_wrap(~ %s, scale = "%s")',
+                       input$plot.facet.y, input$plot.scale)
+    } else if(input$plot.facet.y %!=% 'None' && input$plot.facet.x %!=% 'None'){
+        cat(sprintf('\t - faceting on "%s" and "%s"\n', input$plot.facet.x, input$plot.facet.y))
+        cmd <- sprintf('facet_grid(%s ~ %s, scale = "%s")',
+                       input$plot.facet.x, input$plot.facet.y, input$plot.facet.scale)
+    } else {
+        cmd = ''
+    }
+    facet <- eval(parse(text=cmd))
+
     switch(input$plot.geom,
         'barplot' = {
             cat('\t - barplot\n')
@@ -24,23 +52,31 @@ buildPlot <- function(dataset, input){
             g.aes$group     <- NULL
             g.aes$linetype  <- NULL
             g.aes$size      <- NULL
-            ggplot(d) +
+            g <- ggplot(d) +
                 geom_boxplot(
                     mapping=g.aes,
                     notch=input$plot.notch,
                     alpha=input$plot.alpha,
                     width=input$plot.width
-               )
+                ) +
+                facet + transy 
+            g
         },
         'histogram' = {
             cat('\t - histogram\n')
             cat(str(g.aes))
             # todo BUG here
-            ggplot(d) + geom_histogram(mapping=g.aes)
+            ggplot(d) + geom_histogram(mapping=g.aes) + facet + transx
         },
         'point' = {
             cat('\t - point\n')
-            ggplot(d) + geom_point(mapping=g.aes)
+            g <- ggplot(d) +
+                geom_point(
+                    mapping=g.aes,
+                    alpha=input$plot.alpha
+                ) +
+                facet + transx + transy 
+            g
         },
         'path' = {
             cat('\t - path\n')
@@ -49,7 +85,7 @@ buildPlot <- function(dataset, input){
         'heatmap' = {
             cat('\t - heatmap\n')
             g.aes$fill <- NULL
-            ggplot(d) + geom_tile(mapping=g.aes)
+            ggplot(d) + geom_tile(mapping=g.aes) + facet
         },
         'density2d' = {
             cat('\t - density2d - NOT IMPLEMENTED\n')
@@ -94,6 +130,11 @@ get.aes.terms <- function(input){
     a
 }
 
+get.facet.terms <- function(input){
+    a <- c(input$plot.facet.x, input$plot.facet.y)
+    a[a != 'None']
+}
+
 build.aes <- function(input, additional=list()){
     cat('\t - plotBuild.R::build.aes\n')
     a <- get.aes.terms(input)
@@ -106,6 +147,6 @@ build.aes <- function(input, additional=list()){
 
 build.dataframe <- function(dataset, input){
     cat('\t - plotBuild.R::build.dataframe\n')
-    cols <- unlist(get.aes.terms(input))
+    cols <- c(unlist(get.aes.terms(input)), get.facet.terms(input))
     dataset$getDF(cols=cols)
 }
