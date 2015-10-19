@@ -214,7 +214,8 @@ shinyServer(function(input, output, session){
             cat(sprintf(' - (name=%s, type=%s)\n', x$name, x$type))
             plotui$setX(x)
             build()
-        }, priority=-1
+        },
+        ignoreNULL=TRUE
     )
     observeEvent(
         input$plot.y,
@@ -224,7 +225,8 @@ shinyServer(function(input, output, session){
             cat(sprintf(' - (name=%s, type=%s)\n', y$name, y$type))
             plotui$setY(y)
             build()
-        }, priority=-1
+        },
+        ignoreNULL=TRUE
     )
     observeEvent(
         input$plot.geom,
@@ -234,7 +236,8 @@ shinyServer(function(input, output, session){
             cat(sprintf(' - geom=(%s)\n', geom))
             plotui$setGeom(geom)
             build()
-        }, priority=-1
+        },
+        ignoreNULL=TRUE
     )
     observeEvent(
         input$selected.dataset,
@@ -242,17 +245,15 @@ shinyServer(function(input, output, session){
             cat('-> Initialize plotUI object\n')
             plotui$init(dataset(), empty=Empty())
             build()
-        }
+        },
+        ignoreNULL=TRUE
     )
 
     output$plot_data_plot <- renderPlot({
-        source('R/plotBuild.R', local=TRUE)
+        cat('-> plot_data_plot\n')
         input$build.plot
-        if(input$plot.x != 'None') {
-            isolate(buildPlot(isolate(dataset()), input))
-        } else {
-            NULL
-        }
+        source('R/plotBuild.R', local=TRUE)
+        isolate(buildPlot(dataset(), reactiveValuesToList(input)))
     })
 
 
@@ -506,9 +507,21 @@ shinyServer(function(input, output, session){
     output$downloadData <- downloadHandler(
         filename = 'metaoku-data.tab',
         content = function(file) {
-            write.table(dat()[rowFilter()], file, row.names=FALSE, sep="\t")
+            out <- dataset()$getDF(filterRows=TRUE)[, names(dat())]
+            write.table(out, file, row.names=FALSE, sep="\t")
         },
         contentType='text/csv'
+    )
+
+    # BUG - for some reason this creates an archive with directory structure
+    # all the way to root
+    output$downloadProject <- downloadHandler(
+        filename = 'metaoku-project.tar.gz',
+        content = function(file){
+            tar(tarfile=file,
+                files='project',
+                compression='gzip')
+        }
     )
 
     # =========================================================================

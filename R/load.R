@@ -57,6 +57,7 @@ build.one.dataset <- function(dataname, config){
     if(file.exists(mdfile)){
         md <- read.delim(mdfile, stringsAsFactors=FALSE)
     } else {
+        cat(sprintf('No METADATA found for %s at %s\n', dataname, mdfile))
         md <- NULL
     }
 
@@ -64,7 +65,7 @@ build.one.dataset <- function(dataname, config){
     dataset <- DataSet$new()
     dataset$build(
         df,
-        metadata=NULL,
+        metadata=md,
         max_levels=config$max_levels,
         max_prop=config$max_prop,
         max_length=config$max_length)

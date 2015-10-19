@@ -48,7 +48,7 @@ getGeoMap <- function(){
     return(geomap)
 }
 
-getChoices <- function(dataset, accepted=types){
+getChoices <- function(dataset, accepted){
     c('None', dataset$getNameByType(accepted))
 }
 
@@ -65,8 +65,8 @@ getGeomChoices <- function(x, y=NULL){
     return(unlist(strsplit(getGeoMap()[x$type, y$type], ',')))
 }
 
-plot.select.x <- function(datasets, selected=NULL) {
-    selectInput('plot.x', 'Independent variable', choices=names(datasets$getDF()), selected=selected$name)
+plot.select.x <- function(dataset, selected=NULL) {
+    selectInput('plot.x', 'Independent variable', choices=dataset$names, selected=selected$name)
 }
 
 plot.build.ggplot.ui <- function(taglist, geom, elements){
@@ -206,34 +206,35 @@ plot.build.elements <- function(dataset){
 }
 
 PlotUI <- setRefClass('PlotUI',
-    fields=c("dataset", "xel", "yel", "geomel", "x", "y", "geom", "empty"),
+    fields=c("dataset", "xel", "yel", "geomel", "x", "y", "geom", "empty", "elements"),
     methods=list(
         init = function(dataset, empty){
             cat(sprintf('PlotUI::init dim(dataset):(%s)\n', class(dataset)))
+            empty    <<- empty
             dataset  <<- dataset 
             xel      <<- plot.select.x(dataset, selected=empty)
             yel      <<- selectInput('plot.y', 'Dependent variable', choices='None')
             geomel   <<- selectInput('plot.geom', 'Plot type', choices='None')
             x        <<- empty
             y        <<- empty
-            geom     <<- empty
+            geom     <<- 'None'
             elements <<- plot.build.elements(dataset)
         },
-        setX = function(x){
+        setX = function(x.in){
             cat('\tentering PlotUI::setX\n')
-            x <<- x
-            xel <<- plot.select.x(dataset, selected=x)
+            x <<- x.in
+            xel <<- plot.select.x(dataset, selected=x.in)
             setY()
             setGeom()
         },
-        setY = function(y=y){
+        setY = function(y.in=y){
             cat('\tentering PlotUI::setY\n')
             choices <- getYChoices(dataset, x)
-            if(!y %in% choices){
-                y <<- NA
+            if(!y.in$name %in% choices){
+                y <<- empty
             }
-            yel <<- selectInput('plot.y', 'Dependent variable', choices=choices, selected=y)
-            y   <<- y
+            yel <<- selectInput('plot.y', 'Dependent variable', choices=choices, selected=y.in$name)
+            y   <<- y.in
             setGeom()
         },
         setGeom = function(g=geom){

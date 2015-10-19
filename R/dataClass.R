@@ -72,7 +72,7 @@ DataSet <- setRefClass(
             # Initialize metadata if none is given
             if(is.null(metadata)){
                 metadata <- data.frame(
-                    column_names = names(dataset),
+                    column_names = sapply(children, function(x) x$name),
                     type = sapply(children, function(x) x$type),
                     stringsAsFactors=FALSE
                 )
@@ -80,7 +80,7 @@ DataSet <- setRefClass(
             # initialize each child
             for(child in children){
                 if(!child$name %in% metadata[[1]]){
-                    metadata[nrow(metadata)+1, 1] <- c(child$name)
+                    metadata[nrow(metadata)+1, 1] <- child$name
                 }
                 met <- metadata[metadata[[1]] == child$name, ]
                 if(nrow(met) > 1) {
@@ -123,11 +123,12 @@ DataSet <- setRefClass(
             for (child in children) { child$refresh() }
         },
 
-        getDF = function(filterRows=FALSE){
+        getDF = function(filterRows=FALSE, cols=names){
             if(length(children) == 0) { return(NULL) }
             d <- do.call(cbind.data.frame,
-                    append(lapply(children, function(child) child$value),
+                    append(lapply(children, function(child) child$.value),
                            list(stringsAsFactors = FALSE)))
+            d <- d[, names %in% cols]
             if(filterRows && !is.null(row_filter)){
                 d <- d[row_filter, ]
             }
@@ -136,9 +137,7 @@ DataSet <- setRefClass(
 
         getMetadataDF = function(){
             if(length(children) == 0) { return(NULL) }
-            do.call(rbind.data.frame,
-                    append(lapply(children, function(child) child$metadata),
-                           list(stringsAsFactors = FALSE)))
+            do.call(rbind.data.frame, lapply(children, function(child) child$metadata))
         },
         refresh = function(){
             for (child in children) { child$refresh() }

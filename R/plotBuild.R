@@ -1,22 +1,23 @@
-num2cat <- function(x){
-    cat('\t   - num2cat()\n')
-    cut(x, breaks=5)
-}
-
-buildPlot <- function(d, input){
+buildPlot <- function(dataset, input){
     cat('\tplotBuild.R::buildPlot\n')
 
-    d <- build.dataframe(d, input)
+    d <- build.dataframe(dataset, input)
+    if(length(d) == 0 || nrow(d) == 0){
+        return(NULL)
+    }
     g.aes <- build.aes(input)
 
-    `%|%` <- function(a, b) if(is.null(a)) b else a
+    cat('\t GEOM: ', input$plot.geom, '\n')
+    cat(str(g.aes))
 
     switch(input$plot.geom,
         'barplot' = {
+            cat('\t - barplot\n')
             cat(str(g.aes))
             ggplot(d) + geom_bar(mapping=g.aes)
         },
         'boxplot' = {
+            cat('\t - boxplot\n')
             # clear unused aesthetics
             g.aes$color     <- NULL
             g.aes$shape     <- NULL
@@ -38,31 +39,40 @@ buildPlot <- function(d, input){
             ggplot(d) + geom_histogram(mapping=g.aes)
         },
         'point' = {
+            cat('\t - point\n')
             ggplot(d) + geom_point(mapping=g.aes)
         },
         'path' = {
+            cat('\t - path\n')
             ggplot(d) + geom_path(mapping=g.aes)
         },
         'heatmap' = {
+            cat('\t - heatmap\n')
             g.aes$fill <- NULL
             ggplot(d) + geom_tile(mapping=g.aes)
         },
         'density2d' = {
+            cat('\t - density2d - NOT IMPLEMENTED\n')
             NULL
         },
         'wordcloud' = {
+            cat('\t - wordcloud - NOT IMPLEMENTED\n')
             NULL
         },
         'seq' = {
+            cat('\t - seq - NOT IMPLEMENTED\n')
             NULL
         },
         'numseq' = {
+            cat('\t - numseq - NOT IMPLEMENTED\n')
             NULL
         },
         'network' = {
+            cat('\t - network - NOT IMPLEMENTED\n')
             NULL
         },
         'catseq' = {
+            cat('\t - catseq - NOT IMPLEMENTED\n')
             NULL
         },
         NULL
@@ -70,7 +80,7 @@ buildPlot <- function(d, input){
 }
 
 get.aes.terms <- function(input){
-    cat('\t - plotBuild.R::get.aes.terms ', class(input), '\n')
+    cat('\t - plotBuild.R::get.aes.terms\n')
     a <- list()
     a$y        <- input$plot.y
     a$x        <- input$plot.x
@@ -80,7 +90,7 @@ get.aes.terms <- function(input){
     a$shape    <- input$plot.aes.shape
     a$group    <- input$plot.aes.group
     a$linetype <- input$plot.aes.linetype
-    a <- a[names(a) != 'None']
+    a <- a[a != 'None']
     a
 }
 
@@ -94,8 +104,8 @@ build.aes <- function(input, additional=list()){
     do.call(aes_string, a)
 }
 
-build.dataframe <- function(d, input){
+build.dataframe <- function(dataset, input){
     cat('\t - plotBuild.R::build.dataframe\n')
     cols <- unlist(get.aes.terms(input))
-    d[, cols, with=FALSE]
+    dataset$getDF(cols=cols)
 }
