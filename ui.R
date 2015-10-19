@@ -47,14 +47,6 @@ shinyUI(
                     plotOutput('plot_data_plot', height='800px')
                 )
             )),
-            tabPanel('Analyze', sidebarLayout(
-                sidebarPanel(
-                    h1('STUB')
-                ),
-                mainPanel(
-                    h1('STUB')
-                )
-            )),
             tabPanel('Upload', sidebarLayout(
                 sidebarPanel(
                     fileInput('upload.file', 'Filename', multiple=TRUE),
