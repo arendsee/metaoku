@@ -2,7 +2,6 @@
 *.tab
 *.tsv
 .Rprofile
-packrat/lib*
 projects/
 rsconnect/
 shinyapps/
