@@ -212,7 +212,7 @@ shinyServer(function(input, output, session){
 
 
     build <- function(){
-        output$plot.sidebar <- renderUI({ plotui$buildUI() })
+        output$plot.sidebar <- renderUI({ isolate(plotui$buildUI(reactiveValuesToList(input))) })
     }
     observeEvent(
         input$plot.x,

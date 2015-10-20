@@ -92,46 +92,53 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
         'barplot' = {
             append(taglist, list(
                 dorow(c('color.by', 'fill.by', 'biny'), c(4,4,2)),
-                elements$facet
+                elements$facet,
+                elements$labels
             ))
         },
         'boxplot' = {
             append(taglist, list(
                 dorow(c('size.by', 'alpha.by'), c(6, 6)),
                 dorow(c('alpha', 'width', 'notch', 'transy'), c(3,3,3,3)),
-                elements$facet
+                elements$facet,
+                elements$labels
             ))
         },
         'histogram' = {
             append(taglist, list(
                 dorow(c('color.by', 'fill.by', 'biny'), c(5,5,2)),
                 dorow(c('transx'), c(12)),
-                elements$facet
+                elements$facet,
+                elements$labels
             ))
         },
         'point' = {
             append(taglist, list(
                 dorow(c('color.by', 'shape.by', 'size.by'), c(3,3,3)),
                 dorow(c('alpha', 'transx', 'transy'), c(6, 3, 3)),
-                elements$facet
+                elements$facet,
+                elements$labels
             ))
         },
         'path' = {
             append(taglist, list(
                 dorow(c('group.by', 'color.by', 'size.by', 'linetype.by'), c(3,3,3,3)),
                 dorow(c('alpha', 'size'), c(6,6)),
-                elements$facet
+                elements$facet,
+                elements$labels
             ))
         },
         'heatmap' = {
             append(taglist, list(
                 dorow(c('fill'), c(12)),
-                elements$facet_1d
+                elements$facet_1d,
+                elements$labels
             ))
         },
         'density2d' = {
             append(taglist, list(
-                elements$facet_1d
+                elements$facet_1d,
+                elements$labels
             ))
         },
         'wordcloud' = {
@@ -165,7 +172,7 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
     return(taglist)
 }
 
-plot.build.elements <- function(dataset){
+plot.build.elements <- function(dataset, input=NULL){
     p <- list()
     cat.or.num <- getChoices(dataset, c('cat', 'num'))
     # aes
@@ -208,6 +215,32 @@ plot.build.elements <- function(dataset){
         column(4, selectInput('plot.facet.x', 'Facet X-axis', choices=cat.or.num)),
         column(8, radioButtons('plot.facet.scale', 'Scale',
                                choices=c('fixed', 'free_x', 'free_y', 'free')))
+    )
+    if(!is.null(input)){
+        user.title <- input$plot.title
+        user.xlab <- input$plot.xlab
+        user.ylab <- input$plot.ylab
+    } else {
+        user.title <- NULL
+        user.xlab  <- NULL
+        user.ylab  <- NULL
+    }
+    p$labels <- column(12,
+        fluidRow(
+            column(8, textInput('plot.title', 'Main Title', value=user.title)),
+            column(2, numericInput('plot.title.fontsize', 'Font', value=24, min=6, max=36, step=1)),
+            column(2, checkboxInput('plot.blank.title', 'Blank'))
+        ),
+        fluidRow(
+            column(8, textInput('plot.xlab', 'X-Axis Title', value=user.xlab)),
+            column(2, numericInput('plot.xlab.fontsize', 'Font', value=12, min=6, max=36, step=1)),
+            column(2, checkboxInput('plot.blank.xlab', 'Blank'))
+        ),
+        fluidRow(
+            column(8, textInput('plot.ylab', 'Y-Axis Title', value=user.ylab)),
+            column(2, numericInput('plot.ylab.fontsize', 'Font', value=12, min=6, max=36, step=1)),
+            column(2, checkboxInput('plot.blank.ylab', 'Blank'))
+        )
     )
     return(p)
 }
@@ -253,12 +286,13 @@ PlotUI <- setRefClass('PlotUI',
             geomel <<- selectInput('plot.geom', 'Plot type', choices=choices, selected=g)
             geom <<- g
         },
-        buildUI = function(){
+        buildUI = function(input){
             taglist <- list()
             taglist[[1]] <- 12
             taglist[[2]] <- fluidRow(column(4, xel),
                                      column(4, yel),
                                      column(4, geomel))
+            elements <<- plot.build.elements(dataset, input)
             taglist <- plot.build.ggplot.ui(taglist, geom, elements)
             do.call(column, taglist)
         }
