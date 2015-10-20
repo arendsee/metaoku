@@ -10,6 +10,7 @@ buildPlot <- function(dataset, input){
     cat('\t GEOM: ', input$plot.geom, '\n')
     cat(str(g.aes))
 
+    ok <- function(x) if(!is.null(x) && x) TRUE else FALSE
     `%!=%` <- function(x, y) if(!is.null(x) && x != y) TRUE else FALSE
     `%==%` <- function(x, y) if(!is.null(x) && x == y) TRUE else FALSE
     transx <- NULL
@@ -38,11 +39,39 @@ buildPlot <- function(dataset, input){
     }
     facet <- eval(parse(text=cmd))
 
+    the <- list()
+    if(ok(input$plot.blank.xlab)){
+        the$axis.title.x <- element_blank()
+    } else if(!is.null(input$plot.xlab.fontsize)){
+        the$axis.title.x <- element_text(size=input$plot.xlab.fontsize)
+    }
+    if(ok(input$plot.blank.ylab)){
+        the$axis.title.y <- element_blank()
+    } else if(!is.null(input$plot.ylab.fontsize)){
+        the$axis.title.y <- element_text(size=input$plot.ylab.fontsize)
+    }
+    if(ok(input$plot.blank.title)){
+        the$plot.title <- element_blank()
+    } else if(!is.null(input$plot.title.fontsize)){
+        the$plot.title <- element_text(size=input$plot.title.fontsize)
+    }
+    theme <- do.call(theme, the)
+    cat(str(theme))
+    ztn <- function(a) if(nchar(a) == 0) NULL else a
+    labs       <- list()
+    labs$x     <- ztn(input$plot.xlab)
+    labs$y     <- ztn(input$plot.ylab)
+    labs$title <- ztn(input$plot.title)
+    class(labs) <- 'labels'
+    labs       <- if(length(labs) == 0) NULL else labs
+    cat(str(labs))
+
+
     switch(input$plot.geom,
         'barplot' = {
             cat('\t - barplot\n')
             cat(str(g.aes))
-            ggplot(d) + geom_bar(mapping=g.aes)
+            ggplot(d) + geom_bar(mapping=g.aes) + labs + theme
         },
         'boxplot' = {
             cat('\t - boxplot\n')
@@ -59,14 +88,14 @@ buildPlot <- function(dataset, input){
                     alpha=input$plot.alpha,
                     width=input$plot.width
                 ) +
-                facet + transy 
+                facet + transy + labs + theme
             g
         },
         'histogram' = {
             cat('\t - histogram\n')
             cat(str(g.aes))
             # todo BUG here
-            ggplot(d) + geom_histogram(mapping=g.aes) + facet + transx
+            ggplot(d) + geom_histogram(mapping=g.aes) + facet + transx + labs + theme
         },
         'point' = {
             cat('\t - point\n')
@@ -75,17 +104,17 @@ buildPlot <- function(dataset, input){
                     mapping=g.aes,
                     alpha=input$plot.alpha
                 ) +
-                facet + transx + transy 
+                facet + transx + transy + labs + theme
             g
         },
         'path' = {
             cat('\t - path\n')
-            ggplot(d) + geom_path(mapping=g.aes)
+            ggplot(d) + geom_path(mapping=g.aes) + labs + theme
         },
         'heatmap' = {
             cat('\t - heatmap\n')
             g.aes$fill <- NULL
-            ggplot(d) + geom_tile(mapping=g.aes) + facet
+            ggplot(d) + geom_tile(mapping=g.aes) + facet + labs + theme
         },
         'density2d' = {
             cat('\t - density2d - NOT IMPLEMENTED\n')
