@@ -109,8 +109,9 @@ DataSet <- setRefClass(
         },
 
         setFilter = function(filt){
+            cat(sprintf('\tfilt: (%s)\n', paste0(filt, collapse=', ')))
             row_filter <<- filt
-            if(is.null(row_filter)){
+            if(length(row_filter) == 0 || is.null(row_filter)){
                 clearFilter()
             } else {
                 for (child in children) { child$filter(row_filter) }
@@ -177,8 +178,9 @@ Data <- setRefClass(
         },
         asCat = function(){ as.factor(value)  },
         asNum = function(){ as.numeric(value) },
-        setStat = function() {},
+        setStat = function() {cat('\t - WARNING: using unimplemented setStat\n')},
         filter = function(row_filter){
+            #cat(sprintf('\t - filtering %s (%s)\n', name, type))
             value <<- .value[row_filter]
             setStat()
         },
@@ -206,8 +208,13 @@ DataNum <- setRefClass(
             setStat()
         },
         setStat = function(){
-            max  <<- max(value, na.rm=TRUE) 
-            min  <<- min(value, na.rm=TRUE)
+            if(length(value) > 0){
+                max  <<- max(value, na.rm=TRUE) 
+                min  <<- min(value, na.rm=TRUE)
+            } else {
+                max <<- NA
+                min <<- NA
+            }
         },
         asCat = function(breaks=5, dig.lab=1, ordered_result=TRUE){ 
             if(type == 'num'){
@@ -233,8 +240,13 @@ DataCat <- setRefClass(
         },
         setStat = function(){
             nchar      <<- nchar(as.character(value)) 
-            max.length <<- max(nchar, na.rm=TRUE)
-            min.length <<- min(nchar, na.rm=TRUE)
+            if(length(value) > 0){
+                max.length <<- max(nchar, na.rm=TRUE)
+                min.length <<- min(nchar, na.rm=TRUE)
+            } else {
+                max.length <<- NA
+                min.length <<- NA
+            }
             counts     <<- count(as.character(value)) %>% arrange(-freq)
             max.count  <<- counts$freq[1]
             min.count  <<- counts$freq[nrow(counts)]
@@ -267,6 +279,7 @@ DataLongcat <- setRefClass(
             }
         },
         filter = function(row_filter){
+            # cat(sprintf('\t - filtering %s (%s)\n', name, type))
             value <<- .value[row_filter]
             setStat()
             if(type == 'cat'){
@@ -326,6 +339,7 @@ DataSeq <- setRefClass(
         },
         filter = function(row_filter){
             # NOTE: on filtering do NOT copy sequence info, only the stats
+            cat(sprintf('\t - filtering %s (%s)\n', name, type))
             char.table <<- .char.table[row_filter, ]
             setStat()
         },
@@ -380,6 +394,7 @@ DataCor <- setRefClass(
         },
         filter = function(row_filter){
             # NOTE: on filtering do NOT copy text
+            cat(sprintf('\t - filtering %s (%s)\n', name, type))
             mat <<- .mat[row_filter, ]
         },
         refresh = function(){

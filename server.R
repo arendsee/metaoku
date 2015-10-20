@@ -105,17 +105,25 @@ shinyServer(function(input, output, session){
     setFilter <- reactive({
         cat('-> updating dataset filters\n')
         rsel <- input$main_table_rows_all
+        rows.are.selected <- length(rsel) > 0
         if(is.null(user.keys())){
-            if(length(rsel) > 0){
-                cat(' - applying DT row filter\n')
+            if(rows.are.selected){
+                cat(' - applying only DT row filter\n')
                 filt <- rsel
             } else {
                 cat(' - applying no filter\n')
                 filt <- NULL
             }
         } else {
-            cat(' - applying DT and user.key filter\n')
-            filt <- user.keys()[rsel]
+            if(rows.are.selected){
+                cat(' - applying DT and user.key filter\n')
+                cat(sprintf(' - rsel:(%s)\n', paste0(user.keys(), collapse=', ')))
+                cat(sprintf(' - rsel:(%s)\n', paste0(rsel, collapse=', ')))
+                filt <- user.keys()[rsel]
+            } else {
+                cat(' - applying only user.key filter\n')
+                filt <- user.keys()
+            }
         }
 
         if(is.null(filt)){
@@ -142,12 +150,12 @@ shinyServer(function(input, output, session){
                           nchar(txt) > 0  &&
                           any(input$user_key %in% dataset()$names)
             if(parse_keys){
-                cat(paste(input$user_key), '\n')
-                cat(paste(txt), '\n')
+                cat(sprintf(' - user.key=(%s)\n', input$user_key))
                 ids <- gsub('[,;\\\'"\\\t|<>]+', ' ', txt) 
                 ids <- unlist(strsplit(ids, '\\s+', perl=TRUE))
-                keys <- dataset()$get(input$user_key)$value %in% ids
-                cat(sprintf(' <- user.keys keys: %s\n', length(keys)))
+                keys <- which(dataset()$get(input$user_key)$.value %in% ids)
+                cat(sprintf(' - user.keys ids: (%s)\n', paste0(ids, collapse=', ')))
+                cat(sprintf(' - user.keys #ids: %s\n', length(keys)))
                 return(keys)
             } else {
                 cat(' <- user.keys returning no keys\n')
@@ -400,14 +408,7 @@ shinyServer(function(input, output, session){
     # Columns selected from this table are plotted in the sidebar
     # =========================================================================
     output$main_table <- DT::renderDataTable(
-        {
-            cat('-> main_table\n')
-            if(is.null(user.keys())){
-                dat()
-            } else {
-                dat()[user.keys(), ]
-            }
-        },
+        dat(),
         rownames=FALSE,
         filter='top',
         style='bootstrap',
