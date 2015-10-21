@@ -53,8 +53,10 @@ num.cat.cat.plot <- function(x, y, z, fmt.opts){
         geom_boxplot(aes(x=y, y=x)) +
         coord_flip() +
         facet_wrap(~z)
-    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
-    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+    xlab <- fmt.opts$xlab %|% x$name
+    ylab <- fmt.opts$ylab %|% y$name
+    fmt.opts$xlab <- ylab
+    fmt.opts$ylab <- xlab
     fmt.opts$logy <- fmt.opts$logx
     format.plot(g, x, fmt.opts)
 }
@@ -222,8 +224,10 @@ num.cat.plot <- function(x, y, fmt.opts){
         g <- ggplot(d) +
             geom_boxplot(aes(x=y, y=x)) +
             coord_flip()
-        fmt.opts$xlab <- fmt.opts$ylab %|% y$name
-        fmt.opts$ylab <- fmt.opts$xlab %|% x$name
+        xlab <- fmt.opts$ylab %|% y$name
+        ylab <- fmt.opts$xlab %|% x$name
+        fmt.opts$xlab <- xlab
+        fmt.opts$ylab <- ylab
         fmt.opts$logy <- fmt.opts$logx
         format.plot(g, x, fmt.opts)
     } else {
