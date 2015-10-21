@@ -66,7 +66,7 @@ getGeomChoices <- function(x, y=NULL){
 }
 
 plot.select.x <- function(dataset, selected=NULL) {
-    selectInput('plot.x', 'Independent variable', choices=dataset$names, selected=selected$name)
+    selectInput('plot.x', 'X-Axis', choices=dataset$names, selected=selected$name)
 }
 
 plot.build.ggplot.ui <- function(taglist, geom, elements){
@@ -182,7 +182,7 @@ plot.build.elements <- function(dataset, input=NULL){
     p$shape.by     <- selectInput('plot.aes.shape', 'Shape by', choices=cat.or.num)
     p$group.by     <- selectInput('plot.aes.group', 'Group by', choices=cat.or.num)
     p$linetype.by  <- selectInput('plot.aes.linetype', 'Linetype by', choices=cat.or.num)
-    p$alpha.by     <- selectInput('plot.aes.alpha', 'Alpha by', choices=cat.or.num)
+    p$alpha.by     <- selectInput('plot.aes.alpha', 'Transparency by', choices=cat.or.num)
     p$biny         <- radioButtons('plot.biny', label=NULL,
                                   choices=list(count='..count..',
                                                density='..density..',
@@ -199,20 +199,20 @@ plot.build.elements <- function(dataset, input=NULL){
                              'Transform Y',
                              choices=c('none', 'log', 'log2', 'log10', 'sqrt'))
     # constant visuals
-    p$alpha     <- sliderInput('plot.alpha', 'Set alpha', min=0, max=1, value=1, step=0.01) 
-    p$size      <- sliderInput('plot.size', 'Set size', min=0, max=5, value=1, step=0.01)
+    p$alpha     <- sliderInput('plot.alpha', 'Transparency', min=0, max=1, value=1, step=0.01) 
+    p$size      <- sliderInput('plot.size', 'Size', min=0, max=5, value=1, step=0.01)
     p$notch     <- checkboxInput('plot.notch', 'Notch')
-    p$width     <- sliderInput('plot.width', 'Set width', min=0, max=2, value=1, step=0.05)
+    p$width     <- sliderInput('plot.width', 'Width', min=0, max=2, value=1, step=0.05)
     # faceting
     p$facet <- fluidRow(
-        column(4, selectInput('plot.facet.x', 'Facet X-axis', choices=cat.or.num)),
-        column(4, selectInput('plot.facet.y', 'Facet Y-axis', choices=cat.or.num)),
+        column(4, selectInput('plot.facet.x', 'Facet X-axis by', choices=cat.or.num)),
+        column(4, selectInput('plot.facet.y', 'Facet Y-axis by', choices=cat.or.num)),
         column(2, radioButtons('plot.facet.scale', 'Scale',
                                choices=c('fixed', 'free_x', 'free_y', 'free'))),
         column(2, checkboxInput('plot.facet.margins', 'Margins'))
     )
     p$facet_1d <- fluidRow(
-        column(4, selectInput('plot.facet.x', 'Facet X-axis', choices=cat.or.num)),
+        column(4, selectInput('plot.facet.x', 'Facet X-axis by', choices=cat.or.num)),
         column(8, radioButtons('plot.facet.scale', 'Scale',
                                choices=c('fixed', 'free_x', 'free_y', 'free')))
     )
@@ -229,17 +229,17 @@ plot.build.elements <- function(dataset, input=NULL){
         fluidRow(
             column(8, textInput('plot.title', 'Main Title', value=user.title)),
             column(2, numericInput('plot.title.fontsize', 'Font', value=24, min=6, max=36, step=1)),
-            column(2, checkboxInput('plot.blank.title', 'Blank'))
+            column(2, checkboxInput('plot.blank.title', 'None'))
         ),
         fluidRow(
             column(8, textInput('plot.xlab', 'X-Axis Title', value=user.xlab)),
             column(2, numericInput('plot.xlab.fontsize', 'Font', value=12, min=6, max=36, step=1)),
-            column(2, checkboxInput('plot.blank.xlab', 'Blank'))
+            column(2, checkboxInput('plot.blank.xlab', 'None'))
         ),
         fluidRow(
             column(8, textInput('plot.ylab', 'Y-Axis Title', value=user.ylab)),
             column(2, numericInput('plot.ylab.fontsize', 'Font', value=12, min=6, max=36, step=1)),
-            column(2, checkboxInput('plot.blank.ylab', 'Blank'))
+            column(2, checkboxInput('plot.blank.ylab', 'None'))
         )
     )
     return(p)
@@ -253,7 +253,7 @@ PlotUI <- setRefClass('PlotUI',
             empty    <<- empty
             dataset  <<- dataset 
             xel      <<- plot.select.x(dataset, selected=empty)
-            yel      <<- selectInput('plot.y', 'Dependent variable', choices='None')
+            yel      <<- selectInput('plot.y', 'Y-Axis', choices='None')
             geomel   <<- selectInput('plot.geom', 'Plot type', choices='None')
             x        <<- empty
             y        <<- empty
@@ -273,7 +273,7 @@ PlotUI <- setRefClass('PlotUI',
             if(!y.in$name %in% choices){
                 y <<- empty
             }
-            yel <<- selectInput('plot.y', 'Dependent variable', choices=choices, selected=y.in$name)
+            yel <<- selectInput('plot.y', 'Y-Axis', choices=choices, selected=y.in$name)
             y   <<- y.in
             setGeom()
         },
