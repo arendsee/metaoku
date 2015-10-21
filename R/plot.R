@@ -178,16 +178,21 @@ cor.cat.plot <- function(x, y, fmt.opts){
 cat.cat.plot <- function(x, y, fmt.opts){
     cat('\t - cat.cat plot\n')
     d <- build.dt(x, y)
-    d <- ddply(d, colnames(d), summarize, obs=length(x))
-    d <- ddply(d, 'x', mutate, X=sum(obs))
-    d <- ddply(d, 'y', mutate, Y=sum(obs))
-    d$exp <- d$X * d$Y / sum(d$obs)
-    d$lograt <- log(d$obs / d$exp)
-    g <- ggplot(d) +
-        geom_tile(aes(x=x, y=y, fill=lograt))
-    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
-    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x, fmt.opts)
+    if(nlevels(d$y) <= 3){
+        g <- ggplot(d) +
+            geom_bar(aes(x=x, y=..density.., fill=y), position='dodge')
+    } else {
+        d <- ddply(d, colnames(d), summarize, obs=length(x))
+        d <- ddply(d, 'x', mutate, X=sum(obs))
+        d <- ddply(d, 'y', mutate, Y=sum(obs))
+        d$exp <- d$X * d$Y / sum(d$obs)
+        d$lograt <- log(d$obs / d$exp)
+        g <- ggplot(d) +
+            geom_tile(aes(x=x, y=y, fill=lograt))
+    }
+        fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+        fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+        format.plot(g, x, fmt.opts)
 }
 
 # boxplot
@@ -196,16 +201,17 @@ cat.num.plot <- function(x, y, fmt.opts){
     if(nlevels(x$value) > 3){
         g <- ggplot(build.dt(x, y)) +
             geom_boxplot(aes(x=x, y=y))
+        fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+        fmt.opts$ylab <- fmt.opts$ylab %|% y$name
+        format.plot(g, x, fmt.opts)
     } else {
         if(fmt.opts$logy){
             fmt.opts$logx <- TRUE
             fmt.opts$logy <- FALSE
         }
-        return(num.cat.plot(y, x, fmt.opts))
+        g <- num.cat.plot(y, x, fmt.opts)
     }
-    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
-    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x, fmt.opts)
+    return(g)
 }
 
 # boxplot coord flip
@@ -216,10 +222,10 @@ num.cat.plot <- function(x, y, fmt.opts){
         g <- ggplot(d) +
             geom_boxplot(aes(x=y, y=x)) +
             coord_flip()
-    fmt.opts$xlab <- fmt.opts$ylab %|% y$name
-    fmt.opts$ylab <- fmt.opts$xlab %|% x$name
-    fmt.opts$logy <- fmt.opts$logx
-    format.plot(g, x, fmt.opts)
+        fmt.opts$xlab <- fmt.opts$ylab %|% y$name
+        fmt.opts$ylab <- fmt.opts$xlab %|% x$name
+        fmt.opts$logy <- fmt.opts$logx
+        format.plot(g, x, fmt.opts)
     } else {
         g <- ggplot(d) +
             geom_histogram(
@@ -233,9 +239,9 @@ num.cat.plot <- function(x, y, fmt.opts){
             ) + theme(axis.text.y=element_blank(),
                       axis.ticks.y=element_blank()) +
               labs(x=x$name)
-    fmt.opts$xlab <- fmt.opts$xlab %|% x$name
-    fmt.opts$ylab <- fmt.opts$ylab %|% y$name
-    format.plot(g, x, fmt.opts)
+        fmt.opts$xlab <- fmt.opts$xlab %|% x$name
+        fmt.opts$ylab <- 'density'
+        format.plot(g, x, fmt.opts)
     }
 }
 
