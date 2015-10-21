@@ -181,8 +181,11 @@ cat.cat.plot <- function(x, y, fmt.opts){
     cat('\t - cat.cat plot\n')
     d <- build.dt(x, y)
     if(nlevels(d$y) <= 3){
+        d <- count(d) %>%
+             ddply('y', mutate, p=freq/sum(freq))
         g <- ggplot(d) +
-            geom_bar(aes(x=x, y=..density.., fill=y), position='dodge')
+            geom_bar(aes(x=x, y=p, fill=y), position='dodge', stat='identity')
+
     } else {
         d <- ddply(d, colnames(d), summarize, obs=length(x))
         d <- ddply(d, 'x', mutate, X=sum(obs))
