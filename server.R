@@ -312,7 +312,7 @@ shinyServer(function(input, output, session){
     # =========================================================================
     selected.column.name <- reactive({
         cat('-> selected.column.name()\n')
-        cols <- dataset()$names
+        cols <- colnames(dat())
         i <- input$main_table_columns_selected + 1
         if(length(i) > 0){
             cat(sprintf('  <- returning %s\n', cols[i]))
