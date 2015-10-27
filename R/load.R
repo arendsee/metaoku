@@ -2,12 +2,13 @@
 # If there are multiple datafiles in one data folder, try to merge them by the
 # first column. Die on failure.
 # ==============================================================================
-merge.files <- function(data.dir, data.pat){
+merge.files <- function(data.dir, data.pat, skip=NULL){
     require(data.table)
     cat('\t  * merge.files\n')
     global.key <- NULL
     global.d   <- NULL
     for (f in list.files(path=data.dir, pattern=data.pat, full.names=TRUE)){
+        if(basename(f) %in% skip) next
         d <- as.data.table(read.delim(f, quote="", stringsAsFactors=FALSE))
         key = names(d)[1]
         setkeyv(d, key)
@@ -51,13 +52,13 @@ build.one.dataset <- function(dataname, config){
         return(rdat)
     }
 
-    df <- merge.files(data.pat=config$data_pat, data.dir=data.dir)
+    df <- load.data(data.pat=config$data_pat, data.dir=data.dir, skip=config$fields)
 
-    mdfile <- file.path(data.dir, config$metadata)
+    mdfile <- file.path(data.dir, config$fields)
     if(file.exists(mdfile)){
         md <- read.delim(mdfile, stringsAsFactors=FALSE)
     } else {
-        cat(sprintf('No METADATA found for %s at %s\n', dataname, mdfile))
+        cat(sprintf('No FIELDS file found for %s at %s\n', dataname, mdfile))
         md <- NULL
     }
 

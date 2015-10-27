@@ -274,7 +274,7 @@ shinyServer(function(input, output, session){
         {
             cat('-> observe:selected.dataset - update dataset description\n')
             # set the dataset description
-            desc <- file.path(config$data_dir, input$selected.dataset, 'README.md')
+            desc <- file.path(config$data_dir, input$selected.dataset, config$descriptions)
             if(!file.exists(desc)){
                 desc <- file.path('doc', 'dataset-description.md')
             }
