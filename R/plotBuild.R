@@ -24,12 +24,12 @@ buildPlot <- function(dataset, input){
 
     if(input$plot.facet.x %!=% 'None' && input$plot.facet.y %==% 'None'){
         cat(sprintf('\t - faceting on "%s"\n', input$plot.facet.x))
-        cmd <- sprintf('facet_wrap(~ %s, scale = "%s")',
-                       input$plot.facet.x, input$plot.facet.scale)
+        cmd <- sprintf('facet_wrap(~ %s, scale = "%s", ncol = %s)',
+                       input$plot.facet.x, input$plot.facet.scale, input$plot.facet.ncol)
     } else if(input$plot.facet.y %!=% 'None' && input$plot.facet.x %==% 'None'){
         cat(sprintf('\t - faceting on "%s"\n', input$plot.facet.y))
-        cmd <- sprintf('facet_wrap(~ %s, scale = "%s")',
-                       input$plot.facet.y, input$plot.scale)
+        cmd <- sprintf('facet_wrap(~ %s, scale = "%s", ncol = %s)',
+                       input$plot.facet.x, input$plot.facet.scale, input$plot.facet.ncol)
     } else if(input$plot.facet.y %!=% 'None' && input$plot.facet.x %!=% 'None'){
         cat(sprintf('\t - faceting on "%s" and "%s"\n', input$plot.facet.x, input$plot.facet.y))
         cmd <- sprintf('facet_grid(%s ~ %s, scale = "%s")',

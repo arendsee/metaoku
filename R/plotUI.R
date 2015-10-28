@@ -226,12 +226,16 @@ plot.build.elements <- function(dataset, input=NULL){
         column(4, selectInput('plot.facet.y', 'Facet Y-axis by', choices=cat.or.num)),
         column(2, radioButtons('plot.facet.scale', 'Scale',
                                choices=c('fixed', 'free_x', 'free_y', 'free'))),
-        column(2, checkboxInput('plot.facet.margins', 'Margins'))
+        column(2,
+            checkboxInput('plot.facet.margins', 'Margins'),
+            numericInput('plot.facet.ncol', 'Columns', value=4, min=1, max=10, step=1)
+        )
     )
     p$facet_1d <- fluidRow(
         column(4, selectInput('plot.facet.x', 'Facet X-axis by', choices=cat.or.num)),
-        column(8, radioButtons('plot.facet.scale', 'Scale',
-                               choices=c('fixed', 'free_x', 'free_y', 'free')))
+        column(4, radioButtons('plot.facet.scale', 'Scale',
+                               choices=c('fixed', 'free_x', 'free_y', 'free'))),
+        column(4, numericInput('plot.facet.ncol', 'Columns', value=4, min=1, max=10, step=1))
     )
     # density
     p$adjust <- sliderInput('plot.adjust', 'Smoothness', min=0, max=2, value=1, step=0.01)
