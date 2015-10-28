@@ -129,7 +129,7 @@ DataSet <- setRefClass(
             d <- do.call(cbind.data.frame,
                     append(lapply(children, function(child) child$.value),
                            list(stringsAsFactors = FALSE)))
-            d <- d[, names %in% cols]
+            d <- d[names %in% cols]
             if(filterRows && !is.null(row_filter)){
                 d <- d[row_filter, ]
             }
