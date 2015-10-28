@@ -34,14 +34,20 @@ shinyUI(
                                             label='Enter ids',
                                             value=NULL)),
                         column(4, selectInput('user_key', 'Select Key', choices='None'))),
-                    downloadButton('downloadData', 'Download')
+                    fluidRow(
+                        column(4, downloadButton('downloadData', 'Download Data')),
+                        column(4, downloadButton('downloadMagicPlot', 'Download Plot'))
+                    )
                 ),
                 mainPanel(DT::dataTableOutput("main_table"))
             )),
             tabPanel('Plot', sidebarLayout(
                 sidebarPanel(
                     uiOutput('plot.sidebar'),
-                    actionButton('build.plot', 'Plot')
+                    fluidRow(
+                        column(4, actionButton('build.plot', 'Plot')),
+                        column(4, downloadButton('downloadPlot', 'Download Plot'))
+                    )
                 ),
                 mainPanel(
                     plotOutput('plot_data_plot', height='800px')
