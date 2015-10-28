@@ -99,6 +99,7 @@ buildPlot <- function(dataset, input){
         },
         'point' = {
             cat('\t - point\n')
+            g.aes$fill <- NULL
             g <- ggplot(d) +
                 geom_point(
                     mapping=g.aes,
