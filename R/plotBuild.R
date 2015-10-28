@@ -177,5 +177,5 @@ build.aes <- function(input, additional=list()){
 build.dataframe <- function(dataset, input){
     cat('\t - plotBuild.R::build.dataframe\n')
     cols <- c(unlist(get.aes.terms(input)), get.facet.terms(input))
-    dataset$getDF(cols=cols)
+    dataset$getDF(filterRows=TRUE, cols=cols)
 }
