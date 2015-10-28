@@ -125,15 +125,19 @@ DataSet <- setRefClass(
         },
 
         getDF = function(filterRows=FALSE, cols=names){
+            cat(' dataClass::getDF()\n')
             if(length(children) == 0) { return(NULL) }
             d <- do.call(cbind.data.frame,
                     append(lapply(children, function(child) child$.value),
                            list(stringsAsFactors = FALSE)))
-            d <- d[names %in% cols]
+            d <- data.table(d)
+            d <- d[, names[names %in% cols], with=FALSE]
             if(filterRows && !is.null(row_filter)){
-                d <- d[row_filter, ]
+                cat(sprintf(' - filtering, in:(%s)', nrow(d)))
+                d <- d[row_filter]
+                cat(sprintf(' out:(%s)\n', nrow(d)))
             }
-            return(d)
+            return(data.frame(d))
         },
 
         getMetadataDF = function(){
