@@ -97,6 +97,18 @@ buildPlot <- function(dataset, input){
             # todo BUG here
             ggplot(d) + geom_histogram(mapping=g.aes) + facet + transx + labs + theme
         },
+        'density' = {
+            cat('\t - histogram\n')
+            cat(str(g.aes))
+            # todo BUG here
+            ggplot(d) +
+                geom_density(
+                    mapping=g.aes,
+                    adjust=input$plot.adjust,
+                    size=input$plot.size,
+                    alpha=input$plot.alpha
+                ) + facet + transx + labs + theme
+        },
         'point' = {
             cat('\t - point\n')
             g.aes$fill <- NULL

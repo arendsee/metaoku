@@ -33,7 +33,7 @@ getGeoMap <- function(){
     geomap['cor', 'num'] <- NA
     geomap['cor', 'seq'] <- NA
 
-    geomap['num', '-']   <- 'histogram'
+    geomap['num', '-']   <- 'histogram,density'
     geomap['num', 'cat'] <- 'boxplot'
     geomap['num', 'cor'] <- NA
     geomap['num', 'num'] <- 'point,density2d,path'
@@ -113,6 +113,20 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
                 elements$labels
             ))
         },
+        'density' = {
+            append(taglist, list(
+                dorow(c('color.by', 'fill.by'), c(6,6)),
+                fluidRow(
+                    column(9,
+                        fluidRow(column(6, elements$weight.by), column(6, elements$adjust)),
+                        fluidRow(column(6, elements$size), column(6, elements$alpha))
+                    ),
+                    column(3, elements$transx)
+                ),
+                elements$facet,
+                elements$labels
+            ))
+        },
         'point' = {
             append(taglist, list(
                 dorow(c('color.by', 'shape.by', 'size.by'), c(3,3,3)),
@@ -176,14 +190,16 @@ plot.build.ggplot.ui <- function(taglist, geom, elements){
 plot.build.elements <- function(dataset, input=NULL){
     p <- list()
     cat.or.num <- getChoices(dataset, c('cat', 'num'))
+    cat. <- getChoices(dataset, c('cat'))
     # aes
     p$color.by     <- selectInput('plot.aes.color', 'Color by', choices=cat.or.num)
     p$fill.by      <- selectInput('plot.aes.fill', 'Fill by', choices=cat.or.num)
     p$size.by      <- selectInput('plot.aes.size', 'Size by', choices=cat.or.num)
-    p$shape.by     <- selectInput('plot.aes.shape', 'Shape by', choices=cat.or.num)
-    p$group.by     <- selectInput('plot.aes.group', 'Group by', choices=cat.or.num)
-    p$linetype.by  <- selectInput('plot.aes.linetype', 'Linetype by', choices=cat.or.num)
+    p$shape.by     <- selectInput('plot.aes.shape', 'Shape by', choices=cat.)
+    p$group.by     <- selectInput('plot.aes.group', 'Group by', choices=cat.)
+    p$linetype.by  <- selectInput('plot.aes.linetype', 'Linetype by', choices=cat.)
     p$alpha.by     <- selectInput('plot.aes.alpha', 'Transparency by', choices=cat.or.num)
+    p$weight.by    <- selectInput('plot.aes.weight', 'Weight by', choices=cat.)
     p$biny         <- radioButtons('plot.biny', label=NULL,
                                   choices=list(count='..count..',
                                                density='..density..',
@@ -200,10 +216,10 @@ plot.build.elements <- function(dataset, input=NULL){
                              'Transform Y',
                              choices=c('none', 'log', 'log2', 'log10', 'sqrt'))
     # constant visuals
-    p$alpha     <- sliderInput('plot.alpha', 'Transparency', min=0, max=1, value=1, step=0.01) 
-    p$size      <- sliderInput('plot.size', 'Size', min=0, max=5, value=1, step=0.01)
-    p$notch     <- checkboxInput('plot.notch', 'Notch')
-    p$width     <- sliderInput('plot.width', 'Width', min=0, max=2, value=1, step=0.05)
+    p$alpha <- sliderInput('plot.alpha', 'Transparency', min=0, max=1, value=1, step=0.01) 
+    p$size  <- sliderInput('plot.size', 'Size', min=0, max=5, value=1, step=0.1)
+    p$notch <- checkboxInput('plot.notch', 'Notch')
+    p$width <- sliderInput('plot.width', 'Width', min=0, max=2, value=1, step=0.05)
     # faceting
     p$facet <- fluidRow(
         column(4, selectInput('plot.facet.x', 'Facet X-axis by', choices=cat.or.num)),
@@ -217,6 +233,8 @@ plot.build.elements <- function(dataset, input=NULL){
         column(8, radioButtons('plot.facet.scale', 'Scale',
                                choices=c('fixed', 'free_x', 'free_y', 'free')))
     )
+    # density
+    p$adjust <- sliderInput('plot.adjust', 'Smoothness', min=0, max=2, value=1, step=0.01)
     if(!is.null(input)){
         user.title <- input$plot.title
         user.xlab <- input$plot.xlab
