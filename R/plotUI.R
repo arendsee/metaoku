@@ -57,6 +57,7 @@ getYChoices <- function(dataset, x){
     choices <- apply(!is.na(geomap), 1, function(val) colnames(geomap)[val]) %>%
                lapply(function(val) if(length(val) == 0) '-' else val)
     choices <- dataset$getNameByType(choices[[x$type]])
+    choices <- c('None', choices)
     return(choices)
 }
 
@@ -270,11 +271,12 @@ PlotUI <- setRefClass('PlotUI',
         setY = function(y.in=y){
             cat('\tentering PlotUI::setY\n')
             choices <- getYChoices(dataset, x)
+            yel <<- selectInput('plot.y', 'Y-Axis', choices=choices, selected=y.in$name)
             if(!y.in$name %in% choices){
                 y <<- empty
+            } else {
+                y   <<- y.in
             }
-            yel <<- selectInput('plot.y', 'Y-Axis', choices=choices, selected=y.in$name)
-            y   <<- y.in
             setGeom()
         },
         setGeom = function(g=geom){

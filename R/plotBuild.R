@@ -2,7 +2,7 @@ buildPlot <- function(dataset, input){
     cat('\tplotBuild.R::buildPlot\n')
 
     d <- build.dataframe(dataset, input)
-    if(length(d) == 0 || nrow(d) == 0){
+    if(is.null(d) || length(d) == 0 || nrow(d) == 0){
         return(NULL)
     }
     g.aes <- build.aes(input)
