@@ -552,11 +552,9 @@ shinyServer(function(input, output, session){
     # BUG - for some reason this creates an archive with directory structure
     # all the way to root
     output$downloadProject <- downloadHandler(
-        filename = 'metaoku-project.tar.gz',
+        filename = 'metaoku-project.zip',
         content = function(file){
-            tar(tarfile=file,
-                files='project',
-                compression='gzip')
+            zip(zipfile=file, files=basename(config$data_dir))
         }
     )
 
