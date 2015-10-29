@@ -321,7 +321,7 @@ shinyServer(function(input, output, session){
     # =========================================================================
     selected.column.name <- reactive({
         cat('-> selected.column.name()\n')
-        cols <- colnames(dat())
+        cols <- names(dat())
         i <- input$main_table_columns_selected + 1
         if(length(i) > 0){
             cat(sprintf('  <- returning %s\n', cols[i]))
@@ -459,10 +459,6 @@ shinyServer(function(input, output, session){
         },
         filter="none",
         rownames=FALSE,
-        selection=list(
-            mode='multiple',
-            target='row'
-        ),
         options=list(
             paging=FALSE,
             autoWidth=FALSE,
@@ -471,7 +467,8 @@ shinyServer(function(input, output, session){
             scrollY=FALSE,
             searching=FALSE,
             sorting=FALSE
-    ))
+        )
+    )
 
 
 

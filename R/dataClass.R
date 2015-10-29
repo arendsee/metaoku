@@ -141,6 +141,7 @@ DataSet <- setRefClass(
         },
 
         getMetadataDF = function(){
+            cat( 'dataClass::getMetadataD\n')
             if(length(children) == 0) { return(NULL) }
             do.call(rbind.data.frame, lapply(children, function(child) child$metadata))
         },

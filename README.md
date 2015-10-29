@@ -12,6 +12,16 @@ mkdir data/my-dataset
 cp your-data-set.tsv data/my-dataset
 ```
 
+## Dependencies
+
+The standard CRAN packages should work fine. However, you will need to retrieve the DT package from github. To do you may run the following:
+
+``` R
+remove.packages('DT')
+devtools::install_github('rstudio/DT')
+```
+
+
 ## Setting up the database
 
  1. Add one folder per dataset to the data folder

@@ -21,9 +21,8 @@ ACCESS = 'archive'
 DATA_DIR     = 'projects'    # folder holding all data
 SAVE_DIR     = 'saved'       # folder holding all saved data
 DATA_PAT     = '.(tab|tsv)$' # regular expression identifying data files
-FIELDS       = 'FIELDS.tsv'  # column descriptions filename
-DESCRIPTIONS = 'DESC.md'     # description filename
-
+FIELDS       = 'COLUMN.tsv'  # column descriptions filename
+DESCRIPTIONS = 'README.md'     # description filename
 
 
 # =========================================================================
