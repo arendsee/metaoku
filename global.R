@@ -21,4 +21,6 @@ if(file.exists(file.path(config$data_dir, 'help.md'))){
     config$help_tab <- file.path(getwd(), 'doc', 'help.md')
 }
 
+config$access <- ACCESS
+
 config$about_tab <- file.path(getwd(), 'doc', 'about.md')

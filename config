@@ -1,4 +1,20 @@
 # =========================================================================
+# Permissions
+# =========================================================================
+#   There are three choices for access
+#   1) archive
+#      - the client can view and download server-side data
+#      - the client cannot modify or upload data
+#   2) sandbox
+#      - the client can upload data, but it is not preserved across sessions
+#   3) anarchy
+#      - the client can access server-side data
+#      - the client can permanently upload, modify, and delete data
+ACCESS = 'archive'
+
+
+
+# =========================================================================
 # File names and extensions
 # =========================================================================
 
