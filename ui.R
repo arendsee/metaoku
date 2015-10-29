@@ -62,7 +62,8 @@ upload_panel <- tabPanel(
         sidebarPanel(
             fileInput('upload.file', 'Filename', multiple=TRUE),
             radioButtons('upload.type', 'Select upload type',
-                         choices=list('Single Table'='single', 'Dataset'='dataset')),
+                         choices=list('Single Table'='single', 'Dataset'='dataset'),
+                         selected='single'),
             textOutput('upload.status')
         ),
         mainPanel(
@@ -82,18 +83,27 @@ about_panel <- tabPanel(
     shiny::includeMarkdown(config$about_tab)
 )
 
+tabs <- list(
+    home   = home_panel,
+    select = select_panel,
+    view   = view_panel,
+    plot   = plot_panel,
+    upload = upload_panel,
+    help   = help_panel,
+    about  = about_panel
+)
+
+cat(config$access, '----\n')
+if(config$access != 'anarchy'){
+    tabs$upload <- NULL
+}
+cat(config$access, '2----\n')
+tabset.panel <- do.call(tabsetPanel, tabs)
+
 # Define UI for dataset viewer application
 shinyUI(
     fluidPage(
         theme = shinytheme('spacelab'),
-        tabsetPanel(
-            home_panel,
-            select_panel,
-            view_panel,
-            plot_panel,
-            upload_panel,
-            help_panel,
-            about_panel
-        )
+        tabset.panel
     )
 )

@@ -202,10 +202,12 @@ shinyServer(function(input, output, session){
     observe({
         cat('-> observe - Building Upload tab\n')
         umode <- input$upload.type
-        if(umode == 'dataset'){
+        if(!is.null(umode) && umode == 'dataset'){
             desc <- file.path('doc', 'upload-dataset-instructions.md')
-        } else {
+        } else if((!is.null(umode) && umode == 'single')) {
             desc <- file.path('doc', 'upload-single-instructions.md')
+        } else {
+            return()
         }
         output$upload.instructions <- renderUI({shiny::includeMarkdown(desc)})
     })
@@ -468,37 +470,42 @@ shinyServer(function(input, output, session){
         upload.type <<- input$upload.type
     })
     observe({
-        cat('-> observe:upload.file - most things\n')
-        files <- input$upload.file
-        success <- FALSE
-        if(upload.type == 'single'){
-            for(i in nrow(files)){
-                datapath <- files[i, 'datapath']
-                data.basename <- basename(files[i, 'name'])
-                data.name <- gsub('\\..*', '', data.basename)
-                newdir <- file.path(config$data_dir, data.name)
-                newpath <- file.path(newdir, data.basename)
-                if(!dir.exists(newdir)){
-                    dir.create(newdir)
-                }
-                if(file.exists(newpath)){
-                    cat(sprintf('WARNING: I refuse to overwrite file "%s"\n', newpath))
-                } else {
-                    if(file.size(datapath) > 0){
-                        success <- TRUE
-                        file.copy(datapath, newpath)
+        files=input$upload.file
+        if(!is.null(files)){isolate({
+            cat('-> observe:upload.file - most things\n')
+            files <- input$upload.file
+            cat('files:\n')
+            cat(str(files))
+            success <- FALSE
+            if(upload.type == 'single'){
+                for(i in nrow(files)){
+                    datapath <- files[i, 'datapath']
+                    data.basename <- basename(files[i, 'name'])
+                    data.name <- gsub('\\..*', '', data.basename)
+                    newdir <- file.path(config$data_dir, data.name)
+                    newpath <- file.path(newdir, data.basename)
+                    if(!dir.exists(newdir)){
+                        dir.create(newdir)
+                    }
+                    if(file.exists(newpath)){
+                        cat(sprintf('WARNING: I refuse to overwrite file "%s"\n', newpath))
+                    } else {
+                        if(file.size(datapath) > 0){
+                            success <- TRUE
+                            file.copy(datapath, newpath)
+                        }
                     }
                 }
+            } else if(upload.type == 'dataset'){
+                cat('\tdataset upload not yeat implemented')
             }
-        } else if(upload.type == 'dataset'){
-            cat('\tdataset upload not yeat implemented')
-        }
-        if(success){
-            cat('Updating database\n')
-            datasets <<- build.all.datasets(config)
-            cat('Datasets: ', datasets, '\n')
-            update.datasets(datasets)
-        }
+            if(success){
+                cat('Updating database\n')
+                datasets <<- build.all.datasets(config)
+                cat('Datasets: ', datasets, '\n')
+                update.datasets(datasets)
+            }
+        })}
     })
 
 
