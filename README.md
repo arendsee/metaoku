@@ -5,7 +5,7 @@ A shiny app for sharing, subsetting and automagically plotting data of any type
 ## Installation
 
 ``` bash
-git clone https://github.com/zbwrnz/shiny-lab-data
+git clone https://github.com/zbwrnz/metaoku
 cd shiny-lab-data
 mkdir data
 mkdir data/my-dataset
@@ -17,9 +17,8 @@ cp your-data-set.tsv data/my-dataset
  1. Add one folder per dataset to the data folder
  2. Each input files must be TAB-delimited
  3. There may be multiple data tables if they share a common first key column
- 4. (optional) add a file named `data/HOME.md` to annotate the project
- 5. (optional) add a file named `METADATA` to each table-containing folder to annotate the columns
- 6. (optional) add a file named `README.md` to each table-containing folder to annotate the table
+ 4. (optional) add a file named `COLUMN.tsv` to each table-containing folder to annotate the columns
+ 5. (optional) add a file named `README.md` to each table-containing folder to annotate the table
 
 Example folder:
 
@@ -27,13 +26,9 @@ Example folder:
 └── data
     ├── HOME.md
     ├── arabidopsis
-    │   ├── at-prot.tab
-    │   ├── confidence.tab
-    │   ├── METADATA
-    │   ├── README.md
-    │   ├── short_description.tab
-    │   ├── strata.tab
-    │   └── type.tab
+    │   ├── arabidopsis.tab
+    │   ├── COLUMN.tab
+    │   └── README.md
     ├── diamonds
     │   ├── diamonds.tab
     │   └── README.md
