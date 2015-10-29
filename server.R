@@ -535,9 +535,13 @@ shinyServer(function(input, output, session){
 
     # download the small automagic plot from the View tab
     output$downloadMagicPlot <- downloadHandler(
-        filename = 'metaoku-plot.pdf',
+        filename = 'metaoku-plot.png',
         content = function(file){
-            ggsave(filename=file, plot=getViewPlot(), w=6, h=4)
+            g <- getViewPlot()
+            cat(str(g))
+            png(file, width=1920, height=1920, res=288)
+            print(g)
+            dev.off()
         }
     )
 
