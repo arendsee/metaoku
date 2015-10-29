@@ -109,7 +109,7 @@ DataSet <- setRefClass(
         },
 
         setFilter = function(filt){
-            cat(sprintf('\tfilt: (%s)\n', paste0(filt, collapse=', ')))
+            cat(' dataClass:setFilter()\n')
             row_filter <<- filt
             if(length(row_filter) == 0 || is.null(row_filter)){
                 clearFilter()

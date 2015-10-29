@@ -259,12 +259,19 @@ shinyServer(function(input, output, session){
         ignoreNULL=TRUE
     )
 
-    output$plot_data_plot <- renderPlot({
+
+    bigPlot <- reactive({
         cat('-> plot_data_plot\n')
         input$build.plot
         source('R/plotBuild.R', local=TRUE)
         isolate(buildPlot(dataset(), reactiveValuesToList(input)))
     })
+    output$plot_data_plot <- renderPlot({
+        bigPlot()
+    })
+    # Unfortunately, downloadHandler doesn't like reactives, so I have to wrap it
+    # in a normal function
+    getBigPlot <- function(){ bigPlot() }
 
 
 
@@ -362,7 +369,7 @@ shinyServer(function(input, output, session){
     #           must be categorical, since it is used to facet, boxplot, or
     #           barplot the data.
     # =========================================================================
-    output$view_data_plot <- renderPlot({
+    view_plot <- reactive({
         cat('-> renderPlot()\n')
 
         setFilter()
@@ -402,6 +409,13 @@ shinyServer(function(input, output, session){
 
         return(g)
     })
+    output$view_data_plot <- renderPlot({ view_plot()})
+    getViewPlot <- function(){
+        w=session$clientData$output_view_data_plot_width
+        h=session$clientData$output_view_data_plot_height
+        cat(sprintf(' -> getViewPlot w=(%s), h=(%s)\n', w, h))
+        view_plot()
+    }
 
 
 
@@ -520,6 +534,22 @@ shinyServer(function(input, output, session){
             write.table(out, file, row.names=FALSE, sep="\t")
         },
         contentType='text/csv'
+    )
+
+    # download the small automagic plot from the View tab
+    output$downloadMagicPlot <- downloadHandler(
+        filename = 'metaoku-plot.pdf',
+        content = function(file){
+            ggsave(filename=file, plot=getViewPlot(), w=6, h=4)
+        }
+    )
+
+    # download the large plot from the Plot tab
+    output$downloadPlot <- downloadHandler(
+        filename = 'metaoku-plot.pdf',
+        content = function(file){
+            ggsave(filename=file, plot=getBigPlot(), w=12, h=9)
+        }
     )
 
     # BUG - for some reason this creates an archive with directory structure
