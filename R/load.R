@@ -2,7 +2,7 @@
 # If there are multiple datafiles in one data folder, try to merge them by the
 # first column. Die on failure.
 # ==============================================================================
-merge.files <- function(data.dir, data.pat, skip=NULL){
+load.data <- function(data.dir, data.pat, skip=NULL){
     require(data.table)
     cat('\t  * merge.files\n')
     global.key <- NULL
