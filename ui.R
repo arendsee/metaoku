@@ -100,7 +100,7 @@ tabs <- list(
 )
 
 cat(config$access, '----\n')
-if(config$access != 'anarchy'){
+if(config$access == 'anarchy'){
     tabs$upload <- NULL
 }
 cat(config$access, '2----\n')
