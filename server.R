@@ -407,6 +407,11 @@ shinyServer(function(input, output, session){
 
         if(exists('temp.filt')) dataset()$setFilter(temp.filt)
 
+        # Types may be temporarily recast in the dispatch function (e.g.
+        # numeric columns may be recast as categorical ranges via cut(). To
+        # revert these to the original types, refresh.
+        dataset()$refresh()
+
         return(g)
     })
     output$view_data_plot <- renderPlot({ view_plot()})
