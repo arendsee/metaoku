@@ -20,8 +20,6 @@ source('R/dataClass.R')
 source('R/plotUI.R')
 source('R/plot.R')
 
-`%|%` <- function(x,y) if(is.null(x)) y else x
-
 # =========================================================================
 # Initialize a dataset as a list of data and metadata
 # includes:
@@ -558,8 +556,6 @@ shinyServer(function(input, output, session){
         }
     )
 
-    # BUG - for some reason this creates an archive with directory structure
-    # all the way to root
     output$downloadProject <- downloadHandler(
         filename = 'metaoku-project.zip',
         content = function(file){
