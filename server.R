@@ -20,8 +20,6 @@ source('R/dataClass.R')
 source('R/plotUI.R')
 source('R/plot.R')
 
-`%|%` <- function(x,y) if(is.null(x)) y else x
-
 # =========================================================================
 # Initialize a dataset as a list of data and metadata
 # includes:
@@ -407,6 +405,11 @@ shinyServer(function(input, output, session){
 
         if(exists('temp.filt')) dataset()$setFilter(temp.filt)
 
+        # Types may be temporarily recast in the dispatch function (e.g.
+        # numeric columns may be recast as categorical ranges via cut(). To
+        # revert these to the original types, refresh.
+        dataset()$refresh()
+
         return(g)
     })
     output$view_data_plot <- renderPlot({ view_plot()})
@@ -555,8 +558,6 @@ shinyServer(function(input, output, session){
         }
     )
 
-    # BUG - for some reason this creates an archive with directory structure
-    # all the way to root
     output$downloadProject <- downloadHandler(
         filename = 'metaoku-project.zip',
         content = function(file){

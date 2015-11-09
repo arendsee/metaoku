@@ -53,4 +53,4 @@ requires R be installed on your system.
 
 ## Example
 
-To run the app, click [here](https://arendsee.shinyapps.io/shiny-lab-data/)
+To run the app, click [here](https://metaoku.shinyapps.io/archive/)
