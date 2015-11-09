@@ -487,6 +487,7 @@ shinyServer(function(input, output, session){
             files <- input$upload.file
             cat('files:\n')
             cat(str(files))
+            kill_dir <- FALSE
             success <- FALSE
             if(upload.type == 'single'){
                 for(i in nrow(files)){
@@ -496,6 +497,7 @@ shinyServer(function(input, output, session){
                     newdir <- file.path(config$data_dir, data.name)
                     newpath <- file.path(newdir, data.basename)
                     if(!dir.exists(newdir)){
+                        kill_dir <- TRUE
                         dir.create(newdir)
                     }
                     if(file.exists(newpath)){
@@ -511,7 +513,7 @@ shinyServer(function(input, output, session){
                 cat('\tdataset upload not yeat implemented')
             }
             if(success){
-                cat('Updating database\n')
+               cat('Updating database\n')
                 datasets <<- build.all.datasets(config)
                 cat('Datasets: ', datasets, '\n')
                 update.datasets(datasets)
@@ -568,4 +570,20 @@ shinyServer(function(input, output, session){
     output$version <- renderText({
         paste0('v', readLines('VERSION'))
     })
+
+    cancel.onSessionEnded <- session$onSessionEnded(
+        function() {
+            if(config$access == 'sandbox'){
+                setwd(config$data_dir)
+                for(d in dir('.')){
+                    unlink(d, recursive=TRUE)
+                }
+                setwd(config$save_dir)
+                for(f in list.files('.')){
+                    unlink(f)
+                }
+                setwd('..')
+            }
+        }
+    )
 })
