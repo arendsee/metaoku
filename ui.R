@@ -90,13 +90,13 @@ about_panel <- tabPanel(
 )
 
 tabs <- list(
-    home   = home_panel,
-    select = select_panel,
-    view   = view_panel,
-    plot   = plot_panel,
-    upload = upload_panel,
-    help   = help_panel,
-    about  = about_panel
+    home_panel,
+    select_panel,
+    view_panel,
+    plot_panel,
+    upload_panel,
+    help_panel,
+    about_panel
 )
 
 cat(config$access, '----\n')
