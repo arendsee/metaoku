@@ -436,9 +436,10 @@ shinyServer(function(input, output, session){
             target='column',
             selected=0
         ),
-        extensions = c('ColReorder', 'ColVis'),
+        extensions = c('Buttons', 'ColReorder'),
         options = list(
             dom = 'RCT<"clear">lfrtip',
+            buttons = I('colvis'),
             autoWidth=TRUE,
             orderMulti=TRUE,
             searching=TRUE,
