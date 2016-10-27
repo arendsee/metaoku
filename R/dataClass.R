@@ -47,7 +47,7 @@ DataSet <- setRefClass(
                     x <- as.character(x)
                     # determine whether a character vector is cat, longcat,
                     # cor, or seq
-                    if(max(nchar(x), rm.na=TRUE) > max_length){
+                    if(max(nchar(x), na.rm=TRUE) > max_length){
                         # if there are any spaces, treat the string as textual
                         # otherwise, consider it a sequence
                         if(any(grepl(' ', x))){
