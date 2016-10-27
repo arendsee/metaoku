@@ -53,4 +53,4 @@ requires R be installed on your system.
 
 ## Example
 
-To run the app, click [here](https://metaoku.shinyapps.io/archive/)
+To run the app, click [here](https://metaoku.shinyapps.io/sandbox/)
