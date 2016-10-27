@@ -502,7 +502,7 @@ shinyServer(function(input, output, session){
                     newpath <- file.path(newdir, data.basename)
                     if(!dir.exists(newdir)){
                         kill_dir <- TRUE
-                        dir.create(newdir)
+                        dir.create(newdir, recursive=TRUE)
                     }
                     if(file.exists(newpath)){
                         cat(sprintf('WARNING: I refuse to overwrite file "%s"\n', newpath))

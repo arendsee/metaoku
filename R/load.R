@@ -72,7 +72,7 @@ build.one.dataset <- function(dataname, config){
         max_length=config$max_length)
 
     if(!dir.exists(config$save_dir)){
-        dir.create(config$save_dir)
+        dir.create(config$save_dir, recursive=TRUE)
     }
     save(dataset, file=rdat)
     return(rdat)
