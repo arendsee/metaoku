@@ -201,9 +201,9 @@ shinyServer(function(input, output, session){
         cat('-> observe - Building Upload tab\n')
         umode <- input$upload.type
         if(!is.null(umode) && umode == 'dataset'){
-            desc <- file.path('doc', 'upload-dataset-instructions.md')
+            desc <- file.path('pages', 'upload-dataset-instructions.md')
         } else if((!is.null(umode) && umode == 'single')) {
-            desc <- file.path('doc', 'upload-single-instructions.md')
+            desc <- file.path('pages', 'upload-single-instructions.md')
         } else {
             return()
         }
@@ -283,7 +283,7 @@ shinyServer(function(input, output, session){
             # set the dataset description
             desc <- file.path(config$data_dir, input$selected.dataset, config$descriptions)
             if(!file.exists(desc)){
-                desc <- file.path('doc', 'dataset-description.md')
+                desc <- file.path('pages', 'dataset-description.md')
             }
             output$dataset_description <- renderUI({shiny::includeMarkdown(desc)})
         },

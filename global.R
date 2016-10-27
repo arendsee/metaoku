@@ -13,9 +13,9 @@ config$max_length <- MAX_LENGTH
 if(file.exists(file.path(config$data_dir, DESCRIPTIONS))){
     config$home_tab <- file.path(config$data_dir, DESCRIPTIONS)
 } else {
-    config$home_tab <- file.path(getwd(), 'doc', 'home.md')
+    config$home_tab <- file.path(getwd(), 'pages', 'home.md')
 }
 
 config$access <- ACCESS
-config$help_tab <- file.path(getwd(), 'doc', 'help.md')
-config$about_tab <- file.path(getwd(), 'doc', 'about.md')
+config$help_tab <- file.path(getwd(), 'pages', 'help.md')
+config$about_tab <- file.path(getwd(), 'pages', 'about.md')

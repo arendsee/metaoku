@@ -1,8 +1,18 @@
+# ignore data files
 *.Rdat
 *.tab
 *.tsv
 .Rprofile
+
+# ignore instance-specific projects
 projects/
+
+# ignore instance-specific doc
+pages/
+config
+
 rsconnect/
+
 shinyapps/
+
 packrat/lib*/
