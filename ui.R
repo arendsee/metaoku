@@ -99,6 +99,11 @@ tabs <- list(
     about_panel
 )
 
+if(config$access == 'archive') {
+  # No upload panel for archive instances
+  tabs[[5]] = NULL
+}
+
 cat(config$access, '----\n')
 if(config$access == 'anarchy'){
     tabs$upload <- NULL
