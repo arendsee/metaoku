@@ -4,9 +4,9 @@ if(!file.exists('config')){
   stop("No config found, please run make")
 }
 
-dependencies <- c(
+cran_dependencies <- c(
   'data.table',
-  'DT',
+  'devtools',
   'ggplot2',
   'magrittr',
   'markdown',
@@ -20,11 +20,14 @@ dependencies <- c(
   'tm',
   'wordcloud'
 )
-for(d in dependencies){
+for(d in cran_dependencies){
   if(! d %in% installed.packages()){
     install.packages(d)
   }
   library(d, character.only=TRUE)
+}
+if(! 'DT' %in% installed.packages()){
+  devtools::install_github('rstudio/DT')
 }
 
 source('config')
