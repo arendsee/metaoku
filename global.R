@@ -29,6 +29,7 @@ for(d in cran_dependencies){
 if(! 'DT' %in% installed.packages()){
   devtools::install_github('rstudio/DT')
 }
+library(DT)
 
 source('config')
 config <- list()
