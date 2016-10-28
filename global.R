@@ -24,12 +24,27 @@ for(d in cran_dependencies){
   if(! d %in% installed.packages()){
     install.packages(d)
   }
-  library(d, character.only=TRUE)
 }
 if(! 'DT' %in% installed.packages()){
   devtools::install_github('rstudio/DT')
 }
-library(DT)
+
+# NOTE: I can't load these in the loop; Shiny relies on text parsing
+require(data.table)
+require(devtools)
+require(ggplot2)
+require(magrittr)
+require(markdown)
+require(Matrix)
+require(plyr)
+require(plotly)
+require(reshape2)
+require(shiny)
+require(shinyBS)
+require(shinythemes)
+require(tm)
+require(wordcloud)
+require(DT)
 
 source('config')
 config <- list()
