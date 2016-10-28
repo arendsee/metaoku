@@ -24,7 +24,6 @@ DATA_PAT     = '.(tab|tsv)$' # regular expression identifying data files
 FIELDS       = 'COLUMN.tsv'  # column descriptions filename
 DESCRIPTIONS = 'README.md'   # description filename
 
-
 # =========================================================================
 # Constants for distinguishing between integers and factors
 # =========================================================================

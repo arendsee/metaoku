@@ -1,4 +1,5 @@
 require(shiny)
+require(shinyBS)
 require(DT)
 require(markdown)
 require(magrittr)
@@ -31,8 +32,6 @@ source('R/plot.R')
 #  * seqs     - character counts for each sequence column
 # =========================================================================
 datasets <- build.all.datasets(config)
-
-
 
 shinyServer(function(input, output, session){
 
@@ -257,7 +256,6 @@ shinyServer(function(input, output, session){
         ignoreNULL=TRUE
     )
 
-
     bigPlot <- reactive({
         cat('-> plot_data_plot\n')
         input$build.plot
@@ -412,7 +410,16 @@ shinyServer(function(input, output, session){
 
         return(g)
     })
-    output$view_data_plot <- renderPlot({ view_plot()})
+    output$view_data_plot <- renderPlot({
+      view_plot()
+    })
+
+    output$view_plot_plotly <- renderPlotly({
+      g <- view_plot()
+      ggplotly(g) %>% 
+        layout(height = input$plotHeight, autosize=TRUE)
+    })
+
     getViewPlot <- function(){
         w=session$clientData$output_view_data_plot_width
         h=session$clientData$output_view_data_plot_height

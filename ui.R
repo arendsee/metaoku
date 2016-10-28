@@ -38,8 +38,19 @@ view_panel <- tabPanel(
                                     value=NULL)),
                 column(4, selectInput('user_key', 'Select Key', choices='None'))),
             fluidRow(
+                column(4, actionButton('viewtab_plotly_popup', 'use plotly')),
                 column(4, downloadButton('downloadData', 'Download Data')),
-                column(4, downloadButton('downloadMagicPlot', 'Download Plot'))
+                column(4, downloadButton('downloadMagicPlot', 'Download Plot')),
+                mainPanel(
+                  bsModal(
+                    id = "viewtab_plotly_bsModal",
+                    title = "Your Plotly Graphic",
+                    trigger = "viewtab_plotly_popup",
+                    size = "large",
+                    plotlyOutput("view_plot_plotly"),
+                    downloadButton('downloadPlot', 'Download')
+                  )
+                )
             )
         ),
         mainPanel(DT::dataTableOutput("main_table"))
@@ -93,7 +104,6 @@ tabs <- list(
     home_panel,
     select_panel,
     view_panel,
-    plot_panel,
     upload_panel,
     help_panel,
     about_panel
