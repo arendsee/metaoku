@@ -1,4 +1,9 @@
-# Parse the config gile
+# Parse the config file
+
+if(!file.exists('config')){
+  stop("No config found, please run make")
+}
+
 source('config')
 config <- list()
 config$data_dir        <- file.path(getwd(), DATA_DIR)
