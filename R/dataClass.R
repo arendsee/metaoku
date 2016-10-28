@@ -18,9 +18,6 @@ DataSet <- setRefClass(
                          max_prop=0.1,
                          max_length=50,
                          key=NULL){
-            require(plyr)
-            require(data.table)
-            require(magrittr)
             max_levels <<- max_levels
             max_prop   <<- max_prop
             max_length <<- max_length

@@ -10,7 +10,6 @@ as.cat <- function(x){
 
 build.dispatch.table <- function(){ 
     cat('\t - build.dispatch.table()\n')
-    require(reshape2)
     types <- c('-', 'num', 'cat', 'longcat', 'cor', 'seq')
     d <- expand.grid(types, types, types)
     colnames(d) <- c('x', 'y', 'z')

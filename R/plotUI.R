@@ -1,5 +1,3 @@
-require(magrittr)
-
 # TODO - find a way to make these global
 `%ifnul%` <- function(a, b) if(is.null(a)) b else a
 `%ifnot%` <- function(a, b) if(is.null(a) || is.na(a) || length(a) == 0) b else a

@@ -1,10 +1,3 @@
-require(shiny)
-require(shinyBS)
-require(DT)
-require(markdown)
-require(magrittr)
-require(Matrix)
-
 # ====================================================================
 # Here is a really hacky way to avoid polluting the global environment
 # ====================================================================

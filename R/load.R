@@ -3,7 +3,6 @@
 # first column. Die on failure.
 # ==============================================================================
 load.data <- function(data.dir, data.pat, skip=NULL){
-    require(data.table)
     cat('\t  * merge.files\n')
     global.key <- NULL
     global.d   <- NULL

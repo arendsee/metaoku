@@ -1,8 +1,3 @@
-require(shiny)
-require(shinythemes)
-require(DT)
-require(markdown)
-
 source('config')
 
 home_panel <- tabPanel(

@@ -4,6 +4,29 @@ if(!file.exists('config')){
   stop("No config found, please run make")
 }
 
+dependencies <- c(
+  'data.table',
+  'DT',
+  'ggplot2',
+  'magrittr',
+  'markdown',
+  'Matrix',
+  'plyr',
+  'plotly',
+  'reshape2',
+  'shiny',
+  'shinyBS',
+  'shinythemes',
+  'tm',
+  'wordcloud'
+)
+for(d in dependencies){
+  if(! d %in% installed.packages()){
+    install.packages(d)
+  }
+  library(d, character.only=TRUE)
+}
+
 source('config')
 config <- list()
 config$data_dir        <- file.path(getwd(), DATA_DIR)
