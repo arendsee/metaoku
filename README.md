@@ -1,3 +1,5 @@
+[![deprecated](http://badges.github.io/stability-badges/dist/deprecated.svg)](http://github.com/badges/stability-badges)
+
 # Metaoku
 
 A shiny app for sharing, subsetting and automagically plotting data of any type
